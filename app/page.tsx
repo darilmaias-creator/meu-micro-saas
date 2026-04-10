@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   UserRound,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import type { Session } from "next-auth";
 import { getProviders, signIn, signOut, useSession } from "next-auth/react";
 
@@ -28,8 +29,28 @@ type AuthFeedback =
     }
   | null;
 
+function mapAuthErrorMessage(errorCode: string | null) {
+  switch (errorCode) {
+    case "Configuration":
+      return "A autenticacao do servidor ainda nao esta configurada corretamente.";
+    case "AccessDenied":
+      return "O login foi bloqueado pela configuracao atual.";
+    case "OAuthSignin":
+    case "OAuthCallback":
+    case "OAuthCreateAccount":
+      return "Nao foi possivel entrar com o Google agora.";
+    case "Callback":
+      return "A autenticacao falhou no retorno do servidor.";
+    case "CredentialsSignin":
+      return "E-mail ou senha invalidos.";
+    default:
+      return null;
+  }
+}
+
 export default function MainApp() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -38,6 +59,17 @@ export default function MainApp() {
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
   const [isGoogleEnabled, setIsGoogleEnabled] = useState(false);
   const [providersLoaded, setProvidersLoaded] = useState(false);
+
+  useEffect(() => {
+    const errorMessage = mapAuthErrorMessage(searchParams.get("error"));
+
+    if (errorMessage) {
+      setAuthFeedback({
+        tone: "error",
+        message: errorMessage,
+      });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let isMounted = true;
@@ -118,9 +150,11 @@ export default function MainApp() {
         setAuthFeedback({
           tone: "error",
           message:
-            authMode === "register"
+            authMode === "register" &&
+            loginResult.error === "CredentialsSignin"
               ? "Sua conta foi criada, mas o login automatico falhou. Tente entrar novamente."
-              : "E-mail ou senha invalidos.",
+              : mapAuthErrorMessage(loginResult.error) ??
+                "Nao foi possivel concluir a autenticacao agora.",
         });
         return;
       }
@@ -267,7 +301,7 @@ export default function MainApp() {
 
           {providersLoaded && !isGoogleEnabled && (
             <p className="text-xs text-slate-400 mt-3">
-              Para liberar o Google, preencha
+              O login com Google esta indisponivel agora. Confira
               {" "}
               <code>GOOGLE_CLIENT_ID</code>
               {" "}

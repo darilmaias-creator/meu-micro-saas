@@ -30,6 +30,29 @@ function validateRegisterPayload(body: RegisterPayload) {
   return null;
 }
 
+function getRegisterErrorMessage(error: unknown) {
+  const message =
+    error instanceof Error ? error.message : "Erro desconhecido no cadastro.";
+
+  if (
+    message.includes("auth_users") ||
+    message.includes("relation") ||
+    message.includes("does not exist")
+  ) {
+    return "A tabela de usuarios ainda nao foi criada no Supabase.";
+  }
+
+  if (message.includes("SUPABASE_SECRET_KEY")) {
+    return "A chave secreta do Supabase nao esta configurada na Vercel.";
+  }
+
+  if (message.includes("NEXT_PUBLIC_SUPABASE_URL")) {
+    return "A URL do Supabase nao esta configurada na Vercel.";
+  }
+
+  return "Nao foi possivel criar sua conta agora.";
+}
+
 export async function POST(request: Request) {
   let body: RegisterPayload;
 
@@ -48,24 +71,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: validationMessage }, { status: 400 });
   }
 
-  const passwordHash = await hashPassword(body.password!);
-  const user = await createCredentialsUser({
-    name: body.name!.trim(),
-    email: body.email!.trim(),
-    passwordHash,
-  });
+  try {
+    const passwordHash = await hashPassword(body.password!);
+    const user = await createCredentialsUser({
+      name: body.name!.trim(),
+      email: body.email!.trim(),
+      passwordHash,
+    });
 
-  if (!user) {
+    if (!user) {
+      return NextResponse.json(
+        { message: "Ja existe uma conta cadastrada com este e-mail." },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json(
-      { message: "Ja existe uma conta cadastrada com este e-mail." },
-      { status: 409 },
+      {
+        message: "Conta criada com sucesso.",
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        message: getRegisterErrorMessage(error),
+        ...(process.env.NODE_ENV !== "production" && error instanceof Error
+          ? { details: error.message }
+          : {}),
+      },
+      { status: 500 },
     );
   }
-
-  return NextResponse.json(
-    {
-      message: "Conta criada com sucesso.",
-    },
-    { status: 201 },
-  );
 }

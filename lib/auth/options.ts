@@ -15,6 +15,10 @@ import {
 const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 
+function logAuthError(context: string, error: unknown) {
+  console.error(`[auth:${context}]`, error);
+}
+
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
     name: "Email e senha",
@@ -23,31 +27,36 @@ const providers: NextAuthOptions["providers"] = [
       password: { label: "Senha", type: "password" },
     },
     async authorize(credentials) {
-      const email = credentials?.email?.trim();
-      const password = credentials?.password;
+      try {
+        const email = credentials?.email?.trim();
+        const password = credentials?.password;
 
-      if (!email || !password) {
+        if (!email || !password) {
+          return null;
+        }
+
+        const user = await findUserByEmail(email);
+
+        if (!user?.passwordHash) {
+          return null;
+        }
+
+        const passwordMatches = await verifyPassword(password, user.passwordHash);
+
+        if (!passwordMatches) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image ?? undefined,
+        };
+      } catch (error) {
+        logAuthError("credentials-authorize", error);
         return null;
       }
-
-      const user = await findUserByEmail(email);
-
-      if (!user?.passwordHash) {
-        return null;
-      }
-
-      const passwordMatches = await verifyPassword(password, user.passwordHash);
-
-      if (!passwordMatches) {
-        return null;
-      }
-
-      return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        image: user.image ?? undefined,
-      };
     },
   }),
 ];
@@ -68,22 +77,28 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/",
+    error: "/",
   },
   providers,
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === "google" && user.email) {
-        const storedUser = await upsertOAuthUser({
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          provider: "google",
-        });
+      try {
+        if (account?.provider === "google" && user.email) {
+          const storedUser = await upsertOAuthUser({
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            provider: "google",
+          });
 
-        user.id = storedUser.id;
+          user.id = storedUser.id;
+        }
+
+        return true;
+      } catch (error) {
+        logAuthError("sign-in", error);
+        return "/?error=Configuration";
       }
-
-      return true;
     },
     async jwt({ token, user }) {
       if (user?.id) {
@@ -97,28 +112,42 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (!session.user) {
+      try {
+        if (!session.user) {
+          return session;
+        }
+
+        const storedUser = token.sub
+          ? await findUserById(token.sub)
+          : token.email
+            ? await findUserByEmail(token.email)
+            : null;
+
+        if (!storedUser) {
+          if (token.sub) {
+            session.user.id = token.sub;
+          }
+
+          return session;
+        }
+
+        const sessionUser = getSessionUserFromStoredUser(storedUser);
+
+        session.user = {
+          ...session.user,
+          ...sessionUser,
+        };
+
+        return session;
+      } catch (error) {
+        logAuthError("session", error);
+
+        if (session.user && token.sub) {
+          session.user.id = token.sub;
+        }
+
         return session;
       }
-
-      const storedUser = token.sub
-        ? await findUserById(token.sub)
-        : token.email
-          ? await findUserByEmail(token.email)
-          : null;
-
-      if (!storedUser) {
-        return session;
-      }
-
-      const sessionUser = getSessionUserFromStoredUser(storedUser);
-
-      session.user = {
-        ...session.user,
-        ...sessionUser,
-      };
-
-      return session;
     },
   },
 };
