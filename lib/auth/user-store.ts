@@ -59,6 +59,10 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+function logUserStoreWarning(context: string, error: unknown) {
+  console.warn(`[user-store:${context}]`, error);
+}
+
 function isSupabaseUserStoreEnabled() {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
@@ -111,9 +115,9 @@ async function ensureUsersFile() {
 }
 
 async function readUsersFromFile() {
-  await ensureUsersFile();
-
   try {
+    await ensureUsersFile();
+
     const fileContents = await readFile(usersFilePath, "utf8");
     const parsed = JSON.parse(fileContents);
 
@@ -124,7 +128,8 @@ async function readUsersFromFile() {
     return parsed
       .map((user) => normalizeStoredUser(user))
       .filter((user): user is StoredUser => user !== null);
-  } catch {
+  } catch (error) {
+    logUserStoreWarning("read-file-users", error);
     return [];
   }
 }
