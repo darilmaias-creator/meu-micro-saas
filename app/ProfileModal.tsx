@@ -8,11 +8,16 @@ import {
   FREE_NAME_CHANGE_LIMIT,
   MAX_PROFILE_IMAGE_SIZE_BYTES,
 } from "@/lib/auth/profile-rules";
+import {
+  normalizeAppDataState,
+  type AppDataState,
+} from "@/lib/app-data/defaults";
 import { clearLocalAppDataCache } from "./hooks/useAppData";
 
 type ProfileModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onRestoreAppData: (value: Partial<AppDataState>) => void;
 };
 
 type ProfileFeedback =
@@ -22,17 +27,34 @@ type ProfileFeedback =
     }
   | null;
 
+function isAppDataBackupCandidate(value: unknown): value is Partial<AppDataState> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  return (
+    "config" in value ||
+    "insumos" in value ||
+    "savedProducts" in value ||
+    "sales" in value ||
+    "quotes" in value
+  );
+}
+
 export default function ProfileModal({
   isOpen,
   onClose,
+  onRestoreAppData,
 }: ProfileModalProps) {
   const { data: session, update } = useSession();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const backupInputRef = useRef<HTMLInputElement | null>(null);
   const [name, setName] = useState("");
   const [imagePreview, setImagePreview] = useState("");
   const [feedback, setFeedback] = useState<ProfileFeedback>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
@@ -228,6 +250,97 @@ export default function ProfileModal({
     }
   }
 
+  function handleRestoreBackupClick() {
+    backupInputRef.current?.click();
+  }
+
+  async function handleBackupFileChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setFeedback(null);
+    setIsRestoring(true);
+
+    try {
+      const fileContents = await file.text();
+      const parsedPayload = JSON.parse(fileContents) as
+        | {
+            appData?: Partial<AppDataState>;
+          }
+        | Partial<AppDataState>;
+
+      const rawAppData =
+        parsedPayload &&
+        typeof parsedPayload === "object" &&
+        "appData" in parsedPayload &&
+        parsedPayload.appData &&
+        typeof parsedPayload.appData === "object"
+          ? parsedPayload.appData
+          : parsedPayload;
+
+      if (!isAppDataBackupCandidate(rawAppData)) {
+        setFeedback({
+          tone: "error",
+          message:
+            "Esse arquivo nao parece ser um backup valido exportado pelo app.",
+        });
+        return;
+      }
+
+      const normalizedAppData = normalizeAppDataState(rawAppData);
+
+      const confirmed = window.confirm(
+        "Restaurar esse backup vai substituir os dados atuais da conta por esse arquivo. Deseja continuar?",
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const response = await fetch("/api/app-data", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(normalizedAppData),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | { message?: string }
+        | null;
+
+      if (!response.ok) {
+        setFeedback({
+          tone: "error",
+          message:
+            result?.message ?? "Nao foi possivel restaurar o backup agora.",
+        });
+        return;
+      }
+
+      onRestoreAppData(normalizedAppData);
+      setFeedback({
+        tone: "success",
+        message:
+          "Backup restaurado com sucesso. Seus dados principais da conta foram atualizados.",
+      });
+    } catch {
+      setFeedback({
+        tone: "error",
+        message:
+          "Nao foi possivel ler esse arquivo de backup. Confira se ele e um JSON valido exportado pelo app.",
+      });
+    } finally {
+      setIsRestoring(false);
+      event.target.value = "";
+    }
+  }
+
   async function handleDeleteAccount() {
     setFeedback(null);
     setIsDeleting(true);
@@ -417,17 +530,40 @@ export default function ProfileModal({
                   Baixe um arquivo JSON com seu perfil, configuracoes, insumos,
                   produtos, vendas e orcamentos.
                 </p>
+                <p className="text-xs text-slate-400 mt-2">
+                  A restauracao pelo arquivo reaplica os dados principais do app
+                  na conta atual. Login, e-mail e senha nao sao trocados pelo
+                  backup.
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={handleExportData}
-                disabled={isExporting}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-              >
-                <Download size={16} />
-                {isExporting ? "Baixando..." : "Baixar backup"}
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportData}
+                  disabled={isExporting}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Download size={16} />
+                  {isExporting ? "Baixando..." : "Baixar backup"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRestoreBackupClick}
+                  disabled={isRestoring}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 hover:bg-amber-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Upload size={16} />
+                  {isRestoring ? "Restaurando..." : "Restaurar backup"}
+                </button>
+              </div>
             </div>
+            <input
+              ref={backupInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={handleBackupFileChange}
+            />
           </div>
 
           <div className="rounded-3xl border border-red-200 bg-red-50 p-5 space-y-4">

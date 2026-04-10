@@ -428,6 +428,7 @@ function AuthenticatedApp({ session }: { session: Session }) {
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
+        onRestoreAppData={appData.replaceAllData}
       />
     </div>
   );

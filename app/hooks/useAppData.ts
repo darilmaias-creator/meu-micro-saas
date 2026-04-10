@@ -527,6 +527,9 @@ export function useAppData(userId: string) {
 
   return {
     isLoaded,
+    replaceAllData: (value: Partial<AppDataState>) => {
+      setState(normalizeAppDataState(value));
+    },
     config: {
       ...state.config,
       setUnit: buildConfigFieldSetter(setState, "unit"),
