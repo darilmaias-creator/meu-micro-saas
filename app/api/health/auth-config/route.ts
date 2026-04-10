@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 function getHost(value: string | undefined) {
   if (!value) {
     return null;
