@@ -1,23 +1,38 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   createDefaultAppDataState,
   hasMeaningfulAppData,
   normalizeAppDataState,
+  normalizeBrandingValue,
   type AppConfigState,
   type AppDataResponse,
   type AppDataState,
-  type GenericRecord,
 } from "@/lib/app-data/defaults";
 
-type ConfigSetter = <K extends keyof AppConfigState>(
-  key: K,
-  value: AppConfigState[K] | ((prev: AppConfigState[K]) => AppConfigState[K]),
-) => void;
+type StorageUpdater<T> = T | ((prev: T) => T);
+type CollectionKey = "insumos" | "savedProducts" | "sales" | "quotes";
 
 const STORAGE_NAMESPACE = "meu-micro-saas";
+
+const STORAGE_KEYS = {
+  unit: "calc_unit",
+  machineCost: "calc_machineCost",
+  diodeLife: "calc_diodeLife",
+  energyCost: "calc_energyCost",
+  machinePower: "calc_machinePower",
+  hourlyRate: "calc_hourlyRate",
+  profitMargin: "calc_profitMargin",
+  userLogo: "calc_userLogo",
+  storeName: "calc_storeName",
+  storeSubtitle: "calc_storeSubtitle",
+  insumos: "art_calc_insumos",
+  sales: "art_calc_sales",
+  quotes: "art_calc_quotes",
+  savedProducts: "art_calc_products_v3",
+} as const;
 
 function buildScopedStorageKey(userId: string, key: string) {
   return `${STORAGE_NAMESPACE}:user:${userId}:${key}`;
@@ -35,327 +50,356 @@ function readStorageValue<T>(storageKey: string, defaultValue: T) {
       return defaultValue;
     }
 
-    return JSON.parse(storedValue) as T;
-  } catch (error) {
-    console.warn(error);
+    const parsedValue = JSON.parse(storedValue) as T;
+
+    if (typeof parsedValue === "string") {
+      return normalizeBrandingValue(storageKey, parsedValue) as T;
+    }
+
+    return parsedValue;
+  } catch {
     return defaultValue;
   }
 }
 
-function writeCachedAppData(userId: string, state: AppDataState) {
+function writeStorageValue<T>(storageKey: string, value: T) {
   if (typeof window === "undefined") {
     return;
   }
 
   try {
-    window.localStorage.setItem(
-      buildScopedStorageKey(userId, "app_data_cache"),
-      JSON.stringify(state),
-    );
-  } catch (error) {
-    console.warn(error);
+    window.localStorage.setItem(storageKey, JSON.stringify(value));
+  } catch {
+    // Keep the app usable even if the browser blocks storage writes.
   }
 }
 
-function readCachedAppData(userId: string) {
-  return normalizeAppDataState(
-    readStorageValue<Partial<AppDataState>>(
-      buildScopedStorageKey(userId, "app_data_cache"),
-      createDefaultAppDataState(),
-    ),
-  );
-}
+function readLocalAppData(userId: string) {
+  const defaults = createDefaultAppDataState();
 
-function readLegacyLocalAppData(userId: string) {
   return normalizeAppDataState({
     config: {
-      unit: readStorageValue(buildScopedStorageKey(userId, "calc_unit"), "mm"),
+      unit: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.unit),
+        defaults.config.unit,
+      ),
       machineCost: readStorageValue(
-        buildScopedStorageKey(userId, "calc_machineCost"),
-        "",
+        buildScopedStorageKey(userId, STORAGE_KEYS.machineCost),
+        defaults.config.machineCost,
       ),
       diodeLife: readStorageValue(
-        buildScopedStorageKey(userId, "calc_diodeLife"),
-        "",
+        buildScopedStorageKey(userId, STORAGE_KEYS.diodeLife),
+        defaults.config.diodeLife,
       ),
       energyCost: readStorageValue(
-        buildScopedStorageKey(userId, "calc_energyCost"),
-        "",
+        buildScopedStorageKey(userId, STORAGE_KEYS.energyCost),
+        defaults.config.energyCost,
       ),
       machinePower: readStorageValue(
-        buildScopedStorageKey(userId, "calc_machinePower"),
-        "96",
+        buildScopedStorageKey(userId, STORAGE_KEYS.machinePower),
+        defaults.config.machinePower,
       ),
       hourlyRate: readStorageValue(
-        buildScopedStorageKey(userId, "calc_hourlyRate"),
-        "",
+        buildScopedStorageKey(userId, STORAGE_KEYS.hourlyRate),
+        defaults.config.hourlyRate,
       ),
       profitMargin: readStorageValue(
-        buildScopedStorageKey(userId, "calc_profitMargin"),
-        "50",
+        buildScopedStorageKey(userId, STORAGE_KEYS.profitMargin),
+        defaults.config.profitMargin,
       ),
       userLogo: readStorageValue(
-        buildScopedStorageKey(userId, "calc_userLogo"),
-        "https://i.postimg.cc/hj2J824X/logo.png",
+        buildScopedStorageKey(userId, STORAGE_KEYS.userLogo),
+        defaults.config.userLogo,
       ),
       storeName: readStorageValue(
-        buildScopedStorageKey(userId, "calc_storeName"),
-        "Calculadora do Produtor",
+        buildScopedStorageKey(userId, STORAGE_KEYS.storeName),
+        defaults.config.storeName,
       ),
       storeSubtitle: readStorageValue(
-        buildScopedStorageKey(userId, "calc_storeSubtitle"),
-        "Orçamentos claros. Clientes seguros. Negócios fechados.",
+        buildScopedStorageKey(userId, STORAGE_KEYS.storeSubtitle),
+        defaults.config.storeSubtitle,
       ),
     },
-    insumos: readStorageValue<GenericRecord[]>(
-      buildScopedStorageKey(userId, "art_calc_insumos"),
-      [],
+    insumos: readStorageValue(
+      buildScopedStorageKey(userId, STORAGE_KEYS.insumos),
+      defaults.insumos,
     ),
-    savedProducts: readStorageValue<GenericRecord[]>(
-      buildScopedStorageKey(userId, "art_calc_products_v3"),
-      [],
+    savedProducts: readStorageValue(
+      buildScopedStorageKey(userId, STORAGE_KEYS.savedProducts),
+      defaults.savedProducts,
     ),
-    sales: readStorageValue<GenericRecord[]>(
-      buildScopedStorageKey(userId, "art_calc_sales"),
-      [],
+    sales: readStorageValue(
+      buildScopedStorageKey(userId, STORAGE_KEYS.sales),
+      defaults.sales,
     ),
-    quotes: readStorageValue<GenericRecord[]>(
-      buildScopedStorageKey(userId, "art_calc_quotes"),
-      [],
+    quotes: readStorageValue(
+      buildScopedStorageKey(userId, STORAGE_KEYS.quotes),
+      defaults.quotes,
     ),
   });
 }
 
+function writeLocalAppData(userId: string, state: AppDataState) {
+  const normalizedState = normalizeAppDataState(state);
+
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.unit),
+    normalizedState.config.unit,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.machineCost),
+    normalizedState.config.machineCost,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.diodeLife),
+    normalizedState.config.diodeLife,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.energyCost),
+    normalizedState.config.energyCost,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.machinePower),
+    normalizedState.config.machinePower,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.hourlyRate),
+    normalizedState.config.hourlyRate,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.profitMargin),
+    normalizedState.config.profitMargin,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.userLogo),
+    normalizedState.config.userLogo,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.storeName),
+    normalizedState.config.storeName,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.storeSubtitle),
+    normalizedState.config.storeSubtitle,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.insumos),
+    normalizedState.insumos,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.savedProducts),
+    normalizedState.savedProducts,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.sales),
+    normalizedState.sales,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.quotes),
+    normalizedState.quotes,
+  );
+}
+
+async function readResponseError(response: Response) {
+  try {
+    const payload = (await response.json()) as {
+      message?: string;
+      details?: string;
+    };
+
+    return payload.details
+      ? `${payload.message ?? "Erro desconhecido"} (${payload.details})`
+      : payload.message ?? `HTTP ${response.status}`;
+  } catch {
+    return `HTTP ${response.status}`;
+  }
+}
+
+function buildConfigFieldSetter(
+  setState: React.Dispatch<React.SetStateAction<AppDataState>>,
+  key: keyof AppConfigState,
+) {
+  return (value: StorageUpdater<AppConfigState[typeof key]>) => {
+    setState((previousState) => {
+      const previousValue = previousState.config[key];
+      const nextValue =
+        typeof value === "function"
+          ? (
+              value as (
+                prev: AppConfigState[typeof key],
+              ) => AppConfigState[typeof key]
+            )(previousValue)
+          : value;
+
+      return {
+        ...previousState,
+        config: {
+          ...previousState.config,
+          [key]: nextValue,
+        },
+      };
+    });
+  };
+}
+
+function buildCollectionSetter(
+  setState: React.Dispatch<React.SetStateAction<AppDataState>>,
+  key: CollectionKey,
+) {
+  return (value: StorageUpdater<AppDataState[typeof key]>) => {
+    setState((previousState) => {
+      const previousValue = previousState[key];
+      const nextValue =
+        typeof value === "function"
+          ? (
+              value as (prev: AppDataState[typeof key]) => AppDataState[typeof key]
+            )(previousValue)
+          : value;
+
+      return {
+        ...previousState,
+        [key]: nextValue,
+      };
+    });
+  };
+}
+
 export function useAppData(userId: string) {
-  const localFallbackState = useMemo(() => {
-    const cachedState = readCachedAppData(userId);
-
-    if (hasMeaningfulAppData(cachedState)) {
-      return cachedState;
-    }
-
-    return readLegacyLocalAppData(userId);
-  }, [userId]);
-
-  const [appState, setAppState] = useState<AppDataState>(localFallbackState);
+  const [state, setState] = useState<AppDataState>(() => readLocalAppData(userId));
   const [isLoaded, setIsLoaded] = useState(false);
-  const lastSyncedSnapshotRef = useRef<string | null>(null);
-  const hasFetchedFromServerRef = useRef(false);
-  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasHydratedRef = useRef(false);
+  const lastSyncedStateRef = useRef("");
 
   useEffect(() => {
-    let isMounted = true;
-    const localState = localFallbackState;
+    let isCurrent = true;
 
-    async function loadFromServer() {
+    const localState = readLocalAppData(userId);
+
+    setState(localState);
+    setIsLoaded(false);
+    hasHydratedRef.current = false;
+    lastSyncedStateRef.current = "";
+
+    async function loadFromDatabase() {
       try {
         const response = await fetch("/api/app-data", {
           cache: "no-store",
         });
 
         if (!response.ok) {
-          throw new Error("APP_DATA_FETCH_FAILED");
+          throw new Error(await readResponseError(response));
         }
 
         const payload = (await response.json()) as AppDataResponse;
-        const serverState = normalizeAppDataState(payload.data);
 
-        if (!isMounted) {
+        if (!isCurrent) {
           return;
         }
+
+        const remoteState = normalizeAppDataState(payload.data);
 
         if (payload.source === "default" && hasMeaningfulAppData(localState)) {
-          setAppState(localState);
-          writeCachedAppData(userId, localState);
-<<<<<<< ours
-<<<<<<< ours
-
-          const migrationResponse = await fetch("/api/app-data", {
-=======
-          lastSyncedSnapshotRef.current = JSON.stringify(localState);
-
-          await fetch("/api/app-data", {
->>>>>>> theirs
-=======
-          lastSyncedSnapshotRef.current = JSON.stringify(localState);
-
-          await fetch("/api/app-data", {
->>>>>>> theirs
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(localState),
-          });
-<<<<<<< ours
-<<<<<<< ours
-
-          if (migrationResponse.ok) {
-            lastSyncedSnapshotRef.current = JSON.stringify(localState);
-          }
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
+          setState(localState);
         } else {
-          setAppState(serverState);
-          writeCachedAppData(userId, serverState);
-          lastSyncedSnapshotRef.current = JSON.stringify(serverState);
+          setState(remoteState);
+          writeLocalAppData(userId, remoteState);
+          lastSyncedStateRef.current = JSON.stringify(remoteState);
         }
       } catch (error) {
-        console.warn(error);
-
-        if (!isMounted) {
+        if (!isCurrent) {
           return;
         }
 
-        setAppState(localState);
-        writeCachedAppData(userId, localState);
-        lastSyncedSnapshotRef.current = JSON.stringify(localState);
+        console.error(
+          "Nao foi possivel carregar os dados do Supabase. O app continuou com o armazenamento local.",
+        );
+        console.error(error);
+        setState(localState);
       } finally {
-        if (isMounted) {
-          hasFetchedFromServerRef.current = true;
+        if (isCurrent) {
+          hasHydratedRef.current = true;
           setIsLoaded(true);
         }
       }
     }
 
-    setAppState(localState);
-    setIsLoaded(false);
-    hasFetchedFromServerRef.current = false;
-    lastSyncedSnapshotRef.current = null;
-    loadFromServer();
+    void loadFromDatabase();
 
     return () => {
-      isMounted = false;
+      isCurrent = false;
     };
-  }, [localFallbackState, userId]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!isLoaded || !hasFetchedFromServerRef.current) {
+    if (!isLoaded || !hasHydratedRef.current) {
       return;
     }
 
-    const nextSnapshot = JSON.stringify(appState);
+    const normalizedState = normalizeAppDataState(state);
+    writeLocalAppData(userId, normalizedState);
 
-    writeCachedAppData(userId, appState);
-
-    if (nextSnapshot === lastSyncedSnapshotRef.current) {
+    if (!hasMeaningfulAppData(normalizedState)) {
       return;
     }
 
-    if (syncTimerRef.current) {
-      clearTimeout(syncTimerRef.current);
+    const serializedState = JSON.stringify(normalizedState);
+
+    if (serializedState === lastSyncedStateRef.current) {
+      return;
     }
 
-    syncTimerRef.current = setTimeout(async () => {
+    const timeoutId = setTimeout(async () => {
       try {
         const response = await fetch("/api/app-data", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(appState),
+          body: serializedState,
         });
 
-        if (!response.ok) {
-          throw new Error("APP_DATA_SAVE_FAILED");
+        if (response.ok) {
+          lastSyncedStateRef.current = serializedState;
+          return;
         }
 
-        lastSyncedSnapshotRef.current = nextSnapshot;
+        console.error(await readResponseError(response));
       } catch (error) {
-        console.warn(error);
+        // Fall back to the local cache if the database is unavailable.
+        console.error(
+          "Nao foi possivel salvar os dados no Supabase. Os dados ficaram apenas no navegador por enquanto.",
+        );
+        console.error(error);
       }
-    }, 500);
+    }, 300);
 
     return () => {
-      if (syncTimerRef.current) {
-        clearTimeout(syncTimerRef.current);
-      }
+      clearTimeout(timeoutId);
     };
-  }, [appState, isLoaded, userId]);
-
-  const setConfigValue: ConfigSetter = (key, value) => {
-    setAppState((prev) => ({
-      ...prev,
-      config: {
-        ...prev.config,
-        [key]:
-          typeof value === "function"
-            ? (
-                value as (prev: AppConfigState[typeof key]) => AppConfigState[typeof key]
-              )(prev.config[key])
-            : value,
-      },
-    }));
-  };
+  }, [isLoaded, state, userId]);
 
   return {
     isLoaded,
     config: {
-      unit: appState.config.unit,
-      setUnit: (value: string) => setConfigValue("unit", value),
-      machineCost: appState.config.machineCost,
-      setMachineCost: (value: string) => setConfigValue("machineCost", value),
-      diodeLife: appState.config.diodeLife,
-      setDiodeLife: (value: string) => setConfigValue("diodeLife", value),
-      energyCost: appState.config.energyCost,
-      setEnergyCost: (value: string) => setConfigValue("energyCost", value),
-      machinePower: appState.config.machinePower,
-      setMachinePower: (value: string) => setConfigValue("machinePower", value),
-      hourlyRate: appState.config.hourlyRate,
-      setHourlyRate: (value: string) => setConfigValue("hourlyRate", value),
-      profitMargin: appState.config.profitMargin,
-      setProfitMargin: (value: string) => setConfigValue("profitMargin", value),
-      userLogo: appState.config.userLogo,
-      setUserLogo: (value: string) => setConfigValue("userLogo", value),
-      storeName: appState.config.storeName,
-      setStoreName: (value: string) => setConfigValue("storeName", value),
-      storeSubtitle: appState.config.storeSubtitle,
-      setStoreSubtitle: (value: string) =>
-        setConfigValue("storeSubtitle", value),
+      ...state.config,
+      setUnit: buildConfigFieldSetter(setState, "unit"),
+      setMachineCost: buildConfigFieldSetter(setState, "machineCost"),
+      setDiodeLife: buildConfigFieldSetter(setState, "diodeLife"),
+      setEnergyCost: buildConfigFieldSetter(setState, "energyCost"),
+      setMachinePower: buildConfigFieldSetter(setState, "machinePower"),
+      setHourlyRate: buildConfigFieldSetter(setState, "hourlyRate"),
+      setProfitMargin: buildConfigFieldSetter(setState, "profitMargin"),
+      setUserLogo: buildConfigFieldSetter(setState, "userLogo"),
+      setStoreName: buildConfigFieldSetter(setState, "storeName"),
+      setStoreSubtitle: buildConfigFieldSetter(setState, "storeSubtitle"),
     },
-    insumos: appState.insumos,
-    setInsumos: (
-      value:
-        | GenericRecord[]
-        | ((prev: GenericRecord[]) => GenericRecord[]),
-    ) =>
-      setAppState((prev) => ({
-        ...prev,
-        insumos:
-          typeof value === "function" ? value(prev.insumos) : value,
-      })),
-    savedProducts: appState.savedProducts,
-    setSavedProducts: (
-      value:
-        | GenericRecord[]
-        | ((prev: GenericRecord[]) => GenericRecord[]),
-    ) =>
-      setAppState((prev) => ({
-        ...prev,
-        savedProducts:
-          typeof value === "function" ? value(prev.savedProducts) : value,
-      })),
-    sales: appState.sales,
-    setSales: (
-      value:
-        | GenericRecord[]
-        | ((prev: GenericRecord[]) => GenericRecord[]),
-    ) =>
-      setAppState((prev) => ({
-        ...prev,
-        sales: typeof value === "function" ? value(prev.sales) : value,
-      })),
-    quotes: appState.quotes,
-    setQuotes: (
-      value:
-        | GenericRecord[]
-        | ((prev: GenericRecord[]) => GenericRecord[]),
-    ) =>
-      setAppState((prev) => ({
-        ...prev,
-        quotes: typeof value === "function" ? value(prev.quotes) : value,
-      })),
+    insumos: state.insumos,
+    setInsumos: buildCollectionSetter(setState, "insumos"),
+    savedProducts: state.savedProducts,
+    setSavedProducts: buildCollectionSetter(setState, "savedProducts"),
+    sales: state.sales,
+    setSales: buildCollectionSetter(setState, "sales"),
+    quotes: state.quotes,
+    setQuotes: buildCollectionSetter(setState, "quotes"),
   };
 }

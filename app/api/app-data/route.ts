@@ -19,6 +19,14 @@ type AppDataRow = {
   quotes: AppDataState["quotes"];
 };
 
+function getErrorDetails(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
 function buildAppDataStateFromRow(row: AppDataRow | null): AppDataState {
   if (!row) {
     return createDefaultAppDataState();
@@ -64,7 +72,12 @@ export async function GET() {
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { message: "Nao foi possivel carregar os dados do aplicativo." },
+      {
+        message: "Nao foi possivel carregar os dados do aplicativo.",
+        ...(process.env.NODE_ENV !== "production"
+          ? { details: getErrorDetails(error) }
+          : {}),
+      },
       { status: 500 },
     );
   }
@@ -117,7 +130,12 @@ export async function PUT(request: Request) {
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { message: "Nao foi possivel salvar os dados do aplicativo." },
+      {
+        message: "Nao foi possivel salvar os dados do aplicativo.",
+        ...(process.env.NODE_ENV !== "production"
+          ? { details: getErrorDetails(error) }
+          : {}),
+      },
       { status: 500 },
     );
   }
