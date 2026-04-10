@@ -10,7 +10,6 @@ import {
   ShoppingBag,
   UserRound,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import type { Session } from "next-auth";
 import { getProviders, signIn, signOut, useSession } from "next-auth/react";
 
@@ -50,7 +49,6 @@ function mapAuthErrorMessage(errorCode: string | null) {
 
 export default function MainApp() {
   const { data: session, status } = useSession();
-  const searchParams = useSearchParams();
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -61,6 +59,7 @@ export default function MainApp() {
   const [providersLoaded, setProvidersLoaded] = useState(false);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
     const errorMessage = mapAuthErrorMessage(searchParams.get("error"));
 
     if (errorMessage) {
@@ -69,7 +68,7 @@ export default function MainApp() {
         message: errorMessage,
       });
     }
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
