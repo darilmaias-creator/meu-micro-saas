@@ -10,6 +10,10 @@ import {
 import { authOptions } from "@/lib/auth/options";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type AppDataRow = {
   user_id: string;
   config: AppDataState["config"];
@@ -17,6 +21,7 @@ type AppDataRow = {
   saved_products: AppDataState["savedProducts"];
   sales: AppDataState["sales"];
   quotes: AppDataState["quotes"];
+  updated_at: string;
 };
 
 function getErrorDetails(error: unknown) {
@@ -55,7 +60,7 @@ export async function GET() {
     const supabase = createSupabaseServerClient();
     const { data, error } = await supabase
       .from("user_app_data")
-      .select("user_id, config, insumos, saved_products, sales, quotes")
+      .select("user_id, config, insumos, saved_products, sales, quotes, updated_at")
       .eq("user_id", session.user.id)
       .maybeSingle();
 
@@ -66,6 +71,7 @@ export async function GET() {
     const response: AppDataResponse = {
       data: buildAppDataStateFromRow(data as AppDataRow | null),
       source: data ? "database" : "default",
+      updatedAt: (data as AppDataRow | null)?.updated_at ?? null,
     };
 
     return NextResponse.json(response);
@@ -108,25 +114,32 @@ export async function PUT(request: Request) {
 
   try {
     const supabase = createSupabaseServerClient();
-    const { error } = await supabase.from("user_app_data").upsert(
-      {
-        user_id: session.user.id,
-        config: normalizedState.config,
-        insumos: normalizedState.insumos,
-        saved_products: normalizedState.savedProducts,
-        sales: normalizedState.sales,
-        quotes: normalizedState.quotes,
-      },
-      {
-        onConflict: "user_id",
-      },
-    );
+    const { data, error } = await supabase
+      .from("user_app_data")
+      .upsert(
+        {
+          user_id: session.user.id,
+          config: normalizedState.config,
+          insumos: normalizedState.insumos,
+          saved_products: normalizedState.savedProducts,
+          sales: normalizedState.sales,
+          quotes: normalizedState.quotes,
+        },
+        {
+          onConflict: "user_id",
+        },
+      )
+      .select("updated_at")
+      .single();
 
     if (error) {
       throw error;
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+      ok: true,
+      updatedAt: (data as { updated_at?: string } | null)?.updated_at ?? null,
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json(

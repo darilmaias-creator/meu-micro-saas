@@ -14,8 +14,13 @@ import {
 
 type StorageUpdater<T> = T | ((prev: T) => T);
 type CollectionKey = "insumos" | "savedProducts" | "sales" | "quotes";
+type AppDataMutationResponse = {
+  ok: boolean;
+  updatedAt: string | null;
+};
 
 const STORAGE_NAMESPACE = "meu-micro-saas";
+const SYNC_POLL_INTERVAL_MS = 15_000;
 
 const STORAGE_KEYS = {
   unit: "calc_unit",
@@ -200,6 +205,20 @@ function writeLocalAppData(userId: string, state: AppDataState) {
   );
 }
 
+export function clearLocalAppDataCache(userId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  Object.values(STORAGE_KEYS).forEach((key) => {
+    window.localStorage.removeItem(buildScopedStorageKey(userId, key));
+  });
+}
+
+function serializeAppDataState(state: AppDataState) {
+  return JSON.stringify(normalizeAppDataState(state));
+}
+
 async function readResponseError(response: Response) {
   try {
     const payload = (await response.json()) as {
@@ -269,16 +288,21 @@ export function useAppData(userId: string) {
   const [isLoaded, setIsLoaded] = useState(false);
   const hasHydratedRef = useRef(false);
   const lastSyncedStateRef = useRef("");
+  const lastRemoteUpdatedAtRef = useRef<string | null>(null);
+  const latestSerializedStateRef = useRef(serializeAppDataState(state));
 
   useEffect(() => {
     let isCurrent = true;
 
     const localState = readLocalAppData(userId);
+    const localSerializedState = serializeAppDataState(localState);
 
     setState(localState);
     setIsLoaded(false);
     hasHydratedRef.current = false;
     lastSyncedStateRef.current = "";
+    lastRemoteUpdatedAtRef.current = null;
+    latestSerializedStateRef.current = localSerializedState;
 
     async function loadFromDatabase() {
       try {
@@ -297,14 +321,20 @@ export function useAppData(userId: string) {
         }
 
         const remoteState = normalizeAppDataState(payload.data);
+        const remoteSerializedState = serializeAppDataState(remoteState);
+        const shouldKeepLocalState =
+          payload.source === "default" && hasMeaningfulAppData(localState);
 
-        if (payload.source === "default" && hasMeaningfulAppData(localState)) {
+        if (shouldKeepLocalState) {
           setState(localState);
         } else {
           setState(remoteState);
           writeLocalAppData(userId, remoteState);
-          lastSyncedStateRef.current = JSON.stringify(remoteState);
+          latestSerializedStateRef.current = remoteSerializedState;
+          lastSyncedStateRef.current = remoteSerializedState;
         }
+
+        lastRemoteUpdatedAtRef.current = payload.updatedAt;
       } catch (error) {
         if (!isCurrent) {
           return;
@@ -331,6 +361,10 @@ export function useAppData(userId: string) {
   }, [userId]);
 
   useEffect(() => {
+    latestSerializedStateRef.current = serializeAppDataState(state);
+  }, [state]);
+
+  useEffect(() => {
     if (!isLoaded || !hasHydratedRef.current) {
       return;
     }
@@ -342,7 +376,7 @@ export function useAppData(userId: string) {
       return;
     }
 
-    const serializedState = JSON.stringify(normalizedState);
+    const serializedState = serializeAppDataState(normalizedState);
 
     if (serializedState === lastSyncedStateRef.current) {
       return;
@@ -359,7 +393,11 @@ export function useAppData(userId: string) {
         });
 
         if (response.ok) {
+          const payload =
+            (await response.json().catch(() => null)) as AppDataMutationResponse | null;
+
           lastSyncedStateRef.current = serializedState;
+          lastRemoteUpdatedAtRef.current = payload?.updatedAt ?? null;
           return;
         }
 
@@ -377,6 +415,115 @@ export function useAppData(userId: string) {
       clearTimeout(timeoutId);
     };
   }, [isLoaded, state, userId]);
+
+  useEffect(() => {
+    if (!isLoaded || typeof window === "undefined") {
+      return;
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (!event.key) {
+        return;
+      }
+
+      const scopedPrefix = `${STORAGE_NAMESPACE}:user:${userId}:`;
+
+      if (!event.key.startsWith(scopedPrefix)) {
+        return;
+      }
+
+      const nextState = readLocalAppData(userId);
+      const nextSerializedState = serializeAppDataState(nextState);
+
+      if (nextSerializedState === latestSerializedStateRef.current) {
+        return;
+      }
+
+      setState(nextState);
+    }
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [isLoaded, userId]);
+
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    async function refreshFromDatabase() {
+      if (document.visibilityState === "hidden") {
+        return;
+      }
+
+      if (latestSerializedStateRef.current !== lastSyncedStateRef.current) {
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/app-data", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error(await readResponseError(response));
+        }
+
+        const payload = (await response.json()) as AppDataResponse;
+
+        if (isCancelled) {
+          return;
+        }
+
+        if (!payload.updatedAt || payload.updatedAt === lastRemoteUpdatedAtRef.current) {
+          return;
+        }
+
+        const remoteState = normalizeAppDataState(payload.data);
+        const remoteSerializedState = serializeAppDataState(remoteState);
+
+        if (remoteSerializedState === latestSerializedStateRef.current) {
+          lastRemoteUpdatedAtRef.current = payload.updatedAt;
+          lastSyncedStateRef.current = remoteSerializedState;
+          return;
+        }
+
+        setState(remoteState);
+        writeLocalAppData(userId, remoteState);
+        latestSerializedStateRef.current = remoteSerializedState;
+        lastSyncedStateRef.current = remoteSerializedState;
+        lastRemoteUpdatedAtRef.current = payload.updatedAt;
+      } catch (error) {
+        console.error(
+          "Nao foi possivel atualizar os dados da conta a partir do Supabase.",
+        );
+        console.error(error);
+      }
+    }
+
+    const intervalId = window.setInterval(() => {
+      void refreshFromDatabase();
+    }, SYNC_POLL_INTERVAL_MS);
+
+    function handleVisibilityOrFocus() {
+      void refreshFromDatabase();
+    }
+
+    window.addEventListener("focus", handleVisibilityOrFocus);
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+
+    return () => {
+      isCancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+    };
+  }, [isLoaded, userId]);
 
   return {
     isLoaded,

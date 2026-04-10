@@ -236,6 +236,28 @@ export async function findUserById(userId: string) {
   return users.find((user) => user.id === userId) ?? null;
 }
 
+export async function deleteUserById(userId: string) {
+  if (isSupabaseUserStoreEnabled()) {
+    const supabase = createSupabaseServerClient();
+    const { error } = await supabase.from("auth_users").delete().eq("id", userId);
+
+    if (error) {
+      throw error;
+    }
+
+    return;
+  }
+
+  const users = await readUsersFromFile();
+  const nextUsers = users.filter((user) => user.id !== userId);
+
+  if (nextUsers.length === users.length) {
+    return;
+  }
+
+  await writeUsersToFile(nextUsers);
+}
+
 export function getSessionUserFromStoredUser(user: StoredUser): SessionUser {
   const isPremium = isPremiumPlan(user.plan);
   const freeNameChangesRemaining = getRemainingFreeNameChanges(

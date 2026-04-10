@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Crown, ImagePlus, Lock, Upload, UserRound, X } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { AlertTriangle, Crown, Download, ImagePlus, Lock, Trash2, Upload, UserRound, X } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 
 import {
   FREE_NAME_CHANGE_LIMIT,
   MAX_PROFILE_IMAGE_SIZE_BYTES,
 } from "@/lib/auth/profile-rules";
+import { clearLocalAppDataCache } from "./hooks/useAppData";
 
 type ProfileModalProps = {
   isOpen: boolean;
@@ -31,6 +32,9 @@ export default function ProfileModal({
   const [imagePreview, setImagePreview] = useState("");
   const [feedback, setFeedback] = useState<ProfileFeedback>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   useEffect(() => {
     if (!isOpen || !session?.user) {
@@ -39,6 +43,7 @@ export default function ProfileModal({
 
     setName(session.user.name ?? "");
     setImagePreview(session.user.image ?? "");
+    setDeleteConfirmation("");
     setFeedback(null);
   }, [isOpen, session]);
 
@@ -56,6 +61,7 @@ export default function ProfileModal({
   const displayProfilePhoto = isPremium ? imagePreview : "";
   const hasProfileChanges =
     name.trim() !== initialName || imagePreview !== initialImage;
+  const canDeleteAccount = deleteConfirmation.trim().toUpperCase() === "EXCLUIR";
 
   async function handleSaveProfile() {
     setFeedback(null);
@@ -167,6 +173,98 @@ export default function ProfileModal({
       });
     } finally {
       event.target.value = "";
+    }
+  }
+
+  async function handleExportData() {
+    setFeedback(null);
+    setIsExporting(true);
+
+    try {
+      const response = await fetch("/api/account", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | Record<string, unknown>
+        | { message?: string }
+        | null;
+
+      if (!response.ok || !payload) {
+        setFeedback({
+          tone: "error",
+          message:
+            (payload as { message?: string } | null)?.message ??
+            "Nao foi possivel exportar os dados agora.",
+        });
+        return;
+      }
+
+      const timestamp = new Date().toISOString().replaceAll(":", "-");
+      const filename = `backup-calculadora-do-produtor-${timestamp}.json`;
+      const fileContents = JSON.stringify(payload, null, 2);
+      const blob = new Blob([fileContents], { type: "application/json" });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = downloadUrl;
+      link.download = filename;
+      link.click();
+
+      window.URL.revokeObjectURL(downloadUrl);
+
+      setFeedback({
+        tone: "success",
+        message: "Backup baixado com sucesso em arquivo JSON.",
+      });
+    } catch {
+      setFeedback({
+        tone: "error",
+        message: "Nao foi possivel exportar os dados agora.",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setFeedback(null);
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch("/api/account", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          confirmationText: deleteConfirmation.trim(),
+        }),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | { message?: string }
+        | null;
+
+      if (!response.ok) {
+        setFeedback({
+          tone: "error",
+          message:
+            result?.message ?? "Nao foi possivel excluir a sua conta agora.",
+        });
+        return;
+      }
+
+      clearLocalAppDataCache(user.id);
+      await signOut({ callbackUrl: "/" });
+    } catch {
+      setFeedback({
+        tone: "error",
+        message: "Nao foi possivel excluir a sua conta agora.",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -308,6 +406,69 @@ export default function ProfileModal({
               usuarios premium.
             </div>
           )}
+
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-base font-black text-slate-800">
+                  Backup da conta
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  Baixe um arquivo JSON com seu perfil, configuracoes, insumos,
+                  produtos, vendas e orcamentos.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleExportData}
+                disabled={isExporting}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              >
+                <Download size={16} />
+                {isExporting ? "Baixando..." : "Baixar backup"}
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-red-200 bg-red-50 p-5 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="rounded-2xl bg-red-100 p-2 text-red-700">
+                <AlertTriangle size={18} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-red-900">
+                  Zona de perigo
+                </h3>
+                <p className="text-sm text-red-700 mt-1">
+                  Ao excluir a conta, seu perfil e todos os dados sincronizados
+                  serao removidos do sistema.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-red-700 uppercase tracking-wide mb-2">
+                Digite EXCLUIR para confirmar
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                placeholder="EXCLUIR"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              disabled={!canDeleteAccount || isDeleting}
+              className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition-colors"
+            >
+              <Trash2 size={16} />
+              {isDeleting ? "Excluindo conta..." : "Excluir minha conta"}
+            </button>
+          </div>
 
           {feedback && (
             <div

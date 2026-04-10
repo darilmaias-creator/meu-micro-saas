@@ -30,6 +30,7 @@ export type AppDataState = {
 export type AppDataResponse = {
   data: AppDataState;
   source: "database" | "default";
+  updatedAt: string | null;
 };
 
 export function createDefaultAppDataState(): AppDataState {
