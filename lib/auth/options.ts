@@ -97,7 +97,7 @@ export const authOptions: NextAuthOptions = {
         return true;
       } catch (error) {
         logAuthError("sign-in", error);
-        return "/?error=Configuration";
+        return "/?error=Storage";
       }
     },
     async jwt({ token, user }) {

@@ -32,6 +32,8 @@ function mapAuthErrorMessage(errorCode: string | null) {
   switch (errorCode) {
     case "Configuration":
       return "A autenticacao do servidor ainda nao esta configurada corretamente.";
+    case "Storage":
+      return "Nao foi possivel acessar os dados de autenticacao no banco.";
     case "AccessDenied":
       return "O login foi bloqueado pela configuracao atual.";
     case "OAuthSignin":
