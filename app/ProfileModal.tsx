@@ -60,6 +60,8 @@ const BACKUP_FREQUENCY_LABELS: Record<BackupFrequency, string> = {
   monthly: "Mensal",
 };
 
+const SHOW_EMAIL_BACKUP_ACTION = false;
+
 export default function ProfileModal({
   isOpen,
   onClose,
@@ -809,15 +811,17 @@ export default function ProfileModal({
                   <Upload size={16} />
                   {isRestoring ? "Restaurando..." : "Restaurar backup"}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleSendBackupEmailNow}
-                  disabled={isSendingBackupEmail}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800 hover:bg-blue-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Download size={16} />
-                  {isSendingBackupEmail ? "Enviando..." : "Enviar por e-mail agora"}
-                </button>
+                {SHOW_EMAIL_BACKUP_ACTION && (
+                  <button
+                    type="button"
+                    onClick={handleSendBackupEmailNow}
+                    disabled={isSendingBackupEmail}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800 hover:bg-blue-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Download size={16} />
+                    {isSendingBackupEmail ? "Enviando..." : "Enviar por e-mail agora"}
+                  </button>
+                )}
               </div>
             </div>
             <input
