@@ -70,6 +70,7 @@ export default function ProfileModal({
   const { data: session, update } = useSession();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
+  const feedbackRef = useRef<HTMLDivElement | null>(null);
   const [name, setName] = useState("");
   const [imagePreview, setImagePreview] = useState("");
   const [feedback, setFeedback] = useState<ProfileFeedback>(null);
@@ -96,6 +97,17 @@ export default function ProfileModal({
     setBackupFrequency(session.user.backupFrequency ?? "off");
     setFeedback(null);
   }, [isOpen, session]);
+
+  useEffect(() => {
+    if (!feedback) {
+      return;
+    }
+
+    feedbackRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }, [feedback]);
 
   if (!isOpen || !session?.user) {
     return null;
@@ -556,7 +568,7 @@ export default function ProfileModal({
     const fileContents = JSON.stringify(payload, null, 2);
 
     return new File([fileContents], filename, {
-      type: "application/json",
+      type: "text/plain;charset=utf-8",
       lastModified: Date.now(),
     });
   }
@@ -878,6 +890,7 @@ export default function ProfileModal({
 
           {feedback && (
             <div
+              ref={feedbackRef}
               className={`rounded-2xl px-4 py-3 text-sm ${
                 feedback.tone === "error"
                   ? "bg-red-50 text-red-700 border border-red-100"
