@@ -587,15 +587,16 @@ export default function ProfileModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm p-4 flex items-center justify-center"
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4"
       onClick={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
         }
       }}
     >
-      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
-        <div className="bg-amber-600 text-white px-6 py-5 flex items-start justify-between gap-4">
+      <div className="flex min-h-full items-start justify-center py-3 sm:items-center sm:py-6">
+        <div className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl sm:max-h-[calc(100dvh-3rem)]">
+        <div className="shrink-0 bg-amber-600 px-5 py-4 text-white sm:px-6 sm:py-5 flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-amber-100 font-bold">
               Meu Perfil
@@ -612,7 +613,7 @@ export default function ProfileModal({
           </button>
         </div>
 
-        <div className="p-6 md:p-7 space-y-6">
+        <div className="flex-1 overflow-y-auto p-5 md:p-7 space-y-6">
           <div className="flex flex-col md:flex-row gap-5 md:items-center">
             <div className="w-28 h-28 rounded-3xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
               {displayProfilePhoto ? (
@@ -902,6 +903,7 @@ export default function ProfileModal({
               {isSaving ? "Salvando..." : "Salvar alteracoes"}
             </button>
           </div>
+        </div>
         </div>
       </div>
     </div>
