@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, Crown, Download, ImagePlus, Lock, Trash2, Upload, UserRound, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Crown,
+  Download,
+  ImagePlus,
+  Lock,
+  Share2,
+  Trash2,
+  Upload,
+  UserRound,
+  X,
+} from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
 import {
@@ -62,6 +73,7 @@ export default function ProfileModal({
   const [feedback, setFeedback] = useState<ProfileFeedback>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSharingBackup, setIsSharingBackup] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isSavingBackupSettings, setIsSavingBackupSettings] = useState(false);
   const [isSendingBackupEmail, setIsSendingBackupEmail] = useState(false);
@@ -217,47 +229,18 @@ export default function ProfileModal({
     setIsExporting(true);
 
     try {
-      const response = await fetch("/api/account", {
-        method: "GET",
-        cache: "no-store",
-      });
+      const backupFile = await fetchBackupFile();
 
-      const payload = (await response.json().catch(() => null)) as
-        | Record<string, unknown>
-        | { message?: string }
-        | null;
-
-      if (!response.ok || !payload) {
-        setFeedback({
-          tone: "error",
-          message:
-            (payload as { message?: string } | null)?.message ??
-            "Nao foi possivel exportar os dados agora.",
-        });
-        return;
-      }
-
-      const timestamp = new Date().toISOString().replaceAll(":", "-");
-      const filename = `backup-calculadora-do-produtor-${timestamp}.json`;
-      const fileContents = JSON.stringify(payload, null, 2);
-      const blob = new Blob([fileContents], { type: "application/json" });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      link.href = downloadUrl;
-      link.download = filename;
-      link.click();
-
-      window.URL.revokeObjectURL(downloadUrl);
+      downloadBackupFile(backupFile);
 
       setFeedback({
         tone: "success",
         message: "Backup baixado com sucesso em arquivo JSON.",
       });
-    } catch {
+    } catch (error) {
       setFeedback({
         tone: "error",
-        message: "Nao foi possivel exportar os dados agora.",
+        message: getBackupActionErrorMessage(error, "baixar"),
       });
     } finally {
       setIsExporting(false);
@@ -355,6 +338,72 @@ export default function ProfileModal({
       });
     } finally {
       setIsSendingBackupEmail(false);
+    }
+  }
+
+  async function handleShareBackup() {
+    setFeedback(null);
+    setIsSharingBackup(true);
+
+    try {
+      const backupFile = await fetchBackupFile();
+
+      if (
+        typeof navigator === "undefined" ||
+        typeof navigator.share !== "function"
+      ) {
+        downloadBackupFile(backupFile);
+        setFeedback({
+          tone: "success",
+          message:
+            "Seu navegador nao suporta compartilhamento direto. O backup foi baixado para voce.",
+        });
+        return;
+      }
+
+      const shareData = {
+        title: "Backup da conta",
+        text: "Backup da conta da Calculadora do Produtor.",
+        files: [backupFile],
+      };
+
+      const canShareFiles =
+        typeof navigator.canShare !== "function" || navigator.canShare(shareData);
+
+      if (!canShareFiles) {
+        downloadBackupFile(backupFile);
+        setFeedback({
+          tone: "success",
+          message:
+            "Esse navegador nao consegue compartilhar o arquivo diretamente. O backup foi baixado para voce.",
+        });
+        return;
+      }
+
+      await navigator.share(shareData);
+
+      setFeedback({
+        tone: "success",
+        message:
+          "Backup preparado para compartilhamento. Escolha onde deseja salvar ou enviar.",
+      });
+    } catch (error) {
+      if (
+        error instanceof DOMException &&
+        error.name === "AbortError"
+      ) {
+        setFeedback({
+          tone: "error",
+          message: "O compartilhamento foi cancelado antes de concluir.",
+        });
+      } else {
+        setFeedback({
+          tone: "error",
+          message: getBackupActionErrorMessage(error, "compartilhar"),
+        });
+      }
+    } finally {
+      setIsSharingBackup(false);
     }
   }
 
@@ -483,6 +532,55 @@ export default function ProfileModal({
     } finally {
       setIsDeleting(false);
     }
+  }
+
+  async function fetchBackupFile() {
+    const response = await fetch("/api/account", {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | Record<string, unknown>
+      | { message?: string }
+      | null;
+
+    if (!response.ok || !payload) {
+      throw new Error(
+        (payload as { message?: string } | null)?.message ??
+          "Nao foi possivel preparar o backup agora.",
+      );
+    }
+
+    const timestamp = new Date().toISOString().replaceAll(":", "-");
+    const filename = `backup-calculadora-do-produtor-${timestamp}.json`;
+    const fileContents = JSON.stringify(payload, null, 2);
+
+    return new File([fileContents], filename, {
+      type: "application/json",
+      lastModified: Date.now(),
+    });
+  }
+
+  function downloadBackupFile(file: File) {
+    const downloadUrl = window.URL.createObjectURL(file);
+    const link = document.createElement("a");
+
+    link.href = downloadUrl;
+    link.download = file.name;
+    link.click();
+
+    window.URL.revokeObjectURL(downloadUrl);
+  }
+
+  function getBackupActionErrorMessage(error: unknown, action: "baixar" | "compartilhar") {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+
+    return action === "baixar"
+      ? "Nao foi possivel exportar os dados agora."
+      : "Nao foi possivel compartilhar o backup agora.";
   }
 
   return (
@@ -692,6 +790,15 @@ export default function ProfileModal({
                 >
                   <Download size={16} />
                   {isExporting ? "Baixando..." : "Baixar backup"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleShareBackup}
+                  disabled={isSharingBackup}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Share2 size={16} />
+                  {isSharingBackup ? "Compartilhando..." : "Compartilhar backup"}
                 </button>
                 <button
                   type="button"
