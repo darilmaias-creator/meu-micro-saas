@@ -2,14 +2,16 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import {
-  createDefaultAppDataState,
-  normalizeAppDataState,
-  type AppDataState,
-} from "@/lib/app-data/defaults";
+  isValidBackupFrequency,
+  normalizeBackupFrequency,
+} from "@/lib/account/backup-config";
+import { getBackupPayloadForUser } from "@/lib/account/backup";
 import { authOptions } from "@/lib/auth/options";
 import {
   deleteUserById,
   findUserById,
+  getSessionUserFromStoredUser,
+  updateUserBackupSettings,
 } from "@/lib/auth/user-store";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -19,13 +21,9 @@ export const revalidate = 0;
 
 const DELETE_CONFIRMATION_TEXT = "EXCLUIR";
 
-type AppDataRow = {
-  config: AppDataState["config"];
-  insumos: AppDataState["insumos"];
-  saved_products: AppDataState["savedProducts"];
-  sales: AppDataState["sales"];
-  quotes: AppDataState["quotes"];
-  updated_at: string;
+type UpdateBackupSettingsPayload = {
+  backupEmail?: string | null;
+  backupFrequency?: string;
 };
 
 type DeleteAccountPayload = {
@@ -38,20 +36,6 @@ function getErrorDetails(error: unknown) {
   }
 
   return String(error);
-}
-
-function buildAppDataStateFromRow(row: AppDataRow | null) {
-  if (!row) {
-    return createDefaultAppDataState();
-  }
-
-  return normalizeAppDataState({
-    config: row.config,
-    insumos: row.insumos,
-    savedProducts: row.saved_products,
-    sales: row.sales,
-    quotes: row.quotes,
-  });
 }
 
 async function getAuthenticatedUserId() {
@@ -71,14 +55,7 @@ export async function GET() {
   }
 
   try {
-    const [user, appDataResponse] = await Promise.all([
-      findUserById(userId),
-      createSupabaseServerClient()
-        .from("user_app_data")
-        .select("config, insumos, saved_products, sales, quotes, updated_at")
-        .eq("user_id", userId)
-        .maybeSingle(),
-    ]);
+    const user = await findUserById(userId);
 
     if (!user) {
       return NextResponse.json(
@@ -87,33 +64,103 @@ export async function GET() {
       );
     }
 
-    if (appDataResponse.error) {
-      throw appDataResponse.error;
-    }
-
-    return NextResponse.json({
-      exportedAt: new Date().toISOString(),
-      account: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        image: user.image ?? null,
-        plan: user.plan,
-        authProviders: user.authProviders,
-        freeNameChangesUsed: user.freeNameChangesUsed,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      },
-      appData: buildAppDataStateFromRow(appDataResponse.data as AppDataRow | null),
-      appDataUpdatedAt:
-        (appDataResponse.data as AppDataRow | null)?.updated_at ?? null,
-    });
+    return NextResponse.json(await getBackupPayloadForUser(user));
   } catch (error) {
     console.error(error);
 
     return NextResponse.json(
       {
         message: "Nao foi possivel exportar os dados da conta.",
+        ...(process.env.NODE_ENV !== "production"
+          ? { details: getErrorDetails(error) }
+          : {}),
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return NextResponse.json(
+      { message: "Voce precisa estar logado para atualizar o backup." },
+      { status: 401 },
+    );
+  }
+
+  let body: UpdateBackupSettingsPayload;
+
+  try {
+    body = (await request.json()) as UpdateBackupSettingsPayload;
+  } catch {
+    return NextResponse.json(
+      { message: "Nao foi possivel ler os dados de backup enviados." },
+      { status: 400 },
+    );
+  }
+
+  const backupEmail = body.backupEmail?.trim().toLowerCase() ?? "";
+  const backupFrequency = normalizeBackupFrequency(body.backupFrequency);
+
+  if (
+    body.backupFrequency !== undefined &&
+    !isValidBackupFrequency(body.backupFrequency)
+  ) {
+    return NextResponse.json(
+      { message: "A frequencia escolhida para o backup nao e valida." },
+      { status: 400 },
+    );
+  }
+
+  if (
+    backupEmail &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(backupEmail)
+  ) {
+    return NextResponse.json(
+      { message: "Informe um e-mail valido para receber os backups." },
+      { status: 400 },
+    );
+  }
+
+  if (backupFrequency !== "off" && !backupEmail) {
+    return NextResponse.json(
+      {
+        message:
+          "Informe um e-mail para receber os backups automaticos antes de ativar a frequencia.",
+      },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const result = await updateUserBackupSettings({
+      userId,
+      backupEmail: backupEmail || null,
+      backupFrequency,
+    });
+
+    if (!result.ok) {
+      return NextResponse.json(
+        { message: "Nao foi possivel localizar a conta logada." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      message:
+        backupFrequency === "off"
+          ? "Backup automatico desativado com sucesso."
+          : "Preferencias de backup automatico salvas com sucesso.",
+      user: getSessionUserFromStoredUser(result.user),
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        message: "Nao foi possivel salvar as preferencias de backup agora.",
         ...(process.env.NODE_ENV !== "production"
           ? { details: getErrorDetails(error) }
           : {}),

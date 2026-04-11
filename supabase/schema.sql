@@ -7,9 +7,28 @@ create table if not exists public.auth_users (
   plan text not null default 'free' check (plan in ('free', 'premium')),
   free_name_changes_used integer not null default 0,
   auth_providers text[] not null default '{}'::text[],
+  backup_email text null,
+  backup_frequency text not null default 'off' check (backup_frequency in ('off', 'daily', 'weekly', 'monthly')),
+  backup_last_sent_at timestamptz null,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.auth_users
+  add column if not exists backup_email text null;
+
+alter table public.auth_users
+  add column if not exists backup_frequency text not null default 'off';
+
+alter table public.auth_users
+  add column if not exists backup_last_sent_at timestamptz null;
+
+alter table public.auth_users
+  drop constraint if exists auth_users_backup_frequency_check;
+
+alter table public.auth_users
+  add constraint auth_users_backup_frequency_check
+  check (backup_frequency in ('off', 'daily', 'weekly', 'monthly'));
 
 create table if not exists public.user_app_data (
   user_id text primary key,

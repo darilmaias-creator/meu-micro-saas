@@ -6,6 +6,10 @@ import path from "node:path";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
+  normalizeBackupFrequency,
+  type BackupFrequency,
+} from "@/lib/account/backup-config";
+import {
   getRemainingFreeNameChanges,
   isPremiumPlan,
   type UserPlan,
@@ -22,6 +26,9 @@ export type StoredUser = {
   plan: UserPlan;
   freeNameChangesUsed: number;
   authProviders: AuthProvider[];
+  backupEmail?: string | null;
+  backupFrequency: BackupFrequency;
+  backupLastSentAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -37,6 +44,9 @@ export type SessionUser = {
   canChangePhoto: boolean;
   freeNameChangesUsed: number;
   freeNameChangesRemaining: number;
+  backupEmail?: string | null;
+  backupFrequency: BackupFrequency;
+  backupLastSentAt?: string | null;
 };
 
 type AuthUserRow = {
@@ -48,6 +58,9 @@ type AuthUserRow = {
   plan: string;
   free_name_changes_used: number | null;
   auth_providers: string[] | null;
+  backup_email: string | null;
+  backup_frequency: string | null;
+  backup_last_sent_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -84,6 +97,9 @@ function mapAuthUserRow(row: AuthUserRow | null | undefined) {
     plan: row.plan === "premium" ? "premium" : "free",
     freeNameChangesUsed: row.free_name_changes_used ?? 0,
     authProviders: Array.isArray(row.auth_providers) ? row.auth_providers : [],
+    backupEmail: row.backup_email ?? null,
+    backupFrequency: normalizeBackupFrequency(row.backup_frequency),
+    backupLastSentAt: row.backup_last_sent_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -99,6 +115,9 @@ function buildAuthUserRow(user: StoredUser) {
     plan: user.plan,
     free_name_changes_used: user.freeNameChangesUsed,
     auth_providers: user.authProviders,
+    backup_email: user.backupEmail ?? null,
+    backup_frequency: user.backupFrequency,
+    backup_last_sent_at: user.backupLastSentAt ?? null,
     created_at: user.createdAt,
     updated_at: user.updatedAt,
   };
@@ -144,7 +163,7 @@ async function findSupabaseUserByEmail(email: string) {
   const { data, error } = await supabase
     .from("auth_users")
     .select(
-      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, created_at, updated_at",
+      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, created_at, updated_at",
     )
     .eq("email", email)
     .maybeSingle();
@@ -161,7 +180,7 @@ async function findSupabaseUserById(userId: string) {
   const { data, error } = await supabase
     .from("auth_users")
     .select(
-      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, created_at, updated_at",
+      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, created_at, updated_at",
     )
     .eq("id", userId)
     .maybeSingle();
@@ -236,6 +255,90 @@ export async function findUserById(userId: string) {
   return users.find((user) => user.id === userId) ?? null;
 }
 
+export async function findUsersWithAutomaticBackupEnabled() {
+  if (!isSupabaseUserStoreEnabled()) {
+    return [];
+  }
+
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("auth_users")
+    .select(
+      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, created_at, updated_at",
+    )
+    .neq("backup_frequency", "off");
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data as AuthUserRow[] | null) ?? [])
+    .map((row) => mapAuthUserRow(row))
+    .filter((user): user is StoredUser => user !== null);
+}
+
+export async function updateUserBackupSettings(input: {
+  userId: string;
+  backupEmail: string | null;
+  backupFrequency: BackupFrequency;
+}) {
+  const user = await findUserById(input.userId);
+
+  if (!user) {
+    return {
+      ok: false as const,
+      code: "USER_NOT_FOUND" as const,
+    };
+  }
+
+  const updatedUser: StoredUser = {
+    ...user,
+    backupEmail: input.backupEmail,
+    backupFrequency: input.backupFrequency,
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (isSupabaseUserStoreEnabled()) {
+    await upsertSupabaseUser(updatedUser);
+  } else {
+    const users = await readUsersFromFile();
+    const nextUsers = users.map((currentUser) =>
+      currentUser.id === updatedUser.id ? updatedUser : currentUser,
+    );
+    await writeUsersToFile(nextUsers);
+  }
+
+  return {
+    ok: true as const,
+    user: updatedUser,
+  };
+}
+
+export async function markUserBackupSent(userId: string, sentAt: string) {
+  const user = await findUserById(userId);
+
+  if (!user) {
+    return;
+  }
+
+  const updatedUser: StoredUser = {
+    ...user,
+    backupLastSentAt: sentAt,
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (isSupabaseUserStoreEnabled()) {
+    await upsertSupabaseUser(updatedUser);
+    return;
+  }
+
+  const users = await readUsersFromFile();
+  const nextUsers = users.map((currentUser) =>
+    currentUser.id === updatedUser.id ? updatedUser : currentUser,
+  );
+  await writeUsersToFile(nextUsers);
+}
+
 export async function deleteUserById(userId: string) {
   if (isSupabaseUserStoreEnabled()) {
     const supabase = createSupabaseServerClient();
@@ -275,6 +378,9 @@ export function getSessionUserFromStoredUser(user: StoredUser): SessionUser {
     canChangePhoto: isPremium,
     freeNameChangesUsed: user.freeNameChangesUsed,
     freeNameChangesRemaining,
+    backupEmail: user.backupEmail ?? null,
+    backupFrequency: user.backupFrequency,
+    backupLastSentAt: user.backupLastSentAt ?? null,
   };
 }
 
@@ -300,6 +406,9 @@ export async function createCredentialsUser(input: {
     plan: "free",
     freeNameChangesUsed: 0,
     authProviders: ["credentials"],
+    backupEmail: null,
+    backupFrequency: "off",
+    backupLastSentAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -360,6 +469,9 @@ export async function upsertOAuthUser(input: {
     plan: "free",
     freeNameChangesUsed: 0,
     authProviders: [input.provider],
+    backupEmail: null,
+    backupFrequency: "off",
+    backupLastSentAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -503,6 +615,15 @@ function normalizeStoredUser(rawUser: unknown): StoredUser | null {
             provider === "credentials" || provider === "google",
         )
       : [],
+    backupEmail:
+      typeof candidate.backupEmail === "string" && candidate.backupEmail.trim()
+        ? candidate.backupEmail.trim().toLowerCase()
+        : null,
+    backupFrequency: normalizeBackupFrequency(candidate.backupFrequency),
+    backupLastSentAt:
+      typeof candidate.backupLastSentAt === "string"
+        ? candidate.backupLastSentAt
+        : null,
     createdAt,
     updatedAt,
   };

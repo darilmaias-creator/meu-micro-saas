@@ -12,6 +12,7 @@ import {
   normalizeAppDataState,
   type AppDataState,
 } from "@/lib/app-data/defaults";
+import type { BackupFrequency } from "@/lib/account/backup-config";
 import { clearLocalAppDataCache } from "./hooks/useAppData";
 
 type ProfileModalProps = {
@@ -41,6 +42,13 @@ function isAppDataBackupCandidate(value: unknown): value is Partial<AppDataState
   );
 }
 
+const BACKUP_FREQUENCY_LABELS: Record<BackupFrequency, string> = {
+  off: "Desligado",
+  daily: "Diario",
+  weekly: "Semanal",
+  monthly: "Mensal",
+};
+
 export default function ProfileModal({
   isOpen,
   onClose,
@@ -55,8 +63,12 @@ export default function ProfileModal({
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isSavingBackupSettings, setIsSavingBackupSettings] = useState(false);
+  const [isSendingBackupEmail, setIsSendingBackupEmail] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [backupEmail, setBackupEmail] = useState("");
+  const [backupFrequency, setBackupFrequency] = useState<BackupFrequency>("off");
 
   useEffect(() => {
     if (!isOpen || !session?.user) {
@@ -66,6 +78,8 @@ export default function ProfileModal({
     setName(session.user.name ?? "");
     setImagePreview(session.user.image ?? "");
     setDeleteConfirmation("");
+    setBackupEmail(session.user.backupEmail ?? session.user.email ?? "");
+    setBackupFrequency(session.user.backupFrequency ?? "off");
     setFeedback(null);
   }, [isOpen, session]);
 
@@ -252,6 +266,96 @@ export default function ProfileModal({
 
   function handleRestoreBackupClick() {
     backupInputRef.current?.click();
+  }
+
+  async function handleSaveBackupSettings() {
+    setFeedback(null);
+    setIsSavingBackupSettings(true);
+
+    try {
+      const response = await fetch("/api/account", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          backupEmail,
+          backupFrequency,
+        }),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | { message?: string }
+        | null;
+
+      if (!response.ok) {
+        setFeedback({
+          tone: "error",
+          message:
+            result?.message ??
+            "Nao foi possivel salvar as preferencias de backup agora.",
+        });
+        return;
+      }
+
+      await update();
+
+      setFeedback({
+        tone: "success",
+        message:
+          result?.message ?? "Preferencias de backup salvas com sucesso.",
+      });
+    } catch {
+      setFeedback({
+        tone: "error",
+        message: "Nao foi possivel salvar as preferencias de backup agora.",
+      });
+    } finally {
+      setIsSavingBackupSettings(false);
+    }
+  }
+
+  async function handleSendBackupEmailNow() {
+    setFeedback(null);
+    setIsSendingBackupEmail(true);
+
+    try {
+      const response = await fetch("/api/account/backup-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          backupEmail,
+        }),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | { message?: string }
+        | null;
+
+      if (!response.ok) {
+        setFeedback({
+          tone: "error",
+          message:
+            result?.message ??
+            "Nao foi possivel enviar o backup por e-mail agora.",
+        });
+        return;
+      }
+
+      setFeedback({
+        tone: "success",
+        message: result?.message ?? "Backup enviado por e-mail com sucesso.",
+      });
+    } catch {
+      setFeedback({
+        tone: "error",
+        message: "Nao foi possivel enviar o backup por e-mail agora.",
+      });
+    } finally {
+      setIsSendingBackupEmail(false);
+    }
   }
 
   async function handleBackupFileChange(
@@ -535,8 +639,51 @@ export default function ProfileModal({
                   na conta atual. Login, e-mail e senha nao sao trocados pelo
                   backup.
                 </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
+                      E-mail para backup
+                    </label>
+                    <input
+                      type="email"
+                      value={backupEmail}
+                      onChange={(event) => setBackupEmail(event.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                      placeholder="seu@email.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
+                      Frequencia automatica
+                    </label>
+                    <select
+                      value={backupFrequency}
+                      onChange={(event) =>
+                        setBackupFrequency(event.target.value as BackupFrequency)
+                      }
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                    >
+                      {Object.entries(BACKUP_FREQUENCY_LABELS).map(
+                        ([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </div>
+                </div>
               </div>
               <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveBackupSettings}
+                  disabled={isSavingBackupSettings}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Upload size={16} />
+                  {isSavingBackupSettings ? "Salvando..." : "Salvar automacao"}
+                </button>
                 <button
                   type="button"
                   onClick={handleExportData}
@@ -554,6 +701,15 @@ export default function ProfileModal({
                 >
                   <Upload size={16} />
                   {isRestoring ? "Restaurando..." : "Restaurar backup"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendBackupEmailNow}
+                  disabled={isSendingBackupEmail}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800 hover:bg-blue-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Download size={16} />
+                  {isSendingBackupEmail ? "Enviando..." : "Enviar por e-mail agora"}
                 </button>
               </div>
             </div>
