@@ -349,11 +349,13 @@ export default function ProfileModal({
 
     try {
       const backupFile = await fetchBackupFile();
+      const supportsFileShare =
+        typeof navigator !== "undefined" &&
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [backupFile] });
 
-      if (
-        typeof navigator === "undefined" ||
-        typeof navigator.share !== "function"
-      ) {
+      if (!supportsFileShare) {
         downloadBackupFile(backupFile);
         setFeedback({
           tone: "success",
@@ -363,26 +365,11 @@ export default function ProfileModal({
         return;
       }
 
-      const shareData = {
+      await navigator.share({
         title: "Backup da conta",
         text: "Backup da conta da Calculadora do Produtor.",
         files: [backupFile],
-      };
-
-      const canShareFiles =
-        typeof navigator.canShare !== "function" || navigator.canShare(shareData);
-
-      if (!canShareFiles) {
-        downloadBackupFile(backupFile);
-        setFeedback({
-          tone: "success",
-          message:
-            "Esse navegador nao consegue compartilhar o arquivo diretamente. O backup foi baixado para voce.",
-        });
-        return;
-      }
-
-      await navigator.share(shareData);
+      });
 
       setFeedback({
         tone: "success",
@@ -399,10 +386,20 @@ export default function ProfileModal({
           message: "O compartilhamento foi cancelado antes de concluir.",
         });
       } else {
+        try {
+          const backupFile = await fetchBackupFile();
+          downloadBackupFile(backupFile);
+          setFeedback({
+            tone: "success",
+            message:
+              "Esse navegador nao conseguiu abrir o compartilhamento. O backup foi baixado para voce.",
+          });
+        } catch {
         setFeedback({
           tone: "error",
           message: getBackupActionErrorMessage(error, "compartilhar"),
         });
+        }
       }
     } finally {
       setIsSharingBackup(false);
@@ -570,9 +567,14 @@ export default function ProfileModal({
 
     link.href = downloadUrl;
     link.download = file.name;
+    link.style.display = "none";
+    document.body.appendChild(link);
     link.click();
+    link.remove();
 
-    window.URL.revokeObjectURL(downloadUrl);
+    window.setTimeout(() => {
+      window.URL.revokeObjectURL(downloadUrl);
+    }, 1000);
   }
 
   function getBackupActionErrorMessage(error: unknown, action: "baixar" | "compartilhar") {
