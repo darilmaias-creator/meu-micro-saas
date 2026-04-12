@@ -244,7 +244,7 @@ export default function MainApp() {
               : "Entre com e-mail e senha ou use sua conta Google para acessar o sistema e manter sua operacao em um unico lugar."}
           </p>
 
-          {!PASSWORD_RECOVERY_AVAILABLE && authMode !== "forgotPassword" && (
+          {!PASSWORD_RECOVERY_AVAILABLE && authMode === "register" && (
             <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900">
               <p className="font-bold mb-1">Aviso importante sobre senha</p>
               <p>
