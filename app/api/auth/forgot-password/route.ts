@@ -26,6 +26,38 @@ function getBaseUrl(request: Request) {
   return process.env.NEXTAUTH_URL?.trim() || new URL(request.url).origin;
 }
 
+function getForgotPasswordErrorMessage(error: unknown) {
+  const message =
+    error instanceof Error ? error.message : "Erro desconhecido na recuperacao.";
+
+  if (
+    message.includes("password_reset_token_hash") ||
+    message.includes("password_reset_expires_at") ||
+    message.includes("password_reset_requested_at")
+  ) {
+    return "As colunas da recuperacao de senha ainda nao foram criadas no Supabase. Rode o schema.sql atualizado.";
+  }
+
+  if (message.includes("RESEND_API_KEY")) {
+    return "A chave da Resend ainda nao foi configurada para enviar a recuperacao de senha.";
+  }
+
+  if (message.includes("RESEND_FROM_EMAIL")) {
+    return "O remetente da Resend ainda nao foi configurado.";
+  }
+
+  if (
+    message.includes("status 403") ||
+    message.includes("resend.dev") ||
+    message.includes("testing emails") ||
+    message.includes("verify a domain")
+  ) {
+    return "A recuperacao por e-mail ainda esta em modo de teste na Resend. Sem um dominio verificado, ela pode falhar para outros e-mails.";
+  }
+
+  return "Nao foi possivel iniciar a recuperacao de senha agora.";
+}
+
 export async function POST(request: Request) {
   let body: ForgotPasswordPayload;
 
@@ -82,7 +114,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        message: "Nao foi possivel iniciar a recuperacao de senha agora.",
+        message: getForgotPasswordErrorMessage(error),
         ...(process.env.NODE_ENV !== "production" && error instanceof Error
           ? { details: error.message }
           : {}),
