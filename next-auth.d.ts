@@ -16,6 +16,11 @@ declare module "next-auth" {
       backupEmail?: string | null;
       backupFrequency: BackupFrequency;
       backupLastSentAt?: string | null;
+      stripeCustomerId?: string | null;
+      stripeSubscriptionId?: string | null;
+      stripeSubscriptionStatus?: string | null;
+      stripeCurrentPeriodEnd?: string | null;
+      founderOfferApplied: boolean;
     };
   }
 

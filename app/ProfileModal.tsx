@@ -24,6 +24,12 @@ import {
   type AppDataState,
 } from "@/lib/app-data/defaults";
 import type { BackupFrequency } from "@/lib/account/backup-config";
+import {
+  PREMIUM_FOUNDER_LIMIT,
+  PREMIUM_FOUNDER_PRICE_BRL,
+  PREMIUM_STANDARD_PRICE_BRL,
+  formatBrlPriceFromCents,
+} from "@/lib/billing/plans";
 import { clearLocalAppDataCache } from "./hooks/useAppData";
 
 type ProfileModalProps = {
@@ -80,6 +86,9 @@ export default function ProfileModal({
   const [isRestoring, setIsRestoring] = useState(false);
   const [isSavingBackupSettings, setIsSavingBackupSettings] = useState(false);
   const [isSendingBackupEmail, setIsSendingBackupEmail] = useState(false);
+  const [isStartingPremiumCheckout, setIsStartingPremiumCheckout] =
+    useState(false);
+  const [isOpeningBillingPortal, setIsOpeningBillingPortal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [backupEmail, setBackupEmail] = useState("");
@@ -124,6 +133,80 @@ export default function ProfileModal({
   const hasProfileChanges =
     name.trim() !== initialName || imagePreview !== initialImage;
   const canDeleteAccount = deleteConfirmation.trim().toUpperCase() === "EXCLUIR";
+  const founderPriceLabel = formatBrlPriceFromCents(PREMIUM_FOUNDER_PRICE_BRL);
+  const standardPriceLabel = formatBrlPriceFromCents(
+    PREMIUM_STANDARD_PRICE_BRL,
+  );
+  const hasStripeBilling = Boolean(user.stripeCustomerId);
+  const stripeSubscriptionStatusLabel = user.stripeSubscriptionStatus
+    ? user.stripeSubscriptionStatus.replaceAll("_", " ")
+    : null;
+
+  async function handleStartPremiumCheckout() {
+    setFeedback(null);
+    setIsStartingPremiumCheckout(true);
+
+    try {
+      const response = await fetch("/api/billing/checkout", {
+        method: "POST",
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { message?: string; url?: string }
+        | null;
+
+      if (!response.ok || !result?.url) {
+        setFeedback({
+          tone: "error",
+          message:
+            result?.message ?? "Nao foi possivel abrir o checkout agora.",
+        });
+        return;
+      }
+
+      window.location.href = result.url;
+    } catch {
+      setFeedback({
+        tone: "error",
+        message: "Nao foi possivel abrir o checkout agora.",
+      });
+    } finally {
+      setIsStartingPremiumCheckout(false);
+    }
+  }
+
+  async function handleOpenBillingPortal() {
+    setFeedback(null);
+    setIsOpeningBillingPortal(true);
+
+    try {
+      const response = await fetch("/api/billing/portal", {
+        method: "POST",
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { message?: string; url?: string }
+        | null;
+
+      if (!response.ok || !result?.url) {
+        setFeedback({
+          tone: "error",
+          message:
+            result?.message ??
+            "Nao foi possivel abrir o gerenciamento da assinatura agora.",
+        });
+        return;
+      }
+
+      window.location.href = result.url;
+    } catch {
+      setFeedback({
+        tone: "error",
+        message:
+          "Nao foi possivel abrir o gerenciamento da assinatura agora.",
+      });
+    } finally {
+      setIsOpeningBillingPortal(false);
+    }
+  }
 
   async function handleSaveProfile() {
     setFeedback(null);
@@ -738,6 +821,84 @@ export default function ProfileModal({
               usuarios premium.
             </div>
           )}
+
+          <div className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 space-y-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
+                  <Crown size={13} />
+                  Premium
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    {isPremium ? "Sua assinatura Premium" : "Destrave o plano Premium"}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {isPremium
+                      ? user.founderOfferApplied
+                        ? `Seu valor de lançamento ficou travado em ${founderPriceLabel}/mes.`
+                        : `Sua conta esta no valor normal de ${standardPriceLabel}/mes.`
+                      : `Oferta de lancamento: ${founderPriceLabel}/mes para os ${PREMIUM_FOUNDER_LIMIT} primeiros pagantes. Depois, ${standardPriceLabel}/mes.`}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm text-slate-700">
+                  <p>
+                    Premium libera troca de foto, altera nome sem limite e
+                    remove restricoes do plano gratis.
+                  </p>
+                  {isPremium && stripeSubscriptionStatusLabel && (
+                    <p className="mt-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Status da assinatura: {stripeSubscriptionStatusLabel}
+                    </p>
+                  )}
+                  {isPremium && !hasStripeBilling && (
+                    <p className="mt-2 text-xs text-slate-500">
+                      Essa conta premium foi liberada manualmente. O
+                      gerenciamento automatico pela Stripe aparece nas novas
+                      assinaturas pagas.
+                    </p>
+                  )}
+                  {isPremium && user.stripeCurrentPeriodEnd && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Periodo atual ate{" "}
+                      {new Date(user.stripeCurrentPeriodEnd).toLocaleDateString("pt-BR")}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex w-full flex-col gap-2 md:w-auto">
+                {!isPremium && (
+                  <button
+                    type="button"
+                    onClick={handleStartPremiumCheckout}
+                    disabled={isStartingPremiumCheckout}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-300"
+                  >
+                    <Crown size={16} />
+                    {isStartingPremiumCheckout
+                      ? "Abrindo checkout..."
+                      : "Assinar Premium"}
+                  </button>
+                )}
+
+                {hasStripeBilling && (
+                  <button
+                    type="button"
+                    onClick={handleOpenBillingPortal}
+                    disabled={isOpeningBillingPortal}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Crown size={16} />
+                    {isOpeningBillingPortal
+                      ? "Abrindo portal..."
+                      : "Gerenciar assinatura"}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
 
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 space-y-3">
             <div className="flex items-start justify-between gap-4">

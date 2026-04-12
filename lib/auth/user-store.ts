@@ -29,6 +29,12 @@ export type StoredUser = {
   backupEmail?: string | null;
   backupFrequency: BackupFrequency;
   backupLastSentAt?: string | null;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  stripeSubscriptionStatus?: string | null;
+  stripePriceId?: string | null;
+  stripeCurrentPeriodEnd?: string | null;
+  founderOfferApplied: boolean;
   passwordResetTokenHash?: string | null;
   passwordResetExpiresAt?: string | null;
   passwordResetRequestedAt?: string | null;
@@ -50,6 +56,11 @@ export type SessionUser = {
   backupEmail?: string | null;
   backupFrequency: BackupFrequency;
   backupLastSentAt?: string | null;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  stripeSubscriptionStatus?: string | null;
+  stripeCurrentPeriodEnd?: string | null;
+  founderOfferApplied: boolean;
 };
 
 type AuthUserRow = {
@@ -64,6 +75,12 @@ type AuthUserRow = {
   backup_email: string | null;
   backup_frequency: string | null;
   backup_last_sent_at: string | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  stripe_subscription_status: string | null;
+  stripe_price_id: string | null;
+  stripe_current_period_end: string | null;
+  founder_offer_applied: boolean | null;
   password_reset_token_hash: string | null;
   password_reset_expires_at: string | null;
   password_reset_requested_at: string | null;
@@ -73,6 +90,8 @@ type AuthUserRow = {
 
 const dataDirectory = path.join(process.cwd(), "data");
 const usersFilePath = path.join(dataDirectory, "users.json");
+const AUTH_USER_SELECT_COLUMNS =
+  "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, founder_offer_applied, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at";
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -87,6 +106,10 @@ function isSupabaseUserStoreEnabled() {
     process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
       process.env.SUPABASE_SECRET_KEY?.trim(),
   );
+}
+
+function normalizeNullableString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : null;
 }
 
 function mapAuthUserRow(row: AuthUserRow | null | undefined) {
@@ -106,6 +129,12 @@ function mapAuthUserRow(row: AuthUserRow | null | undefined) {
     backupEmail: row.backup_email ?? null,
     backupFrequency: normalizeBackupFrequency(row.backup_frequency),
     backupLastSentAt: row.backup_last_sent_at ?? null,
+    stripeCustomerId: row.stripe_customer_id ?? null,
+    stripeSubscriptionId: row.stripe_subscription_id ?? null,
+    stripeSubscriptionStatus: row.stripe_subscription_status ?? null,
+    stripePriceId: row.stripe_price_id ?? null,
+    stripeCurrentPeriodEnd: row.stripe_current_period_end ?? null,
+    founderOfferApplied: row.founder_offer_applied ?? false,
     passwordResetTokenHash: row.password_reset_token_hash ?? null,
     passwordResetExpiresAt: row.password_reset_expires_at ?? null,
     passwordResetRequestedAt: row.password_reset_requested_at ?? null,
@@ -127,6 +156,12 @@ function buildAuthUserRow(user: StoredUser) {
     backup_email: user.backupEmail ?? null,
     backup_frequency: user.backupFrequency,
     backup_last_sent_at: user.backupLastSentAt ?? null,
+    stripe_customer_id: user.stripeCustomerId ?? null,
+    stripe_subscription_id: user.stripeSubscriptionId ?? null,
+    stripe_subscription_status: user.stripeSubscriptionStatus ?? null,
+    stripe_price_id: user.stripePriceId ?? null,
+    stripe_current_period_end: user.stripeCurrentPeriodEnd ?? null,
+    founder_offer_applied: user.founderOfferApplied,
     password_reset_token_hash: user.passwordResetTokenHash ?? null,
     password_reset_expires_at: user.passwordResetExpiresAt ?? null,
     password_reset_requested_at: user.passwordResetRequestedAt ?? null,
@@ -192,9 +227,7 @@ async function findSupabaseUserByEmail(email: string) {
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from("auth_users")
-    .select(
-      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at",
-    )
+    .select(AUTH_USER_SELECT_COLUMNS)
     .eq("email", email)
     .maybeSingle();
 
@@ -209,10 +242,38 @@ async function findSupabaseUserById(userId: string) {
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from("auth_users")
-    .select(
-      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at",
-    )
+    .select(AUTH_USER_SELECT_COLUMNS)
     .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapAuthUserRow(data as AuthUserRow | null);
+}
+
+async function findSupabaseUserByStripeCustomerId(customerId: string) {
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("auth_users")
+    .select(AUTH_USER_SELECT_COLUMNS)
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapAuthUserRow(data as AuthUserRow | null);
+}
+
+async function findSupabaseUserByStripeSubscriptionId(subscriptionId: string) {
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("auth_users")
+    .select(AUTH_USER_SELECT_COLUMNS)
+    .eq("stripe_subscription_id", subscriptionId)
     .maybeSingle();
 
   if (error) {
@@ -285,6 +346,54 @@ export async function findUserById(userId: string) {
   return users.find((user) => user.id === userId) ?? null;
 }
 
+export async function findUserByStripeCustomerId(customerId: string) {
+  if (isSupabaseUserStoreEnabled()) {
+    const supabaseUser = await findSupabaseUserByStripeCustomerId(customerId);
+
+    if (supabaseUser) {
+      return supabaseUser;
+    }
+  }
+
+  const users = await readUsersFromFile();
+  return users.find((user) => user.stripeCustomerId === customerId) ?? null;
+}
+
+export async function findUserByStripeSubscriptionId(subscriptionId: string) {
+  if (isSupabaseUserStoreEnabled()) {
+    const supabaseUser =
+      await findSupabaseUserByStripeSubscriptionId(subscriptionId);
+
+    if (supabaseUser) {
+      return supabaseUser;
+    }
+  }
+
+  const users = await readUsersFromFile();
+  return (
+    users.find((user) => user.stripeSubscriptionId === subscriptionId) ?? null
+  );
+}
+
+export async function countFounderOfferUsers() {
+  if (isSupabaseUserStoreEnabled()) {
+    const supabase = createSupabaseServerClient();
+    const { count, error } = await supabase
+      .from("auth_users")
+      .select("id", { count: "exact", head: true })
+      .eq("founder_offer_applied", true);
+
+    if (error) {
+      throw error;
+    }
+
+    return count ?? 0;
+  }
+
+  const users = await readUsersFromFile();
+  return users.filter((user) => user.founderOfferApplied).length;
+}
+
 export async function findUsersWithAutomaticBackupEnabled() {
   if (!isSupabaseUserStoreEnabled()) {
     return [];
@@ -293,9 +402,7 @@ export async function findUsersWithAutomaticBackupEnabled() {
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from("auth_users")
-    .select(
-      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at",
-    )
+    .select(AUTH_USER_SELECT_COLUMNS)
     .neq("backup_frequency", "off");
 
   if (error) {
@@ -352,6 +459,61 @@ export async function markUserBackupSent(userId: string, sentAt: string) {
   await persistUser(updatedUser);
 }
 
+export async function updateUserBillingState(input: {
+  userId: string;
+  plan?: UserPlan;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  stripeSubscriptionStatus?: string | null;
+  stripePriceId?: string | null;
+  stripeCurrentPeriodEnd?: string | null;
+  founderOfferApplied?: boolean;
+}) {
+  const user = await findUserById(input.userId);
+
+  if (!user) {
+    return {
+      ok: false as const,
+      code: "USER_NOT_FOUND" as const,
+    };
+  }
+
+  const updatedUser: StoredUser = {
+    ...user,
+    plan: input.plan ?? user.plan,
+    stripeCustomerId:
+      input.stripeCustomerId !== undefined
+        ? input.stripeCustomerId
+        : user.stripeCustomerId ?? null,
+    stripeSubscriptionId:
+      input.stripeSubscriptionId !== undefined
+        ? input.stripeSubscriptionId
+        : user.stripeSubscriptionId ?? null,
+    stripeSubscriptionStatus:
+      input.stripeSubscriptionStatus !== undefined
+        ? input.stripeSubscriptionStatus
+        : user.stripeSubscriptionStatus ?? null,
+    stripePriceId:
+      input.stripePriceId !== undefined
+        ? input.stripePriceId
+        : user.stripePriceId ?? null,
+    stripeCurrentPeriodEnd:
+      input.stripeCurrentPeriodEnd !== undefined
+        ? input.stripeCurrentPeriodEnd
+        : user.stripeCurrentPeriodEnd ?? null,
+    founderOfferApplied:
+      input.founderOfferApplied ?? user.founderOfferApplied,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await persistUser(updatedUser);
+
+  return {
+    ok: true as const,
+    user: updatedUser,
+  };
+}
+
 export async function setUserPasswordResetRequest(input: {
   userId: string;
   tokenHash: string;
@@ -383,9 +545,7 @@ export async function findUserByPasswordResetToken(token: string) {
     const supabase = createSupabaseServerClient();
     const { data, error } = await supabase
       .from("auth_users")
-      .select(
-        "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at",
-      )
+      .select(AUTH_USER_SELECT_COLUMNS)
       .eq("password_reset_token_hash", tokenHash)
       .maybeSingle();
 
@@ -485,6 +645,11 @@ export function getSessionUserFromStoredUser(user: StoredUser): SessionUser {
     backupEmail: user.backupEmail ?? null,
     backupFrequency: user.backupFrequency,
     backupLastSentAt: user.backupLastSentAt ?? null,
+    stripeCustomerId: user.stripeCustomerId ?? null,
+    stripeSubscriptionId: user.stripeSubscriptionId ?? null,
+    stripeSubscriptionStatus: user.stripeSubscriptionStatus ?? null,
+    stripeCurrentPeriodEnd: user.stripeCurrentPeriodEnd ?? null,
+    founderOfferApplied: user.founderOfferApplied,
   };
 }
 
@@ -513,6 +678,12 @@ export async function createCredentialsUser(input: {
     backupEmail: null,
     backupFrequency: "off",
     backupLastSentAt: null,
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    stripeSubscriptionStatus: null,
+    stripePriceId: null,
+    stripeCurrentPeriodEnd: null,
+    founderOfferApplied: false,
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
@@ -579,6 +750,12 @@ export async function upsertOAuthUser(input: {
     backupEmail: null,
     backupFrequency: "off",
     backupLastSentAt: null,
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    stripeSubscriptionStatus: null,
+    stripePriceId: null,
+    stripeCurrentPeriodEnd: null,
+    founderOfferApplied: false,
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
@@ -734,6 +911,18 @@ function normalizeStoredUser(rawUser: unknown): StoredUser | null {
       typeof candidate.backupLastSentAt === "string"
         ? candidate.backupLastSentAt
         : null,
+    stripeCustomerId: normalizeNullableString(candidate.stripeCustomerId),
+    stripeSubscriptionId: normalizeNullableString(
+      candidate.stripeSubscriptionId,
+    ),
+    stripeSubscriptionStatus: normalizeNullableString(
+      candidate.stripeSubscriptionStatus,
+    ),
+    stripePriceId: normalizeNullableString(candidate.stripePriceId),
+    stripeCurrentPeriodEnd: normalizeNullableString(
+      candidate.stripeCurrentPeriodEnd,
+    ),
+    founderOfferApplied: Boolean(candidate.founderOfferApplied),
     passwordResetTokenHash:
       typeof candidate.passwordResetTokenHash === "string"
         ? candidate.passwordResetTokenHash
