@@ -28,6 +28,8 @@ type AuthFeedback =
     }
   | null;
 
+const PASSWORD_RECOVERY_AVAILABLE = false;
+
 function mapAuthErrorMessage(errorCode: string | null) {
   switch (errorCode) {
     case "Configuration":
@@ -242,6 +244,23 @@ export default function MainApp() {
               : "Entre com e-mail e senha ou use sua conta Google para acessar o sistema e manter sua operacao em um unico lugar."}
           </p>
 
+          {!PASSWORD_RECOVERY_AVAILABLE && authMode !== "forgotPassword" && (
+            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900">
+              <p className="font-bold mb-1">Aviso importante sobre senha</p>
+              <p>
+                No momento, a recuperacao de senha por e-mail ainda nao esta
+                liberada para todos os usuarios.
+              </p>
+              <p className="mt-1">
+                Para ter mais seguranca e evitar bloqueio de acesso, recomendamos
+                criar a conta usando o Google sempre que possivel.
+              </p>
+              <p className="mt-1 text-amber-800">
+                A recuperacao de senha sera liberada em novas atualizacoes.
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-2 mb-6 bg-slate-100 p-1 rounded-2xl">
             <button
               type="button"
@@ -338,7 +357,7 @@ export default function MainApp() {
                     : "Entrar com e-mail"}
             </button>
 
-            {authMode === "login" && (
+            {authMode === "login" && PASSWORD_RECOVERY_AVAILABLE && (
               <button
                 type="button"
                 onClick={() => {
