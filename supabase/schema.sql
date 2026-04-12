@@ -10,6 +10,9 @@ create table if not exists public.auth_users (
   backup_email text null,
   backup_frequency text not null default 'off' check (backup_frequency in ('off', 'daily', 'weekly', 'monthly')),
   backup_last_sent_at timestamptz null,
+  password_reset_token_hash text null,
+  password_reset_expires_at timestamptz null,
+  password_reset_requested_at timestamptz null,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
@@ -22,6 +25,15 @@ alter table public.auth_users
 
 alter table public.auth_users
   add column if not exists backup_last_sent_at timestamptz null;
+
+alter table public.auth_users
+  add column if not exists password_reset_token_hash text null;
+
+alter table public.auth_users
+  add column if not exists password_reset_expires_at timestamptz null;
+
+alter table public.auth_users
+  add column if not exists password_reset_requested_at timestamptz null;
 
 alter table public.auth_users
   drop constraint if exists auth_users_backup_frequency_check;

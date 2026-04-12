@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -29,6 +29,9 @@ export type StoredUser = {
   backupEmail?: string | null;
   backupFrequency: BackupFrequency;
   backupLastSentAt?: string | null;
+  passwordResetTokenHash?: string | null;
+  passwordResetExpiresAt?: string | null;
+  passwordResetRequestedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -61,6 +64,9 @@ type AuthUserRow = {
   backup_email: string | null;
   backup_frequency: string | null;
   backup_last_sent_at: string | null;
+  password_reset_token_hash: string | null;
+  password_reset_expires_at: string | null;
+  password_reset_requested_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -100,6 +106,9 @@ function mapAuthUserRow(row: AuthUserRow | null | undefined) {
     backupEmail: row.backup_email ?? null,
     backupFrequency: normalizeBackupFrequency(row.backup_frequency),
     backupLastSentAt: row.backup_last_sent_at ?? null,
+    passwordResetTokenHash: row.password_reset_token_hash ?? null,
+    passwordResetExpiresAt: row.password_reset_expires_at ?? null,
+    passwordResetRequestedAt: row.password_reset_requested_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -118,9 +127,30 @@ function buildAuthUserRow(user: StoredUser) {
     backup_email: user.backupEmail ?? null,
     backup_frequency: user.backupFrequency,
     backup_last_sent_at: user.backupLastSentAt ?? null,
+    password_reset_token_hash: user.passwordResetTokenHash ?? null,
+    password_reset_expires_at: user.passwordResetExpiresAt ?? null,
+    password_reset_requested_at: user.passwordResetRequestedAt ?? null,
     created_at: user.createdAt,
     updated_at: user.updatedAt,
   };
+}
+
+async function persistUser(user: StoredUser) {
+  if (isSupabaseUserStoreEnabled()) {
+    await upsertSupabaseUser(user);
+    return;
+  }
+
+  const users = await readUsersFromFile();
+  const existingUserIndex = users.findIndex((currentUser) => currentUser.id === user.id);
+
+  if (existingUserIndex >= 0) {
+    users[existingUserIndex] = user;
+  } else {
+    users.push(user);
+  }
+
+  await writeUsersToFile(users);
 }
 
 async function ensureUsersFile() {
@@ -163,7 +193,7 @@ async function findSupabaseUserByEmail(email: string) {
   const { data, error } = await supabase
     .from("auth_users")
     .select(
-      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, created_at, updated_at",
+      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at",
     )
     .eq("email", email)
     .maybeSingle();
@@ -180,7 +210,7 @@ async function findSupabaseUserById(userId: string) {
   const { data, error } = await supabase
     .from("auth_users")
     .select(
-      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, created_at, updated_at",
+      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at",
     )
     .eq("id", userId)
     .maybeSingle();
@@ -264,7 +294,7 @@ export async function findUsersWithAutomaticBackupEnabled() {
   const { data, error } = await supabase
     .from("auth_users")
     .select(
-      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, created_at, updated_at",
+      "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at",
     )
     .neq("backup_frequency", "off");
 
@@ -298,15 +328,7 @@ export async function updateUserBackupSettings(input: {
     updatedAt: new Date().toISOString(),
   };
 
-  if (isSupabaseUserStoreEnabled()) {
-    await upsertSupabaseUser(updatedUser);
-  } else {
-    const users = await readUsersFromFile();
-    const nextUsers = users.map((currentUser) =>
-      currentUser.id === updatedUser.id ? updatedUser : currentUser,
-    );
-    await writeUsersToFile(nextUsers);
-  }
+  await persistUser(updatedUser);
 
   return {
     ok: true as const,
@@ -327,16 +349,98 @@ export async function markUserBackupSent(userId: string, sentAt: string) {
     updatedAt: new Date().toISOString(),
   };
 
+  await persistUser(updatedUser);
+}
+
+export async function setUserPasswordResetRequest(input: {
+  userId: string;
+  tokenHash: string;
+  expiresAt: string;
+  requestedAt: string;
+}) {
+  const user = await findUserById(input.userId);
+
+  if (!user) {
+    return null;
+  }
+
+  const updatedUser: StoredUser = {
+    ...user,
+    passwordResetTokenHash: input.tokenHash,
+    passwordResetExpiresAt: input.expiresAt,
+    passwordResetRequestedAt: input.requestedAt,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await persistUser(updatedUser);
+  return updatedUser;
+}
+
+export async function findUserByPasswordResetToken(token: string) {
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+
   if (isSupabaseUserStoreEnabled()) {
-    await upsertSupabaseUser(updatedUser);
-    return;
+    const supabase = createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("auth_users")
+      .select(
+        "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at",
+      )
+      .eq("password_reset_token_hash", tokenHash)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    return mapAuthUserRow(data as AuthUserRow | null);
   }
 
   const users = await readUsersFromFile();
-  const nextUsers = users.map((currentUser) =>
-    currentUser.id === updatedUser.id ? updatedUser : currentUser,
-  );
-  await writeUsersToFile(nextUsers);
+  return users.find((user) => user.passwordResetTokenHash === tokenHash) ?? null;
+}
+
+export async function updateUserPasswordFromReset(input: {
+  token: string;
+  passwordHash: string;
+}) {
+  const user = await findUserByPasswordResetToken(input.token);
+
+  if (!user) {
+    return {
+      ok: false as const,
+      code: "INVALID_TOKEN" as const,
+    };
+  }
+
+  if (
+    user.passwordResetExpiresAt &&
+    new Date(user.passwordResetExpiresAt).getTime() <= Date.now()
+  ) {
+    return {
+      ok: false as const,
+      code: "EXPIRED_TOKEN" as const,
+    };
+  }
+
+  const updatedUser: StoredUser = {
+    ...user,
+    passwordHash: input.passwordHash,
+    authProviders: user.authProviders.includes("credentials")
+      ? user.authProviders
+      : [...user.authProviders, "credentials"],
+    passwordResetTokenHash: null,
+    passwordResetExpiresAt: null,
+    passwordResetRequestedAt: null,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await persistUser(updatedUser);
+
+  return {
+    ok: true as const,
+    user: updatedUser,
+  };
 }
 
 export async function deleteUserById(userId: string) {
@@ -409,6 +513,9 @@ export async function createCredentialsUser(input: {
     backupEmail: null,
     backupFrequency: "off",
     backupLastSentAt: null,
+    passwordResetTokenHash: null,
+    passwordResetExpiresAt: null,
+    passwordResetRequestedAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -472,6 +579,9 @@ export async function upsertOAuthUser(input: {
     backupEmail: null,
     backupFrequency: "off",
     backupLastSentAt: null,
+    passwordResetTokenHash: null,
+    passwordResetExpiresAt: null,
+    passwordResetRequestedAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -623,6 +733,18 @@ function normalizeStoredUser(rawUser: unknown): StoredUser | null {
     backupLastSentAt:
       typeof candidate.backupLastSentAt === "string"
         ? candidate.backupLastSentAt
+        : null,
+    passwordResetTokenHash:
+      typeof candidate.passwordResetTokenHash === "string"
+        ? candidate.passwordResetTokenHash
+        : null,
+    passwordResetExpiresAt:
+      typeof candidate.passwordResetExpiresAt === "string"
+        ? candidate.passwordResetExpiresAt
+        : null,
+    passwordResetRequestedAt:
+      typeof candidate.passwordResetRequestedAt === "string"
+        ? candidate.passwordResetRequestedAt
         : null,
     createdAt,
     updatedAt,

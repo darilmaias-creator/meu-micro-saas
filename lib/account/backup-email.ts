@@ -1,26 +1,7 @@
 import "server-only";
 
 import { buildBackupFileName, type AccountBackupPayload } from "@/lib/account/backup";
-
-const RESEND_API_URL = "https://api.resend.com/emails";
-
-function getResendConfig() {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
-
-  if (!apiKey) {
-    throw new Error("RESEND_API_KEY is not configured.");
-  }
-
-  if (!fromEmail) {
-    throw new Error("RESEND_FROM_EMAIL is not configured.");
-  }
-
-  return {
-    apiKey,
-    fromEmail,
-  };
-}
+import { sendResendEmail } from "@/lib/email/resend";
 
 function createEmailBody(payload: AccountBackupPayload) {
   const appDataCounts = [
@@ -67,40 +48,22 @@ export async function sendBackupEmail(input: {
   to: string;
   payload: AccountBackupPayload;
 }) {
-  const { apiKey, fromEmail } = getResendConfig();
   const emailBody = createEmailBody(input.payload);
   const attachmentContent = Buffer.from(
     JSON.stringify(input.payload, null, 2),
     "utf8",
   ).toString("base64");
 
-  const response = await fetch(RESEND_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [input.to],
-      subject: emailBody.subject,
-      text: emailBody.text,
-      html: emailBody.html,
-      attachments: [
-        {
-          filename: buildBackupFileName(),
-          content: attachmentContent,
-        },
-      ],
-    }),
+  return sendResendEmail({
+    to: input.to,
+    subject: emailBody.subject,
+    text: emailBody.text,
+    html: emailBody.html,
+    attachments: [
+      {
+        filename: buildBackupFileName(),
+        content: attachmentContent,
+      },
+    ],
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Resend request failed with status ${response.status}: ${errorText}`,
-    );
-  }
-
-  return response.json().catch(() => null);
 }
