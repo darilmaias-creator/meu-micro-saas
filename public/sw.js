@@ -4,6 +4,9 @@ const STATIC_ASSETS = [
   "/favicon.ico",
   "/icon",
   "/apple-icon",
+  "/pwa-icon-512.png",
+  "/pwa-maskable-512.png",
+  "/pwa-monochrome-512.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -57,7 +60,10 @@ self.addEventListener("fetch", (event) => {
     url.pathname === "/manifest.webmanifest" ||
     url.pathname === "/favicon.ico" ||
     url.pathname === "/icon" ||
-    url.pathname === "/apple-icon";
+    url.pathname === "/apple-icon" ||
+    url.pathname === "/pwa-icon-512.png" ||
+    url.pathname === "/pwa-maskable-512.png" ||
+    url.pathname === "/pwa-monochrome-512.png";
 
   if (!isPwaAsset) {
     return;
