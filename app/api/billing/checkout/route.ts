@@ -22,7 +22,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const EMBEDDED_CHECKOUT_UI_MODE = "embedded" as unknown as never;
+const EMBEDDED_CHECKOUT_UI_MODE = "embedded_page" as const;
 
 function getBaseUrl(request: Request) {
   return request.headers.get("origin")?.trim() || new URL(request.url).origin;
@@ -135,8 +135,8 @@ export async function POST(request: Request) {
     const baseUrl = getBaseUrl(request);
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "subscription",
-      // Stripe documents `embedded` for in-app Checkout, but the installed
-      // stripe-node typings in this repo still lag behind that enum value.
+      // The Stripe account/API version used in this project expects
+      // `embedded_page` for the in-app Checkout flow.
       ui_mode: EMBEDDED_CHECKOUT_UI_MODE,
       customer: stripeCustomerId,
       client_reference_id: user.id,
