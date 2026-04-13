@@ -30,6 +30,11 @@ import {
   PREMIUM_STANDARD_PRICE_BRL,
   formatBrlPriceFromCents,
 } from "@/lib/billing/plans";
+import {
+  getPremiumRefundDaysRemaining,
+  getPremiumRefundDeadline,
+  PREMIUM_FULL_REFUND_WINDOW_DAYS,
+} from "@/lib/billing/refund-policy";
 import { isPremiumActiveSubscriptionStatus } from "@/lib/billing/subscription-status";
 import { clearLocalAppDataCache } from "./hooks/useAppData";
 
@@ -90,6 +95,10 @@ export default function ProfileModal({
   const [isStartingPremiumCheckout, setIsStartingPremiumCheckout] =
     useState(false);
   const [isOpeningBillingPortal, setIsOpeningBillingPortal] = useState(false);
+  const [isRequestingPremiumRefund, setIsRequestingPremiumRefund] =
+    useState(false);
+  const [showFounderRefundWarning, setShowFounderRefundWarning] =
+    useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [backupEmail, setBackupEmail] = useState("");
@@ -138,9 +147,23 @@ export default function ProfileModal({
   const standardPriceLabel = formatBrlPriceFromCents(
     PREMIUM_STANDARD_PRICE_BRL,
   );
+  const hasFounderPriceLocked = Boolean(
+    user.founderOfferApplied && !user.founderOfferRevokedAt,
+  );
   const hasActiveStripeSubscription = Boolean(
     user.stripeSubscriptionId &&
       isPremiumActiveSubscriptionStatus(user.stripeSubscriptionStatus),
+  );
+  const refundDaysRemaining = getPremiumRefundDaysRemaining(
+    user.premiumActivatedAt,
+  );
+  const refundDeadline = getPremiumRefundDeadline(user.premiumActivatedAt);
+  const canRequestFullRefund = Boolean(
+    hasActiveStripeSubscription &&
+      (user.premiumActivatedAt ? refundDaysRemaining && refundDaysRemaining > 0 : true),
+  );
+  const founderRefundWarningRequired = Boolean(
+    canRequestFullRefund && hasFounderPriceLocked,
   );
   const stripeSubscriptionStatusLabel = user.stripeSubscriptionStatus
     ? user.stripeSubscriptionStatus.replaceAll("_", " ")
@@ -183,6 +206,89 @@ export default function ProfileModal({
     } finally {
       setIsOpeningBillingPortal(false);
     }
+  }
+
+  async function requestPremiumRefund(confirmFounderForfeit: boolean) {
+    setFeedback(null);
+    setIsRequestingPremiumRefund(true);
+
+    try {
+      const response = await fetch("/api/billing/refund", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          confirmFounderForfeit,
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { code?: string; message?: string }
+        | null;
+
+      if (response.status === 409) {
+        setShowFounderRefundWarning(true);
+        setFeedback({
+          tone: "error",
+          message:
+            result?.message ??
+            "Antes do reembolso, precisamos confirmar a perda do beneficio founder.",
+        });
+        return;
+      }
+
+      if (!response.ok) {
+        setFeedback({
+          tone: "error",
+          message:
+            result?.message ?? "Nao foi possivel solicitar o reembolso agora.",
+        });
+        return;
+      }
+
+      await update();
+      setShowFounderRefundWarning(false);
+      setFeedback({
+        tone: "success",
+        message:
+          result?.message ??
+          "Reembolso solicitado com sucesso. O Premium foi encerrado na sua conta.",
+      });
+    } catch {
+      setFeedback({
+        tone: "error",
+        message: "Nao foi possivel solicitar o reembolso agora.",
+      });
+    } finally {
+      setIsRequestingPremiumRefund(false);
+    }
+  }
+
+  function handleRequestPremiumRefund() {
+    setFeedback(null);
+
+    if (!canRequestFullRefund) {
+      setFeedback({
+        tone: "error",
+        message: `O reembolso integral fica disponivel apenas nos primeiros ${PREMIUM_FULL_REFUND_WINDOW_DAYS} dias apos a liberacao do Premium.`,
+      });
+      return;
+    }
+
+    if (founderRefundWarningRequired) {
+      setShowFounderRefundWarning(true);
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Solicitar o reembolso encerra o Premium imediatamente e devolve 100% do valor pago. Deseja continuar?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    void requestPremiumRefund(false);
   }
 
   async function handleSaveProfile() {
@@ -812,9 +918,11 @@ export default function ProfileModal({
                   </h3>
                   <p className="mt-1 text-sm text-slate-600">
                     {isPremium
-                      ? user.founderOfferApplied
+                      ? hasFounderPriceLocked
                         ? `Seu valor de lançamento ficou travado em ${founderPriceLabel}/mes.`
                         : `Sua conta esta no valor normal de ${standardPriceLabel}/mes.`
+                      : user.founderOfferRevokedAt
+                        ? `Seu beneficio de lançamento foi encerrado apos um reembolso anterior. Novas assinaturas seguem o valor normal de ${standardPriceLabel}/mes.`
                       : `Oferta de lancamento: ${founderPriceLabel}/mes para os ${PREMIUM_FOUNDER_LIMIT} primeiros pagantes. Depois, ${standardPriceLabel}/mes.`}
                   </p>
                 </div>
@@ -840,6 +948,13 @@ export default function ProfileModal({
                     <p className="mt-1 text-xs text-slate-500">
                       Periodo atual ate{" "}
                       {new Date(user.stripeCurrentPeriodEnd).toLocaleDateString("pt-BR")}
+                    </p>
+                  )}
+                  {hasActiveStripeSubscription && canRequestFullRefund && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      {refundDeadline
+                        ? `Reembolso integral disponivel ate ${refundDeadline.toLocaleDateString("pt-BR")}.`
+                        : `O reembolso integral pode ser pedido em ate ${PREMIUM_FULL_REFUND_WINDOW_DAYS} dias apos a liberacao do Premium.`}
                     </p>
                   )}
                 </div>
@@ -873,8 +988,60 @@ export default function ProfileModal({
                       : "Gerenciar assinatura"}
                   </button>
                 )}
+
+                {canRequestFullRefund && (
+                  <button
+                    type="button"
+                    onClick={handleRequestPremiumRefund}
+                    disabled={isRequestingPremiumRefund}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <AlertTriangle size={16} />
+                    {isRequestingPremiumRefund
+                      ? "Solicitando reembolso..."
+                      : "Pedir reembolso"}
+                  </button>
+                )}
               </div>
             </div>
+
+            {showFounderRefundWarning && founderRefundWarningRequired && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                <p className="font-bold">
+                  Sua conta esta com o valor especial de lancamento.
+                </p>
+                <p className="mt-2">
+                  Hoje voce manteve o Premium em {founderPriceLabel}/mes. Se
+                  seguir com o reembolso integral agora, esse beneficio founder
+                  sera encerrado e futuras assinaturas voltarao para o valor
+                  vigente do Premium.
+                </p>
+                <p className="mt-2">
+                  Se quiser continuar com esse valor reduzido, o melhor caminho
+                  e manter o seu plano atual.
+                </p>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => setShowFounderRefundWarning(false)}
+                    disabled={isRequestingPremiumRefund}
+                    className="inline-flex items-center justify-center rounded-2xl border border-amber-300 bg-white px-4 py-3 text-sm font-bold text-amber-900 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Manter meu plano atual
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void requestPremiumRefund(true)}
+                    disabled={isRequestingPremiumRefund}
+                    className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+                  >
+                    {isRequestingPremiumRefund
+                      ? "Solicitando reembolso..."
+                      : "Pedir reembolso mesmo assim"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 space-y-3">

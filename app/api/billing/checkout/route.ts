@@ -104,10 +104,11 @@ export async function POST(request: Request) {
     }
 
     const founderCount = await countFounderOfferUsers();
+    const founderOfferStillEligible =
+      !user.founderOfferRevokedAt &&
+      (user.founderOfferApplied || founderCount < PREMIUM_FOUNDER_LIMIT);
     const offerTier: PremiumOfferTier =
-      user.founderOfferApplied || founderCount < PREMIUM_FOUNDER_LIMIT
-        ? "founder"
-        : "standard";
+      founderOfferStillEligible ? "founder" : "standard";
 
     const stripe = createStripeServerClient();
     let stripeCustomerId = await resolveStripeCustomerForCheckout({

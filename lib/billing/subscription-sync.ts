@@ -81,14 +81,28 @@ export async function syncSubscriptionState(
     throw new Error("Nao foi possivel localizar o usuario da assinatura Stripe.");
   }
 
+  const existingUser = await findUserById(userId);
+
+  if (!existingUser) {
+    throw new Error("Nao foi possivel localizar a conta interna da assinatura.");
+  }
+
   const founderOfferApplied =
     options?.founderOfferApplied === true ||
     subscription.metadata.founderOfferApplied === "true" ||
     isFounderPriceId(stripePriceId);
+  const grantsPremium = shouldGrantPremium(subscription.status);
+  const premiumActivatedAt = grantsPremium
+    ? existingUser.plan === "premium" &&
+      existingUser.stripeSubscriptionId === stripeSubscriptionId &&
+      existingUser.premiumActivatedAt
+      ? existingUser.premiumActivatedAt
+      : new Date().toISOString()
+    : null;
 
   await updateUserBillingState({
     userId,
-    plan: shouldGrantPremium(subscription.status) ? "premium" : "free",
+    plan: grantsPremium ? "premium" : "free",
     stripeCustomerId,
     stripeSubscriptionId,
     stripeSubscriptionStatus: subscription.status,
@@ -96,12 +110,14 @@ export async function syncSubscriptionState(
     stripeCurrentPeriodEnd: toIsoStringFromUnixTimestamp(
       firstSubscriptionItem?.current_period_end,
     ),
+    premiumActivatedAt,
     founderOfferApplied,
+    founderOfferRevokedAt: existingUser.founderOfferRevokedAt ?? null,
   });
 
   return {
     userId,
-    confirmed: shouldGrantPremium(subscription.status),
+    confirmed: grantsPremium,
     status: subscription.status,
   };
 }

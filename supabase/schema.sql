@@ -15,7 +15,9 @@ create table if not exists public.auth_users (
   stripe_subscription_status text null,
   stripe_price_id text null,
   stripe_current_period_end timestamptz null,
+  premium_activated_at timestamptz null,
   founder_offer_applied boolean not null default false,
+  founder_offer_revoked_at timestamptz null,
   password_reset_token_hash text null,
   password_reset_expires_at timestamptz null,
   password_reset_requested_at timestamptz null,
@@ -48,7 +50,13 @@ alter table public.auth_users
   add column if not exists stripe_current_period_end timestamptz null;
 
 alter table public.auth_users
+  add column if not exists premium_activated_at timestamptz null;
+
+alter table public.auth_users
   add column if not exists founder_offer_applied boolean not null default false;
+
+alter table public.auth_users
+  add column if not exists founder_offer_revoked_at timestamptz null;
 
 alter table public.auth_users
   add column if not exists password_reset_token_hash text null;

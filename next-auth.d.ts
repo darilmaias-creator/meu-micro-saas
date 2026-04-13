@@ -20,7 +20,9 @@ declare module "next-auth" {
       stripeSubscriptionId?: string | null;
       stripeSubscriptionStatus?: string | null;
       stripeCurrentPeriodEnd?: string | null;
+      premiumActivatedAt?: string | null;
       founderOfferApplied: boolean;
+      founderOfferRevokedAt?: string | null;
     };
   }
 

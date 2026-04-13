@@ -34,7 +34,9 @@ export type StoredUser = {
   stripeSubscriptionStatus?: string | null;
   stripePriceId?: string | null;
   stripeCurrentPeriodEnd?: string | null;
+  premiumActivatedAt?: string | null;
   founderOfferApplied: boolean;
+  founderOfferRevokedAt?: string | null;
   passwordResetTokenHash?: string | null;
   passwordResetExpiresAt?: string | null;
   passwordResetRequestedAt?: string | null;
@@ -60,7 +62,9 @@ export type SessionUser = {
   stripeSubscriptionId?: string | null;
   stripeSubscriptionStatus?: string | null;
   stripeCurrentPeriodEnd?: string | null;
+  premiumActivatedAt?: string | null;
   founderOfferApplied: boolean;
+  founderOfferRevokedAt?: string | null;
 };
 
 type AuthUserRow = {
@@ -80,7 +84,9 @@ type AuthUserRow = {
   stripe_subscription_status: string | null;
   stripe_price_id: string | null;
   stripe_current_period_end: string | null;
+  premium_activated_at: string | null;
   founder_offer_applied: boolean | null;
+  founder_offer_revoked_at: string | null;
   password_reset_token_hash: string | null;
   password_reset_expires_at: string | null;
   password_reset_requested_at: string | null;
@@ -91,7 +97,7 @@ type AuthUserRow = {
 const dataDirectory = path.join(process.cwd(), "data");
 const usersFilePath = path.join(dataDirectory, "users.json");
 const AUTH_USER_SELECT_COLUMNS =
-  "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, founder_offer_applied, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at";
+  "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, premium_activated_at, founder_offer_applied, founder_offer_revoked_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at";
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -134,7 +140,9 @@ function mapAuthUserRow(row: AuthUserRow | null | undefined) {
     stripeSubscriptionStatus: row.stripe_subscription_status ?? null,
     stripePriceId: row.stripe_price_id ?? null,
     stripeCurrentPeriodEnd: row.stripe_current_period_end ?? null,
+    premiumActivatedAt: row.premium_activated_at ?? null,
     founderOfferApplied: row.founder_offer_applied ?? false,
+    founderOfferRevokedAt: row.founder_offer_revoked_at ?? null,
     passwordResetTokenHash: row.password_reset_token_hash ?? null,
     passwordResetExpiresAt: row.password_reset_expires_at ?? null,
     passwordResetRequestedAt: row.password_reset_requested_at ?? null,
@@ -161,7 +169,9 @@ function buildAuthUserRow(user: StoredUser) {
     stripe_subscription_status: user.stripeSubscriptionStatus ?? null,
     stripe_price_id: user.stripePriceId ?? null,
     stripe_current_period_end: user.stripeCurrentPeriodEnd ?? null,
+    premium_activated_at: user.premiumActivatedAt ?? null,
     founder_offer_applied: user.founderOfferApplied,
+    founder_offer_revoked_at: user.founderOfferRevokedAt ?? null,
     password_reset_token_hash: user.passwordResetTokenHash ?? null,
     password_reset_expires_at: user.passwordResetExpiresAt ?? null,
     password_reset_requested_at: user.passwordResetRequestedAt ?? null,
@@ -467,7 +477,9 @@ export async function updateUserBillingState(input: {
   stripeSubscriptionStatus?: string | null;
   stripePriceId?: string | null;
   stripeCurrentPeriodEnd?: string | null;
+  premiumActivatedAt?: string | null;
   founderOfferApplied?: boolean;
+  founderOfferRevokedAt?: string | null;
 }) {
   const user = await findUserById(input.userId);
 
@@ -501,8 +513,16 @@ export async function updateUserBillingState(input: {
       input.stripeCurrentPeriodEnd !== undefined
         ? input.stripeCurrentPeriodEnd
         : user.stripeCurrentPeriodEnd ?? null,
+    premiumActivatedAt:
+      input.premiumActivatedAt !== undefined
+        ? input.premiumActivatedAt
+        : user.premiumActivatedAt ?? null,
     founderOfferApplied:
       input.founderOfferApplied ?? user.founderOfferApplied,
+    founderOfferRevokedAt:
+      input.founderOfferRevokedAt !== undefined
+        ? input.founderOfferRevokedAt
+        : user.founderOfferRevokedAt ?? null,
     updatedAt: new Date().toISOString(),
   };
 
@@ -649,7 +669,9 @@ export function getSessionUserFromStoredUser(user: StoredUser): SessionUser {
     stripeSubscriptionId: user.stripeSubscriptionId ?? null,
     stripeSubscriptionStatus: user.stripeSubscriptionStatus ?? null,
     stripeCurrentPeriodEnd: user.stripeCurrentPeriodEnd ?? null,
+    premiumActivatedAt: user.premiumActivatedAt ?? null,
     founderOfferApplied: user.founderOfferApplied,
+    founderOfferRevokedAt: user.founderOfferRevokedAt ?? null,
   };
 }
 
@@ -683,7 +705,9 @@ export async function createCredentialsUser(input: {
     stripeSubscriptionStatus: null,
     stripePriceId: null,
     stripeCurrentPeriodEnd: null,
+    premiumActivatedAt: null,
     founderOfferApplied: false,
+    founderOfferRevokedAt: null,
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
@@ -755,7 +779,9 @@ export async function upsertOAuthUser(input: {
     stripeSubscriptionStatus: null,
     stripePriceId: null,
     stripeCurrentPeriodEnd: null,
+    premiumActivatedAt: null,
     founderOfferApplied: false,
+    founderOfferRevokedAt: null,
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
@@ -922,7 +948,11 @@ function normalizeStoredUser(rawUser: unknown): StoredUser | null {
     stripeCurrentPeriodEnd: normalizeNullableString(
       candidate.stripeCurrentPeriodEnd,
     ),
+    premiumActivatedAt: normalizeNullableString(candidate.premiumActivatedAt),
     founderOfferApplied: Boolean(candidate.founderOfferApplied),
+    founderOfferRevokedAt: normalizeNullableString(
+      candidate.founderOfferRevokedAt,
+    ),
     passwordResetTokenHash:
       typeof candidate.passwordResetTokenHash === "string"
         ? candidate.passwordResetTokenHash
