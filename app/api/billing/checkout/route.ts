@@ -15,7 +15,6 @@ import { authOptions } from "@/lib/auth/options";
 import {
   countFounderOfferUsers,
   findUserById,
-  updateUserBillingState,
 } from "@/lib/auth/user-store";
 
 export const runtime = "nodejs";
@@ -26,6 +25,37 @@ const EMBEDDED_CHECKOUT_UI_MODE = "embedded" as unknown as never;
 
 function getBaseUrl(request: Request) {
   return request.headers.get("origin")?.trim() || new URL(request.url).origin;
+}
+
+async function resolveStripeCustomerForCheckout(input: {
+  stripeCustomerId?: string | null;
+}) {
+  const stripe = createStripeServerClient();
+
+  if (!input.stripeCustomerId) {
+    return null;
+  }
+
+  try {
+    const customer = await stripe.customers.retrieve(input.stripeCustomerId);
+
+    if ("deleted" in customer && customer.deleted) {
+      return null;
+    }
+
+    return customer.id;
+  } catch (error) {
+    const stripeError =
+      error && typeof error === "object" && "code" in error
+        ? (error as { code?: string }).code
+        : undefined;
+
+    if (stripeError === "resource_missing") {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export async function POST(request: Request) {
@@ -79,24 +109,9 @@ export async function POST(request: Request) {
         : "standard";
 
     const stripe = createStripeServerClient();
-    let stripeCustomerId = user.stripeCustomerId ?? null;
-
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        name: user.name,
-        metadata: {
-          appUserId: user.id,
-        },
-      });
-
-      stripeCustomerId = customer.id;
-      await updateUserBillingState({
-        userId: user.id,
-        stripeCustomerId,
-      });
-    }
-
+    const stripeCustomerId = await resolveStripeCustomerForCheckout({
+      stripeCustomerId: user.stripeCustomerId,
+    });
     const founderOfferApplied =
       user.founderOfferApplied || offerTier === "founder";
     const baseUrl = getBaseUrl(request);
@@ -105,7 +120,12 @@ export async function POST(request: Request) {
       // Stripe documents `embedded` for in-app Checkout, but the installed
       // stripe-node typings in this repo still lag behind that enum value.
       ui_mode: EMBEDDED_CHECKOUT_UI_MODE,
-      customer: stripeCustomerId,
+      ...(stripeCustomerId
+        ? { customer: stripeCustomerId }
+        : {
+            customer_email: user.email,
+            customer_creation: "always" as const,
+          }),
       client_reference_id: user.id,
       line_items: [
         {
