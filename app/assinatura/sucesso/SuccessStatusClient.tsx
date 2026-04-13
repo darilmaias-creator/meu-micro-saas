@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { isPremiumActiveSubscriptionStatus } from "@/lib/billing/subscription-status";
@@ -21,6 +22,7 @@ function hasActivePremium(session: Awaited<ReturnType<typeof useSession>>["data"
 
 export default function SuccessStatusClient() {
   const { data: session, update } = useSession();
+  const searchParams = useSearchParams();
   const [confirmationState, setConfirmationState] =
     useState<ConfirmationState>(() =>
       hasActivePremium(session) ? "confirmed" : "checking",
@@ -28,6 +30,7 @@ export default function SuccessStatusClient() {
   const effectiveConfirmationState = hasActivePremium(session)
     ? "confirmed"
     : confirmationState;
+  const checkoutSessionId = searchParams.get("session_id");
 
   const statusMessage = useMemo(() => {
     if (effectiveConfirmationState === "confirmed") {
@@ -49,10 +52,22 @@ export default function SuccessStatusClient() {
     let attempts = 0;
     let isMounted = true;
 
-    const interval = window.setInterval(async () => {
+    async function runConfirmationAttempt() {
       attempts += 1;
 
       try {
+        if (checkoutSessionId) {
+          await fetch("/api/billing/confirm", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              sessionId: checkoutSessionId,
+            }),
+          });
+        }
+
         const refreshedSession = await update();
 
         if (!isMounted) {
@@ -61,13 +76,11 @@ export default function SuccessStatusClient() {
 
         if (hasActivePremium(refreshedSession)) {
           setConfirmationState("confirmed");
-          window.clearInterval(interval);
-          return;
+          return true;
         }
 
         if (attempts >= MAX_CONFIRMATION_ATTEMPTS) {
           setConfirmationState("pending");
-          window.clearInterval(interval);
         }
       } catch {
         if (!isMounted) {
@@ -76,8 +89,19 @@ export default function SuccessStatusClient() {
 
         if (attempts >= MAX_CONFIRMATION_ATTEMPTS) {
           setConfirmationState("pending");
-          window.clearInterval(interval);
         }
+      }
+
+      return attempts >= MAX_CONFIRMATION_ATTEMPTS;
+    }
+
+    void runConfirmationAttempt();
+
+    const interval = window.setInterval(async () => {
+      const shouldStop = await runConfirmationAttempt();
+
+      if (shouldStop) {
+        window.clearInterval(interval);
       }
     }, CONFIRMATION_POLL_INTERVAL_MS);
 
@@ -85,7 +109,7 @@ export default function SuccessStatusClient() {
       isMounted = false;
       window.clearInterval(interval);
     };
-  }, [session, update]);
+  }, [checkoutSessionId, session, update]);
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-10">
