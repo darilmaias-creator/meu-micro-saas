@@ -122,6 +122,16 @@ export default function EmbeddedCheckoutClient() {
             O pagamento agora acontece dentro do proprio app, em ambiente seguro
             da Stripe.
           </p>
+          <p className="mt-2 text-xs text-slate-500">
+            Ao continuar, voce concorda com a nossa{" "}
+            <Link
+              href="/politicas/cancelamento-e-reembolso"
+              className="font-bold text-amber-700 hover:text-amber-800"
+            >
+              politica de cancelamento e reembolso
+            </Link>
+            .
+          </p>
 
           {status === "loading" && (
             <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-12 text-center">

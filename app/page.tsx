@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   BarChart2,
   Calculator,
@@ -418,6 +419,15 @@ export default function MainApp() {
               )}
             </>
           )}
+
+          <div className="mt-6 border-t border-slate-100 pt-4 text-center">
+            <Link
+              href="/politicas/cancelamento-e-reembolso"
+              className="text-xs font-bold text-slate-500 transition-colors hover:text-amber-700"
+            >
+              Politica de cancelamento e reembolso
+            </Link>
+          </div>
         </div>
       </div>
     );
