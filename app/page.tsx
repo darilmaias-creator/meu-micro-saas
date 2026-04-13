@@ -69,7 +69,24 @@ function mapAuthStatusMessage(searchParams: URLSearchParams): AuthFeedback {
     };
   }
 
+  if (searchParams.get("auth") === "required") {
+    return {
+      tone: "error",
+      message: "Entre na sua conta para acessar essa area protegida.",
+    };
+  }
+
   return null;
+}
+
+function resolvePostLoginPath(searchParams: URLSearchParams) {
+  const nextPath = searchParams.get("next");
+
+  if (!nextPath || !nextPath.startsWith("/") || nextPath.startsWith("//")) {
+    return "/";
+  }
+
+  return nextPath;
 }
 
 export default function MainApp() {
@@ -79,13 +96,20 @@ export default function MainApp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authFeedback, setAuthFeedback] = useState<AuthFeedback>(null);
+  const [postLoginPath, setPostLoginPath] = useState("/");
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
   const [isGoogleEnabled, setIsGoogleEnabled] = useState(false);
   const [providersLoaded, setProvidersLoaded] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
+
     setAuthFeedback(mapAuthStatusMessage(searchParams));
+    setPostLoginPath(resolvePostLoginPath(searchParams));
+
+    if (searchParams.get("auth") === "required") {
+      setAuthMode("login");
+    }
   }, []);
 
   useEffect(() => {
@@ -195,7 +219,7 @@ export default function MainApp() {
         email,
         password,
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl: postLoginPath,
       });
 
       if (loginResult?.error) {
@@ -213,6 +237,10 @@ export default function MainApp() {
 
       setName("");
       setPassword("");
+
+      if (postLoginPath !== "/") {
+        window.location.assign(loginResult?.url ?? postLoginPath);
+      }
     } catch {
       setAuthFeedback({
         tone: "error",
@@ -396,7 +424,7 @@ export default function MainApp() {
               
               <button
                 type="button"
-                onClick={() => signIn("google", { callbackUrl: "/" })}
+                onClick={() => signIn("google", { callbackUrl: postLoginPath })}
                 disabled={!isGoogleEnabled}
                 className="w-full bg-white border-2 border-slate-200 text-slate-700 font-bold text-base py-3 px-4 rounded-xl hover:bg-slate-50 hover:border-slate-300 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-sm"
               >
