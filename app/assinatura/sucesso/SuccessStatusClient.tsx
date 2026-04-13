@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { isPremiumActiveSubscriptionStatus } from "@/lib/billing/subscription-status";
@@ -12,6 +11,10 @@ type ConfirmationState = "checking" | "confirmed" | "pending";
 const MAX_CONFIRMATION_ATTEMPTS = 8;
 const CONFIRMATION_POLL_INTERVAL_MS = 2500;
 
+type SuccessStatusClientProps = {
+  sessionId?: string;
+};
+
 function hasActivePremium(session: Awaited<ReturnType<typeof useSession>>["data"]) {
   return Boolean(
     session?.user?.isPremium &&
@@ -20,9 +23,10 @@ function hasActivePremium(session: Awaited<ReturnType<typeof useSession>>["data"
   );
 }
 
-export default function SuccessStatusClient() {
+export default function SuccessStatusClient({
+  sessionId,
+}: SuccessStatusClientProps) {
   const { data: session, update } = useSession();
-  const searchParams = useSearchParams();
   const [confirmationState, setConfirmationState] =
     useState<ConfirmationState>(() =>
       hasActivePremium(session) ? "confirmed" : "checking",
@@ -30,7 +34,7 @@ export default function SuccessStatusClient() {
   const effectiveConfirmationState = hasActivePremium(session)
     ? "confirmed"
     : confirmationState;
-  const checkoutSessionId = searchParams.get("session_id");
+  const checkoutSessionId = sessionId;
 
   const statusMessage = useMemo(() => {
     if (effectiveConfirmationState === "confirmed") {
