@@ -5,6 +5,7 @@ import {
   createStripeServerClient,
   isStripeBillingConfigured,
 } from "@/lib/billing/stripe";
+import { isPremiumActiveSubscriptionStatus } from "@/lib/billing/subscription-status";
 import { authOptions } from "@/lib/auth/options";
 import { findUserById } from "@/lib/auth/user-store";
 
@@ -46,11 +47,15 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!user.stripeCustomerId) {
+    if (
+      !user.stripeCustomerId ||
+      !user.stripeSubscriptionId ||
+      !isPremiumActiveSubscriptionStatus(user.stripeSubscriptionStatus)
+    ) {
       return NextResponse.json(
         {
           message:
-            "Essa conta ainda nao tem uma assinatura gerenciada pela Stripe.",
+            "Essa conta ainda nao tem uma assinatura ativa para gerenciar.",
         },
         { status: 400 },
       );
@@ -74,4 +79,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

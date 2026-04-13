@@ -5,6 +5,7 @@ import {
   PREMIUM_FOUNDER_LIMIT,
   type PremiumOfferTier,
 } from "@/lib/billing/plans";
+import { isPremiumActiveSubscriptionStatus } from "@/lib/billing/subscription-status";
 import {
   createStripeServerClient,
   getStripePriceIdForTier,
@@ -55,7 +56,11 @@ export async function POST(request: Request) {
       );
     }
 
-    if (user.plan === "premium" && user.stripeCustomerId) {
+    if (
+      user.plan === "premium" &&
+      user.stripeSubscriptionId &&
+      isPremiumActiveSubscriptionStatus(user.stripeSubscriptionStatus)
+    ) {
       return NextResponse.json(
         {
           message:
@@ -95,6 +100,7 @@ export async function POST(request: Request) {
     const baseUrl = getBaseUrl(request);
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "subscription",
+      ui_mode: "embedded_page",
       customer: stripeCustomerId,
       client_reference_id: user.id,
       line_items: [
@@ -103,8 +109,7 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${baseUrl}/assinatura/sucesso`,
-      cancel_url: `${baseUrl}/assinatura/cancelado`,
+      return_url: `${baseUrl}/assinatura/sucesso?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         appUserId: user.id,
         offerTier,
@@ -119,12 +124,12 @@ export async function POST(request: Request) {
       },
     });
 
-    if (!checkoutSession.url) {
-      throw new Error("A Stripe nao retornou a URL do checkout.");
+    if (!checkoutSession.client_secret) {
+      throw new Error("A Stripe nao retornou o client secret do checkout.");
     }
 
     return NextResponse.json({
-      url: checkoutSession.url,
+      clientSecret: checkoutSession.client_secret,
       offerTier,
     });
   } catch (error) {
@@ -136,4 +141,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

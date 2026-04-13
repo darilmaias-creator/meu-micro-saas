@@ -30,6 +30,7 @@ import {
   PREMIUM_STANDARD_PRICE_BRL,
   formatBrlPriceFromCents,
 } from "@/lib/billing/plans";
+import { isPremiumActiveSubscriptionStatus } from "@/lib/billing/subscription-status";
 import { clearLocalAppDataCache } from "./hooks/useAppData";
 
 type ProfileModalProps = {
@@ -137,41 +138,17 @@ export default function ProfileModal({
   const standardPriceLabel = formatBrlPriceFromCents(
     PREMIUM_STANDARD_PRICE_BRL,
   );
-  const hasStripeBilling = Boolean(user.stripeCustomerId);
+  const hasActiveStripeSubscription = Boolean(
+    user.stripeSubscriptionId &&
+      isPremiumActiveSubscriptionStatus(user.stripeSubscriptionStatus),
+  );
   const stripeSubscriptionStatusLabel = user.stripeSubscriptionStatus
     ? user.stripeSubscriptionStatus.replaceAll("_", " ")
     : null;
 
   async function handleStartPremiumCheckout() {
-    setFeedback(null);
     setIsStartingPremiumCheckout(true);
-
-    try {
-      const response = await fetch("/api/billing/checkout", {
-        method: "POST",
-      });
-      const result = (await response.json().catch(() => null)) as
-        | { message?: string; url?: string }
-        | null;
-
-      if (!response.ok || !result?.url) {
-        setFeedback({
-          tone: "error",
-          message:
-            result?.message ?? "Nao foi possivel abrir o checkout agora.",
-        });
-        return;
-      }
-
-      window.location.href = result.url;
-    } catch {
-      setFeedback({
-        tone: "error",
-        message: "Nao foi possivel abrir o checkout agora.",
-      });
-    } finally {
-      setIsStartingPremiumCheckout(false);
-    }
+    window.location.href = "/assinatura/checkout";
   }
 
   async function handleOpenBillingPortal() {
@@ -852,7 +829,7 @@ export default function ProfileModal({
                       Status da assinatura: {stripeSubscriptionStatusLabel}
                     </p>
                   )}
-                  {isPremium && !hasStripeBilling && (
+                  {isPremium && !hasActiveStripeSubscription && (
                     <p className="mt-2 text-xs text-slate-500">
                       Essa conta premium foi liberada manualmente. O
                       gerenciamento automatico pela Stripe aparece nas novas
@@ -883,7 +860,7 @@ export default function ProfileModal({
                   </button>
                 )}
 
-                {hasStripeBilling && (
+                {hasActiveStripeSubscription && (
                   <button
                     type="button"
                     onClick={handleOpenBillingPortal}
