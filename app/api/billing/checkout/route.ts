@@ -15,6 +15,7 @@ import { authOptions } from "@/lib/auth/options";
 import {
   countFounderOfferUsers,
   findUserById,
+  updateUserBillingState,
 } from "@/lib/auth/user-store";
 
 export const runtime = "nodejs";
@@ -109,9 +110,26 @@ export async function POST(request: Request) {
         : "standard";
 
     const stripe = createStripeServerClient();
-    const stripeCustomerId = await resolveStripeCustomerForCheckout({
+    let stripeCustomerId = await resolveStripeCustomerForCheckout({
       stripeCustomerId: user.stripeCustomerId,
     });
+
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.name,
+        metadata: {
+          appUserId: user.id,
+        },
+      });
+
+      stripeCustomerId = customer.id;
+      await updateUserBillingState({
+        userId: user.id,
+        stripeCustomerId,
+      });
+    }
+
     const founderOfferApplied =
       user.founderOfferApplied || offerTier === "founder";
     const baseUrl = getBaseUrl(request);
@@ -120,12 +138,7 @@ export async function POST(request: Request) {
       // Stripe documents `embedded` for in-app Checkout, but the installed
       // stripe-node typings in this repo still lag behind that enum value.
       ui_mode: EMBEDDED_CHECKOUT_UI_MODE,
-      ...(stripeCustomerId
-        ? { customer: stripeCustomerId }
-        : {
-            customer_email: user.email,
-            customer_creation: "always" as const,
-          }),
+      customer: stripeCustomerId,
       client_reference_id: user.id,
       line_items: [
         {
