@@ -468,6 +468,12 @@ function AuthenticatedApp({ session }: { session: Session }) {
             </div>
 
             <div className="flex items-center gap-4">
+              <Link
+                href="/politicas/cancelamento-e-reembolso"
+                className="hidden rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50 md:inline-flex"
+              >
+                Politica Premium
+              </Link>
               <button
                 type="button"
                 onClick={() => setIsProfileOpen(true)}

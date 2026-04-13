@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -1002,6 +1003,14 @@ export default function ProfileModal({
                       : "Pedir reembolso"}
                   </button>
                 )}
+
+                <Link
+                  href="/politicas/cancelamento-e-reembolso"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-bold text-sky-800 transition-colors hover:bg-sky-100"
+                >
+                  <Crown size={16} />
+                  Politica do Premium
+                </Link>
               </div>
             </div>
 
