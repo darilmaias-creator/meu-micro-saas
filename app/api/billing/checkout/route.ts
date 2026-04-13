@@ -146,7 +146,9 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      redirect_on_completion: "if_required",
+      // Always return to the app success page so the client can confirm
+      // the subscription with the Checkout Session id.
+      redirect_on_completion: "always",
       return_url: `${baseUrl}/assinatura/sucesso?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         appUserId: user.id,
@@ -168,6 +170,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       clientSecret: checkoutSession.client_secret,
+      checkoutSessionId: checkoutSession.id,
       offerTier,
     });
   } catch (error) {

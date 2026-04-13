@@ -11,6 +11,7 @@ const stripePromise = loadStripe(
 
 export default function EmbeddedCheckoutClient() {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const checkoutSessionIdRef = useRef<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
@@ -37,7 +38,11 @@ export default function EmbeddedCheckoutClient() {
             });
 
             const result = (await response.json().catch(() => null)) as
-              | { message?: string; clientSecret?: string }
+              | {
+                  message?: string;
+                  clientSecret?: string;
+                  checkoutSessionId?: string;
+                }
               | null;
 
             if (!response.ok || !result?.clientSecret) {
@@ -47,10 +52,17 @@ export default function EmbeddedCheckoutClient() {
               );
             }
 
+            checkoutSessionIdRef.current = result.checkoutSessionId ?? null;
             return result.clientSecret;
           },
           onComplete: () => {
-            window.location.href = "/assinatura/sucesso";
+            const successUrl = checkoutSessionIdRef.current
+              ? `/assinatura/sucesso?session_id=${encodeURIComponent(
+                  checkoutSessionIdRef.current,
+                )}`
+              : "/assinatura/sucesso";
+
+            window.location.assign(successUrl);
           },
         });
 
@@ -139,4 +151,3 @@ export default function EmbeddedCheckoutClient() {
     </div>
   );
 }
-
