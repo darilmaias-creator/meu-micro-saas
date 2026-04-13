@@ -2,9 +2,7 @@
 import React, { useState } from 'react';
 import { Package, Box, AlertCircle, Trash2, Save } from 'lucide-react';
 import { Card, InputGroup } from './ui';
-
-// Limite da conta gratuita
-const FREE_TIER_INSUMO_LIMIT = 20;
+import { FREE_TIER_INSUMO_LIMIT } from '@/lib/app-data/plan-limits';
 
 export default function InventoryTab({ insumos, setInsumos, unit, isPremium }: any) {
     const [insType, setInsType] = useState('area'); 

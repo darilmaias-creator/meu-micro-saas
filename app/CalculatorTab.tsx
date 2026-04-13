@@ -2,12 +2,7 @@
 import React, { useState } from 'react';
 import { Settings, Package, Plus, Trash2, DollarSign, RefreshCw, Heart, Sparkles, Save, Copy, Download, Upload } from 'lucide-react';
 import { Card, InputGroup, TimeInputGroup, Toggle } from './ui';
-
-// Chave de API do Google Gemini para a geração de texto (Marketing)
-const apiKey = "AIzaSyDajnkEqU6D9edIPVb4jwo9P8ZaLCqGBRM"; 
-
-// Limite da conta gratuita
-const FREE_TIER_PRODUCT_LIMIT = 10;
+import { FREE_TIER_PRODUCT_LIMIT } from '@/lib/app-data/plan-limits';
 
 export default function CalculatorTab({ appData, isPremium }: any) {
     const { config, insumos, savedProducts, setSavedProducts } = appData;
@@ -167,19 +162,21 @@ export default function CalculatorTab({ appData, isPremium }: any) {
         }
         if (!navigator.onLine) { setError("⚠️ Apenas modo ONLINE para essa função."); return; }
         if (!productName) { setError("Nome obrigatório."); return; }
-        if (!apiKey) { setError("⚠️ Insira sua chave de API no código para usar a IA."); return; }
         setError(''); setIsGenerating(true); setAiContent(null);
         try {
-            const materialsText = recipeItems.map(i => i.name).join(', ');
-            const prompt = `Crie um anúncio de venda para artesanato. Produto: ${productName}. Materiais principais: ${materialsText}. Preço: R$ ${activePrice.toFixed(2)}. Gere: Título, Descrição com emojis e Hashtags.`;
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+            const response = await fetch("/api/marketing/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    activePrice,
+                    materials: recipeItems.map((item: any) => String(item.name || '')),
+                    productName,
+                }),
             });
             const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
-            setAiContent(data.candidates?.[0]?.content?.parts?.[0]?.text);
-        } catch (err) { setError("Erro na IA. Tente novamente."); } finally { setIsGenerating(false); }
+            if (!response.ok) throw new Error(data?.message || "Erro na IA. Tente novamente.");
+            setAiContent(data.content || null);
+        } catch (err) { setError(err instanceof Error ? err.message : "Erro na IA. Tente novamente."); } finally { setIsGenerating(false); }
     };
 
     return (

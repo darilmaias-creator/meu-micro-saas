@@ -7,6 +7,7 @@ import {
   type AppDataResponse,
   type AppDataState,
 } from "@/lib/app-data/defaults";
+import { validateAppDataPlanLimits } from "@/lib/app-data/plan-limits";
 import { authOptions } from "@/lib/auth/options";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -114,6 +115,33 @@ export async function PUT(request: Request) {
 
   try {
     const supabase = createSupabaseServerClient();
+    const { data: existingRow, error: existingRowError } = await supabase
+      .from("user_app_data")
+      .select("user_id, config, insumos, saved_products, sales, quotes, updated_at")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (existingRowError) {
+      throw existingRowError;
+    }
+
+    const currentState = buildAppDataStateFromRow(existingRow as AppDataRow | null);
+    const planLimitViolation = validateAppDataPlanLimits({
+      currentState,
+      isPremium: Boolean(session.user.isPremium),
+      nextState: normalizedState,
+    });
+
+    if (planLimitViolation) {
+      return NextResponse.json(
+        {
+          code: planLimitViolation.code,
+          message: planLimitViolation.message,
+        },
+        { status: 403 },
+      );
+    }
+
     const { data, error } = await supabase
       .from("user_app_data")
       .upsert(
