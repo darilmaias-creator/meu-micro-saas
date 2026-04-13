@@ -4,7 +4,13 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 
+import {
+  normalizeEmailInput,
+  validateEmailAddress,
+  validatePasswordForLogin,
+} from "@/lib/auth/input-validation";
 import { verifyPassword } from "@/lib/auth/password";
+import { clearAuthRateLimit, consumeAuthRateLimit } from "@/lib/auth/rate-limit";
 import {
   findUserByEmail,
   findUserById,
@@ -14,6 +20,10 @@ import {
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+const nextAuthUrl = process.env.NEXTAUTH_URL?.trim();
+const useSecureCookies =
+  process.env.NODE_ENV === "production" ||
+  Boolean(nextAuthUrl?.startsWith("https://"));
 
 function logAuthError(context: string, error: unknown) {
   console.error(`[auth:${context}]`, error);
@@ -26,12 +36,26 @@ const providers: NextAuthOptions["providers"] = [
       email: { label: "Email", type: "email", placeholder: "seu@email.com" },
       password: { label: "Senha", type: "password" },
     },
-    async authorize(credentials) {
+    async authorize(credentials, req) {
       try {
-        const email = credentials?.email?.trim();
-        const password = credentials?.password;
+        const email = normalizeEmailInput(credentials?.email);
+        const password = credentials?.password ?? "";
 
-        if (!email || !password) {
+        if (validateEmailAddress(email) || validatePasswordForLogin(password)) {
+          return null;
+        }
+
+        const rateLimitResult = await consumeAuthRateLimit({
+          action: "login",
+          email,
+          headers: req.headers,
+        });
+
+        if (!rateLimitResult.ok) {
+          logAuthError("credentials-rate-limit", {
+            email,
+            retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+          });
           return null;
         }
 
@@ -46,6 +70,12 @@ const providers: NextAuthOptions["providers"] = [
         if (!passwordMatches) {
           return null;
         }
+
+        await clearAuthRateLimit({
+          action: "login",
+          email,
+          headers: req.headers,
+        });
 
         return {
           id: user.id,
@@ -74,7 +104,13 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
+    maxAge: 60 * 60 * 24 * 14,
+    updateAge: 60 * 60 * 12,
   },
+  jwt: {
+    maxAge: 60 * 60 * 24 * 14,
+  },
+  useSecureCookies,
   pages: {
     signIn: "/",
     error: "/",

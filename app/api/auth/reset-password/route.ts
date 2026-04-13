@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { validatePasswordForStorage } from "@/lib/auth/input-validation";
 import { hashPassword } from "@/lib/auth/password";
+import { consumeAuthRateLimit } from "@/lib/auth/rate-limit";
 import { updateUserPasswordFromReset } from "@/lib/auth/user-store";
 
 export const runtime = "nodejs";
@@ -22,8 +24,10 @@ function validateResetPasswordPayload(body: ResetPasswordPayload) {
     return "O link de recuperacao esta incompleto ou invalido.";
   }
 
-  if (password.length < 6) {
-    return "A nova senha precisa ter pelo menos 6 caracteres.";
+  const passwordValidationMessage = validatePasswordForStorage(password);
+
+  if (passwordValidationMessage) {
+    return passwordValidationMessage.replace("A senha", "A nova senha");
   }
 
   if (password !== confirmPassword) {
@@ -42,6 +46,18 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { message: "Nao foi possivel ler os dados enviados." },
       { status: 400 },
+    );
+  }
+
+  const rateLimitResult = await consumeAuthRateLimit({
+    action: "reset_password",
+    headers: request.headers,
+  });
+
+  if (!rateLimitResult.ok) {
+    return NextResponse.json(
+      { message: rateLimitResult.message },
+      { status: 429 },
     );
   }
 

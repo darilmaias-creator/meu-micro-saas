@@ -82,6 +82,21 @@ create unique index if not exists auth_users_stripe_subscription_id_idx
   on public.auth_users (stripe_subscription_id)
   where stripe_subscription_id is not null;
 
+create table if not exists public.auth_rate_limits (
+  key text primary key,
+  action text not null check (
+    action in ('login', 'register', 'forgot_password', 'reset_password')
+  ),
+  attempts integer not null default 0,
+  window_started_at timestamptz not null,
+  blocked_until timestamptz null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists auth_rate_limits_action_idx
+  on public.auth_rate_limits (action);
+
 create table if not exists public.user_app_data (
   user_id text primary key,
   config jsonb not null default '{}'::jsonb,
@@ -113,12 +128,29 @@ begin
 end;
 $$;
 
+create or replace function public.set_auth_rate_limits_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = timezone('utc', now());
+  return new;
+end;
+$$;
+
 drop trigger if exists trg_auth_users_updated_at on public.auth_users;
 
 create trigger trg_auth_users_updated_at
 before update on public.auth_users
 for each row
 execute function public.set_auth_users_updated_at();
+
+drop trigger if exists trg_auth_rate_limits_updated_at on public.auth_rate_limits;
+
+create trigger trg_auth_rate_limits_updated_at
+before update on public.auth_rate_limits
+for each row
+execute function public.set_auth_rate_limits_updated_at();
 
 drop trigger if exists trg_user_app_data_updated_at on public.user_app_data;
 
@@ -128,4 +160,5 @@ for each row
 execute function public.set_user_app_data_updated_at();
 
 alter table public.auth_users enable row level security;
+alter table public.auth_rate_limits enable row level security;
 alter table public.user_app_data enable row level security;

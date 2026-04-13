@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
 import {
+  normalizeEmailInput,
+  validateEmailAddress,
+} from "@/lib/auth/input-validation";
+import {
   findUserByEmail,
   setUserPasswordResetRequest,
 } from "@/lib/auth/user-store";
@@ -9,18 +13,13 @@ import {
   createPasswordResetRequest,
 } from "@/lib/auth/password-reset";
 import { sendPasswordResetEmail } from "@/lib/auth/password-reset-email";
+import { consumeAuthRateLimit } from "@/lib/auth/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type ForgotPasswordPayload = {
-  email?: string;
-};
-
-function isValidEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
+type ForgotPasswordPayload = { email?: string };
 
 function getBaseUrl(request: Request) {
   return process.env.NEXTAUTH_URL?.trim() || new URL(request.url).origin;
@@ -70,9 +69,24 @@ export async function POST(request: Request) {
     );
   }
 
-  const email = body.email?.trim().toLowerCase() ?? "";
+  const email = normalizeEmailInput(body.email);
 
-  if (!isValidEmail(email)) {
+  const rateLimitResult = await consumeAuthRateLimit({
+    action: "forgot_password",
+    email,
+    headers: request.headers,
+  });
+
+  if (!rateLimitResult.ok) {
+    return NextResponse.json(
+      { message: rateLimitResult.message },
+      { status: 429 },
+    );
+  }
+
+  const emailValidationMessage = validateEmailAddress(email);
+
+  if (emailValidationMessage) {
     return NextResponse.json(
       { message: "Informe um e-mail valido para recuperar a senha." },
       { status: 400 },

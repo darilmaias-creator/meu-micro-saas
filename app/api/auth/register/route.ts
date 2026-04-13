@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 
+import {
+  normalizeEmailInput,
+  normalizeNameInput,
+  validateEmailAddress,
+  validateName,
+  validatePasswordForStorage,
+} from "@/lib/auth/input-validation";
 import { hashPassword } from "@/lib/auth/password";
+import { consumeAuthRateLimit } from "@/lib/auth/rate-limit";
 import { createCredentialsUser } from "@/lib/auth/user-store";
 
 type RegisterPayload = {
@@ -10,21 +18,26 @@ type RegisterPayload = {
 };
 
 function validateRegisterPayload(body: RegisterPayload) {
-  const name = body.name?.trim() ?? "";
-  const email = body.email?.trim() ?? "";
+  const name = normalizeNameInput(body.name);
+  const email = normalizeEmailInput(body.email);
   const password = body.password ?? "";
 
-  if (name.length < 2) {
-    return "Informe um nome com pelo menos 2 caracteres.";
+  const nameValidationMessage = validateName(name);
+
+  if (nameValidationMessage) {
+    return nameValidationMessage;
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return "Informe um e-mail valido.";
+  const emailValidationMessage = validateEmailAddress(email);
+
+  if (emailValidationMessage) {
+    return emailValidationMessage;
   }
 
-  if (password.length < 6) {
-    return "A senha precisa ter pelo menos 6 caracteres.";
+  const passwordValidationMessage = validatePasswordForStorage(password);
+
+  if (passwordValidationMessage) {
+    return passwordValidationMessage;
   }
 
   return null;
@@ -65,6 +78,19 @@ export async function POST(request: Request) {
     );
   }
 
+  const rateLimitResult = await consumeAuthRateLimit({
+    action: "register",
+    email: body.email,
+    headers: request.headers,
+  });
+
+  if (!rateLimitResult.ok) {
+    return NextResponse.json(
+      { message: rateLimitResult.message },
+      { status: 429 },
+    );
+  }
+
   const validationMessage = validateRegisterPayload(body);
 
   if (validationMessage) {
@@ -74,8 +100,8 @@ export async function POST(request: Request) {
   try {
     const passwordHash = await hashPassword(body.password!);
     const user = await createCredentialsUser({
-      name: body.name!.trim(),
-      email: body.email!.trim(),
+      name: normalizeNameInput(body.name),
+      email: normalizeEmailInput(body.email),
       passwordHash,
     });
 
