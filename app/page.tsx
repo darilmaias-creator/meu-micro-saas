@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import Link from "next/link";
 import {
   BarChart2,
@@ -28,6 +28,7 @@ type AuthFeedback =
       message: string;
     }
   | null;
+type ActiveTab = "calculator" | "inventory" | "sales" | "dashboard";
 
 const PASSWORD_RECOVERY_AVAILABLE = false;
 
@@ -87,6 +88,32 @@ function resolvePostLoginPath(searchParams: URLSearchParams) {
   }
 
   return nextPath;
+}
+
+function resolveActiveTab(searchParams: URLSearchParams): ActiveTab {
+  switch (searchParams.get("tab")) {
+    case "estoque":
+      return "inventory";
+    case "vendas":
+      return "sales";
+    case "dashboard":
+      return "dashboard";
+    default:
+      return "calculator";
+  }
+}
+
+function getTabQueryValue(activeTab: ActiveTab) {
+  switch (activeTab) {
+    case "inventory":
+      return "estoque";
+    case "sales":
+      return "vendas";
+    case "dashboard":
+      return "dashboard";
+    default:
+      return null;
+  }
 }
 
 export default function MainApp() {
@@ -465,9 +492,37 @@ export default function MainApp() {
 }
 
 function AuthenticatedApp({ session }: { session: Session }) {
-  const [activeTab, setActiveTab] = useState("calculator");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("calculator");
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const appData = useAppData(session.user.id);
+
+  const syncActiveTabFromUrl = useEffectEvent(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+
+    setActiveTab(resolveActiveTab(searchParams));
+  });
+
+  useEffect(() => {
+    syncActiveTabFromUrl();
+  }, [syncActiveTabFromUrl]);
+
+  useEffect(() => {
+    const currentUrl = new URL(window.location.href);
+    const tabQueryValue = getTabQueryValue(activeTab);
+
+    if (tabQueryValue) {
+      currentUrl.searchParams.set("tab", tabQueryValue);
+    } else {
+      currentUrl.searchParams.delete("tab");
+    }
+
+    const nextUrl = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+    const currentBrowserUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+    if (nextUrl !== currentBrowserUrl) {
+      window.history.replaceState(null, "", nextUrl);
+    }
+  }, [activeTab]);
 
   if (!appData.isLoaded) {
     return (

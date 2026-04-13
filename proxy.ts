@@ -27,5 +27,11 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/assinatura/:path*"],
+  matcher: [
+    "/assinatura/:path*",
+    "/dashboard",
+    "/vendas",
+    "/estoque",
+    "/ficha-tecnica",
+  ],
 };
