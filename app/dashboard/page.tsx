@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import ProtectedSectionApp from "../ProtectedSectionApp";
 
 export default function DashboardPage() {
-  redirect("/?tab=dashboard");
+  return <ProtectedSectionApp initialTab="dashboard" />;
 }

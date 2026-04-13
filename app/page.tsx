@@ -1,25 +1,13 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  BarChart2,
-  Calculator,
-  Crown,
-  LogOut,
-  Package,
-  ShoppingBag,
-  UserRound,
-} from "lucide-react";
-import type { Session } from "next-auth";
-import { getProviders, signIn, signOut, useSession } from "next-auth/react";
+import { Calculator } from "lucide-react";
+import { getProviders, signIn, useSession } from "next-auth/react";
 
-import CalculatorTab from "./CalculatorTab";
-import DashboardTab from "./DashboardTab";
-import InventoryTab from "./InventoryTab";
-import ProfileModal from "./ProfileModal";
-import SalesTab from "./SalesTab";
-import { useAppData } from "./hooks/useAppData";
+import AuthenticatedAppShell from "./AuthenticatedAppShell";
+import type { ActiveTab } from "../lib/app-tabs";
+import { getPathForActiveTab, resolveActiveTabFromParam } from "../lib/app-tabs";
 
 type AuthMode = "login" | "register" | "forgotPassword";
 type AuthFeedback =
@@ -28,7 +16,6 @@ type AuthFeedback =
       message: string;
     }
   | null;
-type ActiveTab = "calculator" | "inventory" | "sales" | "dashboard";
 
 const PASSWORD_RECOVERY_AVAILABLE = false;
 
@@ -84,36 +71,14 @@ function resolvePostLoginPath(searchParams: URLSearchParams) {
   const nextPath = searchParams.get("next");
 
   if (!nextPath || !nextPath.startsWith("/") || nextPath.startsWith("//")) {
+    if (searchParams.has("tab")) {
+      return getPathForActiveTab(resolveActiveTabFromParam(searchParams.get("tab")));
+    }
+
     return "/";
   }
 
   return nextPath;
-}
-
-function resolveActiveTab(searchParams: URLSearchParams): ActiveTab {
-  switch (searchParams.get("tab")) {
-    case "estoque":
-      return "inventory";
-    case "vendas":
-      return "sales";
-    case "dashboard":
-      return "dashboard";
-    default:
-      return "calculator";
-  }
-}
-
-function getTabQueryValue(activeTab: ActiveTab) {
-  switch (activeTab) {
-    case "inventory":
-      return "estoque";
-    case "sales":
-      return "vendas";
-    case "dashboard":
-      return "dashboard";
-    default:
-      return null;
-  }
 }
 
 export default function MainApp() {
@@ -123,6 +88,8 @@ export default function MainApp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authFeedback, setAuthFeedback] = useState<AuthFeedback>(null);
+  const [initialAuthenticatedTab, setInitialAuthenticatedTab] =
+    useState<ActiveTab>("calculator");
   const [postLoginPath, setPostLoginPath] = useState("/");
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
   const [isGoogleEnabled, setIsGoogleEnabled] = useState(false);
@@ -133,6 +100,7 @@ export default function MainApp() {
 
     setAuthFeedback(mapAuthStatusMessage(searchParams));
     setPostLoginPath(resolvePostLoginPath(searchParams));
+    setInitialAuthenticatedTab(resolveActiveTabFromParam(searchParams.get("tab")));
 
     if (searchParams.get("auth") === "required") {
       setAuthMode("login");
@@ -488,152 +456,11 @@ export default function MainApp() {
     );
   }
 
-  return <AuthenticatedApp key={session.user.id} session={session} />;
-}
-
-function AuthenticatedApp({ session }: { session: Session }) {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("calculator");
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const appData = useAppData(session.user.id);
-
-  const syncActiveTabFromUrl = useEffectEvent(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-
-    setActiveTab(resolveActiveTab(searchParams));
-  });
-
-  useEffect(() => {
-    syncActiveTabFromUrl();
-  }, [syncActiveTabFromUrl]);
-
-  useEffect(() => {
-    const currentUrl = new URL(window.location.href);
-    const tabQueryValue = getTabQueryValue(activeTab);
-
-    if (tabQueryValue) {
-      currentUrl.searchParams.set("tab", tabQueryValue);
-    } else {
-      currentUrl.searchParams.delete("tab");
-    }
-
-    const nextUrl = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
-    const currentBrowserUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-
-    if (nextUrl !== currentBrowserUrl) {
-      window.history.replaceState(null, "", nextUrl);
-    }
-  }, [activeTab]);
-
-  if (!appData.isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p className="text-xl font-bold text-amber-600 animate-pulse">Sincronizando banco de dados...</p>
-      </div>
-    );
-  }
-
-  const isPremium = session.user.isPremium;
-  const displayHeaderAvatar = isPremium ? session.user?.image : null;
-
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12 relative overflow-x-hidden">
-      <div className="bg-amber-600 text-white py-4 shadow-md sticky top-0 z-40 backdrop-blur-sm bg-opacity-95">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-lg shadow-sm">
-                <Calculator size={28} className="text-amber-600" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold leading-tight drop-shadow-sm">Calculadora do Produtor</h1>
-                <span className="text-xs text-amber-200 uppercase tracking-wider font-bold">Orçamentos claros. Clientes seguros. Negócios fechados.</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Link
-                href="/politicas/cancelamento-e-reembolso"
-                className="hidden rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50 md:inline-flex"
-              >
-                Politica Premium
-              </Link>
-              <button
-                type="button"
-                onClick={() => setIsProfileOpen(true)}
-                className="flex items-center gap-3 text-sm bg-amber-700/30 px-3 py-1.5 rounded-full hover:bg-amber-700/45 transition-colors"
-              >
-                {displayHeaderAvatar ? (
-                  <img
-                    src={displayHeaderAvatar}
-                    alt="Avatar"
-                    className="w-8 h-8 rounded-full border border-amber-300 object-cover bg-white"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full border border-amber-300 bg-white flex items-center justify-center">
-                    <UserRound size={16} className="text-slate-400" />
-                  </div>
-                )}
-                <div className="hidden md:block text-left">
-                  <span className="block font-bold text-amber-50 leading-tight">{session.user?.name?.split(" ")[0]}</span>
-                  <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-bold text-amber-100/90">
-                    <Crown size={10} />
-                    {isPremium ? "Premium" : "Gratis"}
-                  </span>
-                </div>
-              </button>
-              <button
-                onClick={() => signOut()}
-                className="bg-amber-700/50 hover:bg-amber-800 p-2 rounded-lg transition-colors text-amber-100 hover:text-white"
-                title="Sair da Conta"
-              >
-                <LogOut size={18} />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex bg-amber-700/50 p-1 rounded-lg overflow-x-auto max-w-full no-scrollbar">
-            <button onClick={() => setActiveTab("calculator")} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "calculator" ? "bg-white text-amber-700 shadow" : "text-amber-50 hover:bg-amber-700"}`}>
-              <Calculator size={16} /> Ficha Técnica
-            </button>
-            <button onClick={() => setActiveTab("inventory")} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "inventory" ? "bg-white text-amber-700 shadow" : "text-amber-50 hover:bg-amber-700"}`}>
-              <Package size={16} /> Estoque Físico
-            </button>
-            <button onClick={() => setActiveTab("sales")} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "sales" ? "bg-white text-amber-700 shadow" : "text-amber-50 hover:bg-amber-700"}`}>
-              <ShoppingBag size={16} /> Nova Venda
-            </button>
-            <button onClick={() => setActiveTab("dashboard")} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "dashboard" ? "bg-white text-amber-700 shadow" : "text-amber-50 hover:bg-amber-700"}`}>
-              <BarChart2 size={16} /> Visão Geral
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        {activeTab === "inventory" && (
-          <InventoryTab
-            insumos={appData.insumos}
-            setInsumos={appData.setInsumos}
-            unit={appData.config.unit}
-            isPremium={isPremium}
-          />
-        )}
-
-        {activeTab === "calculator" && (
-          <CalculatorTab appData={appData} isPremium={isPremium} />
-        )}
-
-        {activeTab === "sales" && (
-          <SalesTab appData={appData} isPremium={isPremium} />
-        )}
-
-        {activeTab === "dashboard" && <DashboardTab appData={appData} />}
-      </main>
-
-      <ProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        onRestoreAppData={appData.replaceAllData}
-      />
-    </div>
+    <AuthenticatedAppShell
+      key={`${session.user.id}:${initialAuthenticatedTab}`}
+      session={session}
+      initialTab={initialAuthenticatedTab}
+    />
   );
 }

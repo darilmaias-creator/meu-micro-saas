@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import ProtectedSectionApp from "../ProtectedSectionApp";
 
 export default function InventoryPage() {
-  redirect("/?tab=estoque");
+  return <ProtectedSectionApp initialTab="inventory" />;
 }

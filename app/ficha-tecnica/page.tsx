@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import ProtectedSectionApp from "../ProtectedSectionApp";
 
 export default function CalculatorPage() {
-  redirect("/");
+  return <ProtectedSectionApp initialTab="calculator" />;
 }
