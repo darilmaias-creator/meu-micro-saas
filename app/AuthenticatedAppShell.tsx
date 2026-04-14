@@ -83,11 +83,11 @@ export default function AuthenticatedAppShell({
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
             <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-lg shadow-sm">
+              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-white p-1.5 shadow-sm md:h-16 md:w-16">
                 <img
                   src="https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png"
                   alt="Logo da Calculadora do Produtor"
-                  className="h-7 w-7 object-contain"
+                  className="h-full w-full object-contain"
                 />
               </div>
               <div>
