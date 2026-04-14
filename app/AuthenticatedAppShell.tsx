@@ -84,7 +84,11 @@ export default function AuthenticatedAppShell({
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="bg-white p-2 rounded-lg shadow-sm">
-                <Calculator size={28} className="text-amber-600" />
+                <img
+                  src="https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png"
+                  alt="Logo da Calculadora do Produtor"
+                  className="h-7 w-7 object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-xl font-bold leading-tight drop-shadow-sm">
