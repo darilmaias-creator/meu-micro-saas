@@ -30,24 +30,24 @@ type AuthenticatedAppShellProps = {
 
 const TAB_ITEMS = [
   {
-    icon: Calculator,
-    id: "calculator",
-    label: "Ficha Técnica",
-  },
-  {
     icon: Package,
     id: "inventory",
-    label: "Estoque Físico",
+    label: "Meus Materiais",
+  },
+  {
+    icon: Calculator,
+    id: "calculator",
+    label: "Calcular Preco",
   },
   {
     icon: ShoppingBag,
     id: "sales",
-    label: "Nova Venda",
+    label: "Orcamento e Venda",
   },
   {
     icon: BarChart2,
     id: "dashboard",
-    label: "Visão Geral",
+    label: "Resumo",
   },
 ] satisfies {
   icon: typeof Calculator;

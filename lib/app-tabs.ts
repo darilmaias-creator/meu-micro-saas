@@ -13,7 +13,7 @@ export function resolveActiveTabFromParam(
     case "dashboard":
       return "dashboard";
     default:
-      return "calculator";
+      return "inventory";
   }
 }
 
