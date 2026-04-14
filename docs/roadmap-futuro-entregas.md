@@ -250,6 +250,200 @@ Campos importantes em `deliveries`:
 - reenvio de codigo deve ser controlado
 - toda mudanca de status importante deve entrar em historico
 
+## Politica de precificacao de entregas
+
+O modulo de entregas nao deve nascer com uma tabela nacional unica.
+
+A recomendacao e trabalhar com precificacao variavel por cidade e por faixa operacional.
+
+### Principio principal
+
+O valor interno da entrega deve variar conforme:
+
+- cidade
+- CEP de origem e CEP de destino
+- distancia estimada
+- area de cobertura
+- tipo de entrega
+- urgencia
+- tempo de espera, quando aplicavel
+
+### Modelo recomendado para o inicio
+
+Cada cidade deve ter sua propria configuracao:
+
+- `valor_base`
+- `faixas_por_distancia`
+- `taxa_de_espera`
+- `taxa_de_urgencia`
+- `raio_maximo`
+- `prazo_estimado`
+
+### Estrutura sugerida de faixas
+
+Exemplo simples:
+
+- ate `3 km`
+- de `3 a 6 km`
+- de `6 a 10 km`
+- acima de `10 km`, sob consulta ou indisponivel
+
+### Regra de calculo sugerida
+
+O sistema pode usar:
+
+- CEP do ponto de coleta
+- CEP do destino final
+- cidade de origem
+- cidade de destino
+
+Com isso, o sistema calcula:
+
+- `valor de repasse do entregador`
+- `valor sugerido de entrega para o usuario`
+- `prazo estimado`
+
+### O que mostrar para o cliente final
+
+O cliente final nao precisa ver:
+
+- repasse do motoboy
+- margem da plataforma
+- custo interno detalhado
+
+O cliente final deve ver:
+
+- valor final da entrega, quando houver cobranca
+- prazo estimado
+- beneficio da entrega com confirmacao
+
+### Linguagem comercial recomendada
+
+O sistema deve vender a entrega como:
+
+- seguranca
+- praticidade
+- conforto
+- confirmacao no recebimento
+
+Mensagem base:
+
+- `Entrega com confirmacao por codigo`
+- `Mais seguranca e praticidade para receber sua encomenda`
+
+### Regra importante
+
+Se houver cobranca de entrega ao cliente final, esse valor precisa ser apresentado com clareza no pedido.
+
+## Operacao com Correios e ultima milha
+
+Para envios entre cidades ou estados, o modelo futuro pode usar os Correios como etapa de transporte principal e a rede local como ultima milha.
+
+## Escolhas de recebimento para o cliente final
+
+O cliente final do artesao nao precisa entrar na plataforma, mas deve ter opcoes claras de recebimento no momento da compra.
+
+### Opcoes recomendadas para o futuro
+
+- `entrega por motoboy`
+- `retirada nos Correios`
+
+### Quando usar entrega por motoboy
+
+Usar quando:
+
+- houver parceiro local disponivel
+- a cidade tiver operacao de ultima milha organizada
+- o cliente preferir praticidade e entrega no endereco
+
+Valor percebido para o cliente:
+
+- mais conforto
+- menos deslocamento
+- confirmacao por codigo no recebimento
+
+### Quando usar retirada nos Correios
+
+Usar quando:
+
+- a cidade nao tiver motoboy parceiro
+- a operacao local ainda nao estiver ativa
+- o cliente preferir retirar pessoalmente
+- a area nao tiver viabilidade operacional de ultima milha
+
+Valor percebido para o cliente:
+
+- previsibilidade
+- possibilidade de retirada em agencia
+- alternativa segura quando nao houver entrega local
+
+### Regra de apresentacao no pedido
+
+O usuario do SaaS deve conseguir apresentar ao cliente final:
+
+- tipo de recebimento
+- prazo estimado
+- valor da entrega, quando houver
+- observacao de confirmacao por codigo, quando a opcao for motoboy
+
+### Regra recomendada de negocio
+
+O sistema nao deve obrigar o cliente final a escolher motoboy em toda cidade.
+
+Deve haver politica por cidade:
+
+- cidades com `motoboy + retirada`
+- cidades com `somente retirada`
+- cidades com `somente entrega local`
+
+### Fluxo recomendado
+
+1. usuario produz e embala a encomenda
+2. usuario despacha nos Correios
+3. sistema registra codigo de rastreio
+4. objeto chega na cidade de destino
+5. retirada acontece por destinatario ou terceiro autorizado, quando aplicavel
+6. parceiro local ou motoboy faz a entrega final
+7. cliente confirma com codigo
+
+### Regra operacional importante
+
+Nao assumir desde ja que qualquer motoboy podera simplesmente retirar uma encomenda nos Correios em nome de qualquer pessoa.
+
+Quando a retirada depender de agencia ou ponto de coleta, a operacao futura deve considerar:
+
+- retirada pelo proprio destinatario
+- retirada por terceiro autorizado
+- eventual uso de Clique e Retire, quando fizer sentido
+
+### Observacao operacional importante
+
+Na fase de implementacao real, assumir que retirada por terceiro nos Correios so entra em fluxo suportado com:
+
+- autorizacao formal do destinatario
+- documento do terceiro
+- documento do destinatario, conforme exigencia operacional aplicavel
+
+Ou seja:
+
+- a retirada por parceiro local pode ser viavel
+- mas deve nascer como fluxo autorizado e documentado
+- nunca como retirada livre em nome de qualquer pessoa
+
+### Requisitos de seguranca para esse fluxo
+
+- destinatario precisa estar ciente da retirada por terceiro
+- parceiro local precisa estar previamente definido
+- retirada precisa ficar registrada no sistema
+- entrega final continua dependendo de codigo de confirmacao
+
+### O que validar antes de implementar
+
+- processo real de autorizacao para retirada por terceiros
+- quais servicos dos Correios suportam melhor esse fluxo
+- prazos de guarda e devolucao
+- cidades com operacao suficientemente previsivel para ultima milha
+
 ## KPI para decidir prioridade
 
 Quando chegar a hora de tirar do papel, acompanhar:
