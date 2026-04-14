@@ -33,5 +33,6 @@ export const config = {
     "/vendas",
     "/estoque",
     "/ficha-tecnica",
+    "/meu-negocio",
   ],
 };

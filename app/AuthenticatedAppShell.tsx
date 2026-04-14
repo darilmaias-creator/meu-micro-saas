@@ -9,6 +9,7 @@ import {
   LogOut,
   Package,
   ShoppingBag,
+  Store,
   UserRound,
 } from "lucide-react";
 import type { Session } from "next-auth";
@@ -96,6 +97,13 @@ export default function AuthenticatedAppShell({
             </div>
 
             <div className="flex items-center gap-4">
+              <Link
+                href="/meu-negocio"
+                className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50"
+              >
+                <Store size={14} />
+                Meu Negocio
+              </Link>
               <Link
                 href="/politicas/cancelamento-e-reembolso"
                 className="hidden rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50 md:inline-flex"

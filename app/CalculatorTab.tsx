@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Settings, Package, Plus, Trash2, DollarSign, RefreshCw, Heart, Sparkles, Save, Copy, Download, Upload } from 'lucide-react';
 import { Card, InputGroup, TimeInputGroup, Toggle } from './ui';
 import { FREE_TIER_PRODUCT_LIMIT } from '@/lib/app-data/plan-limits';
@@ -35,17 +36,6 @@ export default function CalculatorTab({ appData, isPremium }: any) {
         if (tempWidth) setTempWidth(prev => String(parseFloat((Number(prev) * factor).toFixed(2))));
         if (tempHeight) setTempHeight(prev => String(parseFloat((Number(prev) * factor).toFixed(2))));
         config.setUnit(isToMM ? 'mm' : 'cm');
-    };
-
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                config.setUserLogo(reader.result as string); // Salva a imagem convertida em Base64
-            };
-            reader.readAsDataURL(file);
-        }
     };
 
     const handleAddIngredient = () => {
@@ -190,27 +180,16 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                         <InputGroup label="Custo da Máquina" value={config.machineCost} onChange={config.setMachineCost} prefix="R$" tooltip="Valor pago na máquina (se possuir uma)." />
                         <InputGroup label="Vida Útil Máquina (h)" value={config.diodeLife} onChange={config.setDiodeLife} tooltip="Tempo médio de vida da máquina/módulo." />
                         <InputGroup label="Custo Energia (kW/h)" value={config.energyCost} onChange={config.setEnergyCost} prefix="R$" tooltip="Preço do kW/h na sua conta de luz." />
-                        <div className="col-span-1 sm:col-span-2 flex flex-col sm:flex-row items-center gap-4 mt-2 p-4 bg-slate-50 rounded-xl border border-slate-200 relative overflow-hidden">
-                            {!isPremium && (
-                                <div className="absolute inset-0 bg-slate-100/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center rounded-xl">
-                                    <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full mb-1 flex items-center gap-1 shadow-sm"><Sparkles size={12}/> Exclusivo Premium</span>
-                                    <p className="text-[10px] text-slate-700 font-bold bg-white/80 px-2 py-0.5 rounded">Assine para personalizar seus Orçamentos em PDF</p>
-                                </div>
-                            )}
-                            <img src={(isPremium && config.userLogo) ? config.userLogo : "https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png"} alt="Sua Logo" className="w-16 h-16 rounded-lg object-contain border border-slate-200 bg-white shadow-sm" />
-                            <div className="flex-1 w-full space-y-3">
+                        <div className="col-span-1 sm:col-span-2 mt-2 rounded-2xl border border-sky-200 bg-sky-50 p-4">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Nome do seu Negócio</label>
-                                    <input type="text" value={config.storeName || ''} onChange={(e) => config.setStoreName(e.target.value)} disabled={!isPremium} placeholder="Ex: Calculadora do Produtor" className="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm focus:ring-2 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-400" />
+                                    <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Edicao separada</p>
+                                    <h3 className="mt-1 text-base font-black text-slate-900">Nome, slogan e logotipo agora ficam em Meu Negocio</h3>
+                                    <p className="mt-1 text-sm text-slate-600">Assim ficou mais facil editar sua marca sem misturar com a parte de calculo.</p>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Slogan / Subtítulo</label>
-                                    <input type="text" value={config.storeSubtitle ?? ''} onChange={(e) => config.setStoreSubtitle(e.target.value)} disabled={!isPremium} placeholder="Ex: Orçamentos claros. Clientes seguros. Negócios fechados." className="w-full p-2 border border-slate-300 rounded-lg outline-none text-sm focus:ring-2 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-400" />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Logotipo (Para Orçamentos)</label>
-                                    <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={!isPremium} className="w-full text-sm text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200 outline-none cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
-                                </div>
+                                <Link href="/meu-negocio" className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-sky-700">
+                                    Abrir Meu Negocio
+                                </Link>
                             </div>
                         </div>
                     </div>
