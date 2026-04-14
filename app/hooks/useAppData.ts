@@ -22,6 +22,13 @@ type AppDataMutationResponse = {
 const STORAGE_NAMESPACE = "meu-micro-saas";
 const SYNC_POLL_INTERVAL_MS = 15_000;
 
+type RuntimeAppDataCacheEntry = {
+  lastRemoteUpdatedAt: string | null;
+  lastSyncedState: string;
+  latestSerializedState: string;
+  state: AppDataState;
+};
+
 const STORAGE_KEYS = {
   unit: "calc_unit",
   machineCost: "calc_machineCost",
@@ -38,6 +45,8 @@ const STORAGE_KEYS = {
   quotes: "art_calc_quotes",
   savedProducts: "art_calc_products_v3",
 } as const;
+
+const runtimeAppDataCache = new Map<string, RuntimeAppDataCacheEntry>();
 
 function buildScopedStorageKey(userId: string, key: string) {
   return `${STORAGE_NAMESPACE}:user:${userId}:${key}`;
@@ -284,8 +293,25 @@ function buildCollectionSetter(
 }
 
 export function useAppData(userId: string) {
-  const [state, setState] = useState<AppDataState>(() => readLocalAppData(userId));
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [state, setState] = useState<AppDataState>(() => {
+    const cachedEntry = runtimeAppDataCache.get(userId);
+
+    if (cachedEntry) {
+      return cachedEntry.state;
+    }
+
+    return readLocalAppData(userId);
+  });
+  const [isLoaded, setIsLoaded] = useState(() => {
+    const cachedEntry = runtimeAppDataCache.get(userId);
+
+    if (cachedEntry) {
+      return true;
+    }
+
+    const localState = readLocalAppData(userId);
+    return hasMeaningfulAppData(localState);
+  });
   const hasHydratedRef = useRef(false);
   const lastSyncedStateRef = useRef("");
   const lastRemoteUpdatedAtRef = useRef<string | null>(null);
@@ -293,16 +319,20 @@ export function useAppData(userId: string) {
 
   useEffect(() => {
     let isCurrent = true;
+    const cachedEntry = runtimeAppDataCache.get(userId);
 
-    const localState = readLocalAppData(userId);
+    const localState = cachedEntry?.state ?? readLocalAppData(userId);
     const localSerializedState = serializeAppDataState(localState);
+    const canRenderFromLocalState =
+      Boolean(cachedEntry) || hasMeaningfulAppData(localState);
 
     setState(localState);
-    setIsLoaded(false);
-    hasHydratedRef.current = false;
-    lastSyncedStateRef.current = "";
-    lastRemoteUpdatedAtRef.current = null;
-    latestSerializedStateRef.current = localSerializedState;
+    setIsLoaded(canRenderFromLocalState);
+    hasHydratedRef.current = Boolean(cachedEntry);
+    lastSyncedStateRef.current = cachedEntry?.lastSyncedState ?? "";
+    lastRemoteUpdatedAtRef.current = cachedEntry?.lastRemoteUpdatedAt ?? null;
+    latestSerializedStateRef.current =
+      cachedEntry?.latestSerializedState ?? localSerializedState;
 
     async function loadFromDatabase() {
       try {
@@ -327,11 +357,23 @@ export function useAppData(userId: string) {
 
         if (shouldKeepLocalState) {
           setState(localState);
+          runtimeAppDataCache.set(userId, {
+            lastRemoteUpdatedAt: payload.updatedAt,
+            lastSyncedState: localSerializedState,
+            latestSerializedState: localSerializedState,
+            state: localState,
+          });
         } else {
           setState(remoteState);
           writeLocalAppData(userId, remoteState);
           latestSerializedStateRef.current = remoteSerializedState;
           lastSyncedStateRef.current = remoteSerializedState;
+          runtimeAppDataCache.set(userId, {
+            lastRemoteUpdatedAt: payload.updatedAt,
+            lastSyncedState: remoteSerializedState,
+            latestSerializedState: remoteSerializedState,
+            state: remoteState,
+          });
         }
 
         lastRemoteUpdatedAtRef.current = payload.updatedAt;
@@ -362,6 +404,13 @@ export function useAppData(userId: string) {
 
   useEffect(() => {
     latestSerializedStateRef.current = serializeAppDataState(state);
+
+    runtimeAppDataCache.set(userId, {
+      lastRemoteUpdatedAt: lastRemoteUpdatedAtRef.current,
+      lastSyncedState: lastSyncedStateRef.current,
+      latestSerializedState: latestSerializedStateRef.current,
+      state,
+    });
   }, [state]);
 
   useEffect(() => {
@@ -398,6 +447,12 @@ export function useAppData(userId: string) {
 
           lastSyncedStateRef.current = serializedState;
           lastRemoteUpdatedAtRef.current = payload?.updatedAt ?? null;
+          runtimeAppDataCache.set(userId, {
+            lastRemoteUpdatedAt: lastRemoteUpdatedAtRef.current,
+            lastSyncedState: serializedState,
+            latestSerializedState: serializedState,
+            state: normalizedState,
+          });
           return;
         }
 
@@ -498,6 +553,12 @@ export function useAppData(userId: string) {
         latestSerializedStateRef.current = remoteSerializedState;
         lastSyncedStateRef.current = remoteSerializedState;
         lastRemoteUpdatedAtRef.current = payload.updatedAt;
+        runtimeAppDataCache.set(userId, {
+          lastRemoteUpdatedAt: payload.updatedAt,
+          lastSyncedState: remoteSerializedState,
+          latestSerializedState: remoteSerializedState,
+          state: remoteState,
+        });
       } catch (error) {
         console.error(
           "Nao foi possivel atualizar os dados da conta a partir do Supabase.",
