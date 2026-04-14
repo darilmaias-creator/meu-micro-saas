@@ -38,12 +38,12 @@ const TAB_ITEMS = [
   {
     icon: Calculator,
     id: "calculator",
-    label: "Calcular Preco",
+    label: "Calcular Preço",
   },
   {
     icon: ShoppingBag,
     id: "sales",
-    label: "Orcamento e Venda",
+    label: "Orçamentos e Vendas",
   },
   {
     icon: BarChart2,
@@ -179,6 +179,7 @@ export default function AuthenticatedAppShell({
             insumos={appData.insumos}
             setInsumos={appData.setInsumos}
             unit={appData.config.unit}
+            setUnit={appData.config.setUnit}
             isPremium={isPremium}
           />
         )}

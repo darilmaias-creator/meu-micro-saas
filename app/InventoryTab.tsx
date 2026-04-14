@@ -4,7 +4,7 @@ import { Package, Box, AlertCircle, Trash2, Save } from 'lucide-react';
 import { Card, InputGroup } from './ui';
 import { FREE_TIER_INSUMO_LIMIT } from '@/lib/app-data/plan-limits';
 
-export default function InventoryTab({ insumos, setInsumos, unit, isPremium }: any) {
+export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPremium }: any) {
     const [insType, setInsType] = useState('area'); 
     const [insName, setInsName] = useState('');
     const [insPrice, setInsPrice] = useState('');
@@ -14,6 +14,22 @@ export default function InventoryTab({ insumos, setInsumos, unit, isPremium }: a
     const [insMeasure, setInsMeasure] = useState(''); 
     const [insStock, setInsStock] = useState('');
     const [insMinStock, setInsMinStock] = useState('');
+
+    const toggleUnitGlobal = () => {
+        const isToMM = unit === 'cm';
+        const factor = isToMM ? 10 : 0.1;
+
+        if (insType === 'area') {
+            if (insWidth) setInsWidth(prev => String(parseFloat((Number(prev) * factor).toFixed(2))));
+            if (insHeight) setInsHeight(prev => String(parseFloat((Number(prev) * factor).toFixed(2))));
+        }
+
+        if (insType === 'length' && insMeasure) {
+            setInsMeasure(prev => String(parseFloat((Number(prev) * factor).toFixed(2))));
+        }
+
+        setUnit(isToMM ? 'mm' : 'cm');
+    };
     
     const handleSaveInsumo = () => {
         // Lógica FREEMIUM: Verifica limite antes de salvar
@@ -24,7 +40,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, isPremium }: a
 
         let finalTotalQty = 0;
         let measurePItem = 0;
-        let pQty = Number(insPackQty) || 1;
+        const pQty = Number(insPackQty) || 1;
 
         if (insType === 'area') {
             if (!insName || !insPrice || !insWidth || !insHeight) { alert('Preencha Nome, Preço, Largura e Altura de 1 unidade.'); return; }
@@ -39,7 +55,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, isPremium }: a
         let unitLabel = 'un';
         if(insType === 'area') unitLabel = `${unit}²`;
         if(insType === 'weight') unitLabel = 'g';
-        if(insType === 'length') unitLabel = 'cm'; 
+        if(insType === 'length') unitLabel = unit; 
 
         const costPerUnit = Number(insPrice) / finalTotalQty; 
         const costPerItem = Number(insPrice) / pQty; 
@@ -60,7 +76,15 @@ export default function InventoryTab({ insumos, setInsumos, unit, isPremium }: a
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn w-full">
             <Card className={`md:col-span-1 border-t-4 border-amber-500`}>
-                <h2 className={`font-bold text-lg mb-4 flex items-center gap-2 text-amber-600`}><Package size={20} /> Novo Insumo</h2>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                    <h2 className={`font-bold text-lg flex items-center gap-2 text-amber-600`}><Package size={20} /> Novo Insumo</h2>
+                    {(insType === 'area' || insType === 'length') && (
+                        <div className="flex bg-slate-100 p-1 rounded border shrink-0">
+                            <button onClick={() => unit !== 'cm' && toggleUnitGlobal()} className={`px-3 py-1 rounded text-xs font-bold ${unit === 'cm' ? 'bg-white shadow text-amber-600' : 'text-slate-400'}`}>CM</button>
+                            <button onClick={() => unit !== 'mm' && toggleUnitGlobal()} className={`px-3 py-1 rounded text-xs font-bold ${unit === 'mm' ? 'bg-white shadow text-amber-600' : 'text-slate-400'}`}>MM</button>
+                        </div>
+                    )}
+                </div>
                 <div className="mb-4">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Tipo de Medida</label>
                     <select value={insType} onChange={e=>setInsType(e.target.value)} className="w-full p-2.5 border border-slate-300 rounded-lg outline-none text-sm font-bold bg-white text-slate-700">
@@ -75,7 +99,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, isPremium }: a
                 <InputGroup label="Quantidade no Pacote" value={insPackQty} onChange={setInsPackQty} type="number" step="1" min="1" tooltip={insType === 'weight' ? "Quantos cones/rolos vieram no pacote fechado?" : "Quantos itens vieram dentro do pacote que você comprou?"} />
                 
                 {insType === 'area' && (<div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4"><div className="col-span-2 text-xs font-bold text-slate-600 mb-1">Medidas de APENAS 1 unidade:</div><InputGroup label={`Largura (${unit})`} value={insWidth} onChange={setInsWidth} suffix={unit} className="mb-0" /><InputGroup label={`Altura (${unit})`} value={insHeight} onChange={setInsHeight} suffix={unit} className="mb-0" /></div>)}
-                {(insType === 'weight' || insType === 'length' || insType === 'unit') && (<div className="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4"><InputGroup label={insType === 'weight' ? "Peso de 1 rolo/cone (em GRAMAS)" : insType === 'length' ? "Compr. de 1 rolo (cm)" : "Quantidade por item"} value={insMeasure} onChange={setInsMeasure} className="mb-0" tooltip={insType === 'weight' ? "IMPORTANTE: Digite em gramas. Ex: 1Kg = 1000. Rolo de 600g = 600." : insType === 'length' ? "Ex: Um rolo tem 10 metros = 1000cm." : "Para unidades, geralmente é 1."} /></div>)}
+                {(insType === 'weight' || insType === 'length' || insType === 'unit') && (<div className="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4"><InputGroup label={insType === 'weight' ? "Peso de 1 rolo/cone (em GRAMAS)" : insType === 'length' ? `Compr. de 1 rolo (${unit})` : "Quantidade por item"} value={insMeasure} onChange={setInsMeasure} className="mb-0" tooltip={insType === 'weight' ? "IMPORTANTE: Digite em gramas. Ex: 1Kg = 1000. Rolo de 600g = 600." : insType === 'length' ? unit === 'cm' ? "Ex: Um rolo tem 10 metros = 1000cm." : "Ex: Um rolo tem 10 metros = 10000mm." : "Para unidades, geralmente é 1."} suffix={insType === 'length' ? unit : undefined} /></div>)}
                 
                 <div className="border-t border-slate-100 pt-4"><InputGroup label={insType === 'weight' ? "Estoque Atual (Qtd de Cones/Rolos)" : "Estoque Atual (Qtd Pacotes/Unidades)"} value={insStock} onChange={setInsStock} tooltip={insType === 'weight' ? "Quantos cones ou rolos inteiros você tem na prateleira agora?" : "Quantas unidades físicas você tem aí na prateleira?"} /><InputGroup label="Alerta de Estoque Mínimo" value={insMinStock} onChange={setInsMinStock} /></div>
                 <button onClick={handleSaveInsumo} className={`w-full py-3 text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors bg-amber-600 hover:bg-amber-700`}><Save size={18} /> Salvar no Estoque</button>

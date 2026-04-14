@@ -53,15 +53,15 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/estoque",
       },
       {
-        name: "Calcular Preco",
-        short_name: "Preco",
-        description: "Abra direto a area para montar e precificar produtos.",
+        name: "Calcular Preço",
+        short_name: "Preço",
+        description: "Abra direto a área para montar e precificar produtos.",
         url: "/ficha-tecnica",
       },
       {
-        name: "Orcamento e Venda",
+        name: "Orçamentos e Vendas",
         short_name: "Vendas",
-        description: "Abra direto a area de orcamentos e vendas.",
+        description: "Abra direto a área de orçamentos e vendas.",
         url: "/vendas",
       },
       {

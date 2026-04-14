@@ -64,10 +64,17 @@ export default function CalculatorTab({ appData, isPremium }: any) {
         } else {
             if (!tempMeasure) { alert("Preencha a quantidade gasta."); return; }
             const measure = Number(tempMeasure);
+            let measureForCost = measure;
+
+            if (type === 'length') {
+                if (ins.unit && ins.unit.includes('cm') && config.unit === 'mm') measureForCost = measure / 10;
+                else if (ins.unit && ins.unit.includes('mm') && config.unit === 'cm') measureForCost = measure * 10;
+            }
+
             usedMeasure = measure * q;
-            cost = measure * ins.costPerUnit * q; 
+            cost = measureForCost * ins.costPerUnit * q; 
             if (type === 'weight') display = `${q}x de ${measure}g`;
-            else if (type === 'length') display = `${q}x de ${measure}cm`;
+            else if (type === 'length') display = `${q}x de ${measure}${config.unit}`;
             else display = `${q}x de ${measure}un`;
         }
 
@@ -204,7 +211,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                                 if (selIns.unit && selIns.unit.includes('cm') && config.unit === 'mm') { itemArea *= 100; boardW *= 10; boardH *= 10; } 
                                 else if (selIns.unit && selIns.unit.includes('mm') && config.unit === 'cm') { itemArea /= 100; boardW /= 10; boardH /= 10; }
                                 const currentUsedArea = (Number(tempWidth) || 0) * (Number(tempHeight) || 0);
-                                let liveWaste = (itemArea > 0 && currentUsedArea > 0 && itemArea >= currentUsedArea) ? ((itemArea - currentUsedArea) / itemArea) * 100 : 0;
+                                const liveWaste = (itemArea > 0 && currentUsedArea > 0 && itemArea >= currentUsedArea) ? ((itemArea - currentUsedArea) / itemArea) * 100 : 0;
                                 return (
                                     <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-3 animate-fadeIn">
                                         <div className="flex justify-between items-center mb-3"><span className="text-xs font-bold text-slate-600 bg-white px-2 py-1 rounded border shadow-sm">Placa: {boardW}x{boardH} {config.unit}</span>{currentUsedArea > 0 && currentUsedArea <= itemArea && <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded border">Sobra Auto: {liveWaste.toFixed(1)}%</span>}</div>
@@ -214,7 +221,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                             } else {
                                 let labelGasto = 'Quantidade Gasta'; let suffixGasto = '';
                                 if (selIns.type === 'weight') { labelGasto = 'Peso Gasto (em gramas)'; suffixGasto = 'g'; }
-                                if (selIns.type === 'length') { labelGasto = 'Comprimento Gasto'; suffixGasto = 'cm'; }
+                                if (selIns.type === 'length') { labelGasto = 'Comprimento Gasto'; suffixGasto = config.unit; }
                                 return (
                                     <div className="grid grid-cols-2 gap-3 animate-fadeIn mb-3"><InputGroup label="Qtd. Vezes" value={tempQty} onChange={setTempQty} placeholder="1" className="mb-0" /><InputGroup label={labelGasto} value={tempMeasure} onChange={setTempMeasure} suffix={suffixGasto} placeholder="0" className="mb-0" /></div>
                                 )
