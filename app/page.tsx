@@ -22,7 +22,10 @@ const PASSWORD_RECOVERY_AVAILABLE =
 
 function mapAuthErrorMessage(errorCode: string | null) {
   switch (errorCode) {
+    case "Signin":
+      return "Nao foi possivel iniciar a autenticacao agora.";
     case "Configuration":
+    case "configuration":
       return "A autenticacao do servidor ainda nao esta configurada corretamente.";
     case "Storage":
       return "Nao foi possivel acessar os dados de autenticacao no banco.";
@@ -32,13 +35,27 @@ function mapAuthErrorMessage(errorCode: string | null) {
     case "OAuthCallback":
     case "OAuthCreateAccount":
       return "Nao foi possivel entrar com o Google agora.";
+    case "OAuthAccountNotLinked":
+      return "Esta conta do Google ja esta ligada a outro metodo de acesso.";
+    case "EmailSignin":
+      return "Nao foi possivel enviar o e-mail de autenticacao agora.";
     case "Callback":
       return "A autenticacao falhou no retorno do servidor.";
     case "CredentialsSignin":
       return "E-mail ou senha invalidos.";
+    case "SessionRequired":
+      return "Sua sessao nao pode ser iniciada agora.";
     default:
       return null;
   }
+}
+
+function buildUnknownAuthErrorMessage(errorCode: string | null) {
+  if (!errorCode) {
+    return "Nao foi possivel concluir a autenticacao agora.";
+  }
+
+  return `Nao foi possivel concluir a autenticacao agora. Codigo: ${errorCode}.`;
 }
 
 function mapAuthStatusMessage(searchParams: URLSearchParams): AuthFeedback {
@@ -226,7 +243,7 @@ export default function MainApp() {
             loginResult.error === "CredentialsSignin"
               ? "Sua conta foi criada, mas o login automatico falhou. Tente entrar novamente."
               : mapAuthErrorMessage(loginResult.error) ??
-                "Nao foi possivel concluir a autenticacao agora.",
+                buildUnknownAuthErrorMessage(loginResult.error),
         });
         return;
       }
@@ -237,10 +254,13 @@ export default function MainApp() {
       if (postLoginPath !== "/") {
         window.location.assign(loginResult?.url ?? postLoginPath);
       }
-    } catch {
+    } catch (error) {
       setAuthFeedback({
         tone: "error",
-        message: "Nao foi possivel concluir a autenticacao agora.",
+        message:
+          error instanceof Error && error.message
+            ? buildUnknownAuthErrorMessage(error.message)
+            : "Nao foi possivel concluir a autenticacao agora.",
       });
     } finally {
       setIsSubmittingAuth(false);
