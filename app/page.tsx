@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { Calculator } from "lucide-react";
 import { getProviders, signIn, useSession } from "next-auth/react";
@@ -246,6 +246,11 @@ export default function MainApp() {
     }
   }
 
+  function handleCredentialsSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void handleCredentialsAuth();
+  }
+
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -318,7 +323,10 @@ export default function MainApp() {
             </button>
           </div>
 
-          <div className="space-y-3 mb-6 text-left">
+          <form
+            className="space-y-3 mb-6 text-left"
+            onSubmit={handleCredentialsSubmit}
+          >
             {authMode === "register" && (
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1">Nome</label>
@@ -367,8 +375,7 @@ export default function MainApp() {
             )}
 
             <button
-              type="button"
-              onClick={handleCredentialsAuth}
+              type="submit"
               disabled={isSubmittingAuth}
               className="w-full bg-amber-600 text-white font-bold text-base py-3 px-4 rounded-xl hover:bg-amber-700 disabled:bg-amber-300 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
@@ -407,7 +414,7 @@ export default function MainApp() {
                 Voltar para entrar
               </button>
             )}
-          </div>
+          </form>
 
           {authMode !== "forgotPassword" && (
             <>
