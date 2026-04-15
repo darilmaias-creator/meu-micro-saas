@@ -17,7 +17,8 @@ type AuthFeedback =
     }
   | null;
 
-const PASSWORD_RECOVERY_AVAILABLE = false;
+const PASSWORD_RECOVERY_AVAILABLE =
+  process.env.NEXT_PUBLIC_PASSWORD_RECOVERY_ENABLED === "true";
 
 function mapAuthErrorMessage(errorCode: string | null) {
   switch (errorCode) {
