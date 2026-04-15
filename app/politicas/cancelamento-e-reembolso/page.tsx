@@ -102,6 +102,26 @@ export default function BillingPolicyPage() {
                   Depois desse prazo, o reembolso integral automatico deixa de
                   ficar disponivel no app.
                 </p>
+                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-slate-700">
+                  <p className="font-bold text-sky-900">
+                    Importante sobre o prazo do estorno
+                  </p>
+                  <p className="mt-2">
+                    Quando o pedido de reembolso e feito no app, a solicitacao
+                    segue para a Stripe no mesmo momento.
+                  </p>
+                  <p className="mt-2">
+                    O dinheiro, porem, nao costuma voltar na hora para o
+                    cliente. O mais comum e o banco ou a operadora do cartao
+                    mostrarem o estorno em aproximadamente 5 a 10 dias uteis.
+                  </p>
+                  <p className="mt-2">
+                    Em alguns casos, a compra pode simplesmente desaparecer do
+                    extrato em vez de aparecer como uma linha separada de
+                    credito. Isso acontece quando o banco trata o estorno como
+                    reversao.
+                  </p>
+                </div>
               </div>
             </section>
 
@@ -163,6 +183,7 @@ export default function BillingPolicyPage() {
               <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                 <li>Assinatura mensal com renovacao recorrente.</li>
                 <li>Reembolso integral em ate 7 dias apos liberar o Premium.</li>
+                <li>Pedido de reembolso e enviado na hora, mas o estorno costuma aparecer em 5 a 10 dias uteis.</li>
                 <li>Boleto pode demorar para confirmar e liberar o plano.</li>
                 <li>Founder perde o valor promocional se pedir reembolso.</li>
               </ul>

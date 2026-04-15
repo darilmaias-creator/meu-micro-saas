@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Crown } from "lucide-react";
+import { ArrowLeft, BadgeInfo, Crown } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 
 const stripePromise = loadStripe(
@@ -132,6 +132,16 @@ export default function EmbeddedCheckoutClient() {
             </Link>
             .
           </p>
+          <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+            <div className="flex items-start gap-2">
+              <BadgeInfo size={16} className="mt-0.5 shrink-0" />
+              <p>
+                Se houver pedido de reembolso, a solicitacao e feita na hora no
+                sistema, mas o estorno no banco ou no cartao costuma aparecer
+                em aproximadamente 5 a 10 dias uteis.
+              </p>
+            </div>
+          </div>
 
           {status === "loading" && (
             <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-12 text-center">
