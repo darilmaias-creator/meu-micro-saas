@@ -9,6 +9,10 @@ import {
 } from "@/lib/app-data/defaults";
 import { validateAppDataPlanLimits } from "@/lib/app-data/plan-limits";
 import { authOptions } from "@/lib/auth/options";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -75,9 +79,24 @@ export async function GET() {
       updatedAt: (data as AppDataRow | null)?.updated_at ?? null,
     };
 
+    logServerEvent({
+      scope: "app-data:get",
+      message: "app data loaded",
+      context: {
+        userId: session.user.id,
+        source: response.source,
+      },
+    });
+
     return NextResponse.json(response);
   } catch (error) {
-    console.error(error);
+    captureServerException({
+      scope: "app-data:get",
+      error,
+      context: {
+        userId: session.user.id,
+      },
+    });
     return NextResponse.json(
       {
         message: "Nao foi possivel carregar os dados do aplicativo.",
@@ -133,6 +152,16 @@ export async function PUT(request: Request) {
     });
 
     if (planLimitViolation) {
+      logServerEvent({
+        scope: "app-data:put",
+        level: "warn",
+        message: "app data save blocked by plan limits",
+        context: {
+          userId: session.user.id,
+          code: planLimitViolation.code,
+        },
+      });
+
       return NextResponse.json(
         {
           code: planLimitViolation.code,
@@ -164,12 +193,27 @@ export async function PUT(request: Request) {
       throw error;
     }
 
+    logServerEvent({
+      scope: "app-data:put",
+      message: "app data saved",
+      context: {
+        userId: session.user.id,
+        updatedAt: (data as { updated_at?: string } | null)?.updated_at ?? null,
+      },
+    });
+
     return NextResponse.json({
       ok: true,
       updatedAt: (data as { updated_at?: string } | null)?.updated_at ?? null,
     });
   } catch (error) {
-    console.error(error);
+    captureServerException({
+      scope: "app-data:put",
+      error,
+      context: {
+        userId: session.user.id,
+      },
+    });
     return NextResponse.json(
       {
         message: "Nao foi possivel salvar os dados do aplicativo.",

@@ -1068,24 +1068,46 @@ export default function ProfileModal({
                   na conta atual. Login, e-mail e senha nao sao trocados pelo
                   backup.
                 </p>
+                <div className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+                  <p className="font-bold text-slate-700 mb-2">Como usar sem se perder</p>
+                  <ol className="space-y-1 list-decimal pl-4">
+                    <li>Salve o e-mail e a frequencia para automatizar seus envios.</li>
+                    <li>Exporte ou compartilhe o backup antes de trocar de conta ou dispositivo.</li>
+                    <li>Use a restauracao apenas quando quiser substituir os dados atuais por um arquivo salvo.</li>
+                  </ol>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
+                    <label
+                      htmlFor="profile-backup-email"
+                      className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2"
+                    >
                       E-mail para backup
                     </label>
                     <input
+                      id="profile-backup-email"
+                      name="backupEmail"
                       type="email"
+                      autoComplete="email"
                       value={backupEmail}
                       onChange={(event) => setBackupEmail(event.target.value)}
                       className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
                       placeholder="seu@email.com"
                     />
+                    <p className="mt-2 text-xs text-slate-400">
+                      Esse e-mail recebe o envio automatico e tambem o envio manual do backup.
+                    </p>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
+                    <label
+                      htmlFor="profile-backup-frequency"
+                      className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2"
+                    >
                       Frequencia automatica
                     </label>
                     <select
+                      id="profile-backup-frequency"
+                      name="backupFrequency"
                       value={backupFrequency}
                       onChange={(event) =>
                         setBackupFrequency(event.target.value as BackupFrequency)
@@ -1100,6 +1122,9 @@ export default function ProfileModal({
                         ),
                       )}
                     </select>
+                    <p className="mt-2 text-xs text-slate-400">
+                      Deixe desligado se preferir exportar manualmente quando precisar.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1179,10 +1204,15 @@ export default function ProfileModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-red-700 uppercase tracking-wide mb-2">
+              <label
+                htmlFor="profile-delete-confirmation"
+                className="block text-xs font-bold text-red-700 uppercase tracking-wide mb-2"
+              >
                 Digite EXCLUIR para confirmar
               </label>
               <input
+                id="profile-delete-confirmation"
+                name="deleteConfirmation"
                 type="text"
                 value={deleteConfirmation}
                 onChange={(event) => setDeleteConfirmation(event.target.value)}

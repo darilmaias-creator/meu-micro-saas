@@ -5,6 +5,10 @@ import { getBackupPayloadForUser } from "@/lib/account/backup";
 import { sendBackupEmail } from "@/lib/account/backup-email";
 import { authOptions } from "@/lib/auth/options";
 import { findUserById } from "@/lib/auth/user-store";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -73,11 +77,26 @@ export async function POST(request: Request) {
       payload,
     });
 
+    logServerEvent({
+      scope: "account:backup-email",
+      message: "backup email sent",
+      context: {
+        userId: user.id,
+        destinationEmail,
+      },
+    });
+
     return NextResponse.json({
       message: `Backup enviado com sucesso para ${destinationEmail}.`,
     });
   } catch (error) {
-    console.error(error);
+    captureServerException({
+      scope: "account:backup-email",
+      error,
+      context: {
+        userId: session.user.id,
+      },
+    });
 
     return NextResponse.json(
       {

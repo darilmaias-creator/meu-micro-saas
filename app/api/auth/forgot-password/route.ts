@@ -14,6 +14,10 @@ import {
 } from "@/lib/auth/password-reset";
 import { sendPasswordResetEmail } from "@/lib/auth/password-reset-email";
 import { consumeAuthRateLimit } from "@/lib/auth/rate-limit";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -119,12 +123,27 @@ export async function POST(request: Request) {
       expiresAt: passwordResetRequest.expiresAt,
     });
 
+    logServerEvent({
+      scope: "auth:forgot-password",
+      message: "password reset email requested",
+      context: {
+        userId: user.id,
+        email: user.email,
+      },
+    });
+
     return NextResponse.json({
       message:
         "Se existir uma conta com este e-mail, enviaremos um link de recuperacao em instantes.",
     });
   } catch (error) {
-    console.error(error);
+    captureServerException({
+      scope: "auth:forgot-password",
+      error,
+      context: {
+        email,
+      },
+    });
 
     return NextResponse.json(
       {

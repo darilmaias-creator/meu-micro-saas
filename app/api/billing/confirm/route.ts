@@ -5,6 +5,10 @@ import type Stripe from "stripe";
 import { authOptions } from "@/lib/auth/options";
 import { createStripeServerClient } from "@/lib/billing/stripe";
 import { syncSubscriptionState } from "@/lib/billing/subscription-sync";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,12 +103,31 @@ export async function POST(request: Request) {
         checkoutSession.metadata?.founderOfferApplied === "true",
     });
 
+    logServerEvent({
+      scope: "billing:confirm",
+      message: "checkout confirmation processed",
+      context: {
+        userId: relatedUserId ?? session.user.id,
+        sessionId,
+        subscriptionId: subscription.id,
+        confirmed: result.confirmed,
+        status: result.status,
+      },
+    });
+
     return NextResponse.json({
       confirmed: result.confirmed,
       status: result.status,
     });
   } catch (error) {
-    console.error("[billing:confirm]", error);
+    captureServerException({
+      scope: "billing:confirm",
+      error,
+      context: {
+        userId: session.user.id,
+        sessionId,
+      },
+    });
 
     return NextResponse.json(
       { message: "Nao foi possivel confirmar a assinatura agora." },

@@ -6,6 +6,10 @@ import {
   getStripeWebhookSecret,
 } from "@/lib/billing/stripe";
 import { syncSubscriptionState } from "@/lib/billing/subscription-sync";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +36,15 @@ export async function POST(request: Request) {
       getStripeWebhookSecret(),
     );
   } catch (error) {
-    console.error("[stripe:webhook:signature]", error);
+    logServerEvent({
+      scope: "stripe:webhook:signature",
+      level: "warn",
+      message: "invalid webhook signature",
+      context: {
+        error:
+          error instanceof Error && error.message ? error.message : String(error),
+      },
+    });
     return NextResponse.json(
       { message: "Invalid Stripe webhook signature." },
       { status: 400 },
@@ -72,9 +84,25 @@ export async function POST(request: Request) {
       }
     }
 
+    logServerEvent({
+      scope: "stripe:webhook",
+      message: "stripe webhook processed",
+      context: {
+        eventId: event.id,
+        eventType: event.type,
+      },
+    });
+
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("[stripe:webhook]", error);
+    captureServerException({
+      scope: "stripe:webhook",
+      error,
+      context: {
+        eventId: event.id,
+        eventType: event.type,
+      },
+    });
     return NextResponse.json(
       { message: "Nao foi possivel processar o evento da Stripe." },
       { status: 500 },

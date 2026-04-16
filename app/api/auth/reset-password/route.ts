@@ -4,6 +4,10 @@ import { validatePasswordForStorage } from "@/lib/auth/input-validation";
 import { hashPassword } from "@/lib/auth/password";
 import { consumeAuthRateLimit } from "@/lib/auth/rate-limit";
 import { updateUserPasswordFromReset } from "@/lib/auth/user-store";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,11 +90,22 @@ export async function POST(request: Request) {
       );
     }
 
+    logServerEvent({
+      scope: "auth:reset-password",
+      message: "password reset completed",
+      context: {
+        userId: result.user.id,
+      },
+    });
+
     return NextResponse.json({
       message: "Senha redefinida com sucesso. Agora voce ja pode entrar.",
     });
   } catch (error) {
-    console.error(error);
+    captureServerException({
+      scope: "auth:reset-password",
+      error,
+    });
 
     return NextResponse.json(
       {

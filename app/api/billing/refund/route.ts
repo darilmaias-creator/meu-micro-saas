@@ -17,6 +17,10 @@ import {
   isStripeBillingConfigured,
 } from "@/lib/billing/stripe";
 import { isPremiumActiveSubscriptionStatus } from "@/lib/billing/subscription-status";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -164,6 +168,16 @@ export async function POST(request: Request) {
     );
 
     if (founderOfferWouldBeLost && body.confirmFounderForfeit !== true) {
+      logServerEvent({
+        scope: "billing:refund",
+        level: "warn",
+        message: "founder refund requires explicit confirmation",
+        context: {
+          userId: user.id,
+          stripeSubscriptionId: user.stripeSubscriptionId,
+        },
+      });
+
       return NextResponse.json(
         {
           code: "FOUNDER_REFUND_CONFIRMATION_REQUIRED",
@@ -228,7 +242,15 @@ export async function POST(request: Request) {
     try {
       canceledSubscription = await stripe.subscriptions.cancel(subscription.id);
     } catch (error) {
-      console.error("[billing:refund:cancel-after-refund]", error);
+      captureServerException({
+        scope: "billing:refund:cancel-after-refund",
+        error,
+        context: {
+          userId: user.id,
+          stripeSubscriptionId: subscription.id,
+          refundId: refund.id,
+        },
+      });
 
       return NextResponse.json(
         {
@@ -254,6 +276,17 @@ export async function POST(request: Request) {
         : user.founderOfferRevokedAt ?? null,
     });
 
+    logServerEvent({
+      scope: "billing:refund",
+      message: "premium refund requested and subscription canceled",
+      context: {
+        userId: user.id,
+        refundId: refund.id,
+        stripeSubscriptionId: subscription.id,
+        founderOfferWouldBeLost,
+      },
+    });
+
     return NextResponse.json({
       refunded: true,
       refundId: refund.id,
@@ -262,7 +295,13 @@ export async function POST(request: Request) {
         : "Reembolso integral solicitado com sucesso. O Premium foi encerrado na sua conta.",
     });
   } catch (error) {
-    console.error("[billing:refund]", error);
+    captureServerException({
+      scope: "billing:refund",
+      error,
+      context: {
+        userId: session.user.id,
+      },
+    });
 
     return NextResponse.json(
       { message: "Nao foi possivel solicitar o reembolso agora." },

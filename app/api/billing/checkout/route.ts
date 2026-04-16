@@ -17,6 +17,10 @@ import {
   findUserById,
   updateUserBillingState,
 } from "@/lib/auth/user-store";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -169,13 +173,30 @@ export async function POST(request: Request) {
       throw new Error("A Stripe nao retornou o client secret do checkout.");
     }
 
+    logServerEvent({
+      scope: "billing:checkout",
+      message: "checkout session created",
+      context: {
+        userId: user.id,
+        offerTier,
+        checkoutSessionId: checkoutSession.id,
+        stripeCustomerId,
+      },
+    });
+
     return NextResponse.json({
       clientSecret: checkoutSession.client_secret,
       checkoutSessionId: checkoutSession.id,
       offerTier,
     });
   } catch (error) {
-    console.error("[billing:checkout]", error);
+    captureServerException({
+      scope: "billing:checkout",
+      error,
+      context: {
+        userId: session.user.id,
+      },
+    });
 
     return NextResponse.json(
       { message: "Nao foi possivel iniciar a assinatura agora." },

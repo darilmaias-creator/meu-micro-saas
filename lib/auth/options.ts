@@ -18,6 +18,10 @@ import {
   getSessionUserFromStoredUser,
   upsertOAuthUser,
 } from "@/lib/auth/user-store";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
@@ -27,7 +31,10 @@ const useSecureCookies =
   Boolean(nextAuthUrl?.startsWith("https://"));
 
 function logAuthError(context: string, error: unknown) {
-  console.error(`[auth:${context}]`, error);
+  captureServerException({
+    scope: `auth:${context}`,
+    error,
+  });
 }
 
 function buildMinimalJwt(token: JWT, user?: { id?: string; email?: string | null }) {
@@ -58,7 +65,12 @@ const providers: NextAuthOptions["providers"] = [
 
 export async function authorizeCredentials(
   credentials: Record<string, string> | undefined,
-  req: { headers: Headers },
+  req: {
+    headers?:
+      | Headers
+      | Record<string, string | string[] | undefined>
+      | undefined;
+  },
 ) {
   try {
     const email = normalizeEmailInput(credentials?.email);
@@ -75,9 +87,14 @@ export async function authorizeCredentials(
     });
 
     if (!rateLimitResult.ok) {
-      logAuthError("credentials-rate-limit", {
-        email,
-        retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+      logServerEvent({
+        scope: "auth:credentials-rate-limit",
+        level: "warn",
+        message: "credentials login blocked by rate limiting",
+        context: {
+          email,
+          retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+        },
       });
       return null;
     }
@@ -98,6 +115,15 @@ export async function authorizeCredentials(
       action: "login",
       email,
       headers: req.headers,
+    });
+
+    logServerEvent({
+      scope: "auth:credentials-login",
+      message: "credentials login authorized",
+      context: {
+        userId: user.id,
+        email: user.email,
+      },
     });
 
     return {

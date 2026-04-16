@@ -8,6 +8,10 @@ import {
 import { isPremiumActiveSubscriptionStatus } from "@/lib/billing/subscription-status";
 import { authOptions } from "@/lib/auth/options";
 import { findUserById } from "@/lib/auth/user-store";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,11 +71,26 @@ export async function POST(request: Request) {
       return_url: `${getBaseUrl(request)}/`,
     });
 
+    logServerEvent({
+      scope: "billing:portal",
+      message: "billing portal opened",
+      context: {
+        userId: user.id,
+        stripeCustomerId: user.stripeCustomerId,
+      },
+    });
+
     return NextResponse.json({
       url: portalSession.url,
     });
   } catch (error) {
-    console.error("[billing:portal]", error);
+    captureServerException({
+      scope: "billing:portal",
+      error,
+      context: {
+        userId: session.user.id,
+      },
+    });
 
     return NextResponse.json(
       { message: "Nao foi possivel abrir o gerenciamento da assinatura." },

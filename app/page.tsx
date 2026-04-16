@@ -192,7 +192,7 @@ export default function MainApp() {
           tone: "success",
           message:
             forgotPasswordResult?.message ??
-            "Se existir uma conta com este e-mail, enviaremos um link de recuperacao em instantes.",
+            "Se existir uma conta com este e-mail, enviaremos um link de recuperacao em instantes. Confira tambem a pasta spam.",
         });
         return;
       }
@@ -293,6 +293,15 @@ export default function MainApp() {
               ? "Informe o e-mail da conta para receber o link de recuperacao."
               : "Entre com e-mail e senha ou use sua conta Google para acessar o sistema e manter sua operacao em um unico lugar."}
           </p>
+          {authMode !== "forgotPassword" && (
+            <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm text-slate-600">
+              <p className="font-bold text-slate-700 mb-1">Primeira vez por aqui?</p>
+              <p>
+                Crie sua conta, confirme seus dados e entre na hora. Depois voce
+                pode manter calculos, estoque, vendas e backup tudo no mesmo lugar.
+              </p>
+            </div>
+          )}
 
           {!PASSWORD_RECOVERY_AVAILABLE && authMode === "register" && (
             <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900">
@@ -350,9 +359,17 @@ export default function MainApp() {
           >
             {authMode === "register" && (
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Nome</label>
+                <label
+                  htmlFor="auth-name"
+                  className="block text-xs font-bold text-slate-500 mb-1"
+                >
+                  Nome
+                </label>
                 <input
+                  id="auth-name"
+                  name="name"
                   type="text"
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
@@ -361,9 +378,19 @@ export default function MainApp() {
               </div>
             )}
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">E-mail</label>
+              <label
+                htmlFor="auth-email"
+                className="block text-xs font-bold text-slate-500 mb-1"
+              >
+                E-mail
+              </label>
               <input
+                id="auth-email"
+                name="email"
                 type="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
@@ -372,9 +399,19 @@ export default function MainApp() {
             </div>
             {authMode !== "forgotPassword" && (
               <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Senha</label>
+                <label
+                  htmlFor="auth-password"
+                  className="block text-xs font-bold text-slate-500 mb-1"
+                >
+                  Senha
+                </label>
                 <input
+                  id="auth-password"
+                  name="password"
                   type="password"
+                  autoComplete={
+                    authMode === "register" ? "new-password" : "current-password"
+                  }
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
@@ -385,6 +422,7 @@ export default function MainApp() {
 
             {authFeedback && (
               <div
+                aria-live="polite"
                 className={`rounded-xl px-3 py-2 text-sm ${
                   authFeedback.tone === "error"
                     ? "bg-red-50 text-red-700 border border-red-100"

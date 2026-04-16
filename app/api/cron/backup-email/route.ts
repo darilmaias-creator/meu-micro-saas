@@ -7,6 +7,10 @@ import {
   findUsersWithAutomaticBackupEnabled,
   markUserBackupSent,
 } from "@/lib/auth/user-store";
+import {
+  captureServerException,
+  logServerEvent,
+} from "@/lib/observability/server-monitoring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,10 +59,28 @@ export async function GET(request: Request) {
         await markUserBackupSent(user.id, now.toISOString());
         sent += 1;
       } catch (error) {
-        console.error("[cron:backup-email]", user.id, error);
+        captureServerException({
+          scope: "cron:backup-email:user",
+          error,
+          context: {
+            userId: user.id,
+            destinationEmail: destinationEmail,
+          },
+        });
         failed += 1;
       }
     }
+
+    logServerEvent({
+      scope: "cron:backup-email",
+      message: "automatic backup cycle finished",
+      context: {
+        checked: users.length,
+        sent,
+        skipped,
+        failed,
+      },
+    });
 
     return NextResponse.json({
       ok: true,
@@ -68,7 +90,10 @@ export async function GET(request: Request) {
       failed,
     });
   } catch (error) {
-    console.error("[cron:backup-email]", error);
+    captureServerException({
+      scope: "cron:backup-email",
+      error,
+    });
 
     return NextResponse.json(
       {
