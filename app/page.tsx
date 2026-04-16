@@ -3,7 +3,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { Calculator } from "lucide-react";
-import { getProviders, signIn, useSession } from "next-auth/react";
+import { getCsrfToken, getProviders, signIn, useSession } from "next-auth/react";
 
 import AuthenticatedAppShell from "./AuthenticatedAppShell";
 import type { ActiveTab } from "../lib/app-tabs";
@@ -157,6 +157,41 @@ export default function MainApp() {
     };
   }, []);
 
+  async function submitCredentialsForm(input: {
+    callbackUrl: string;
+    email: string;
+    password: string;
+  }) {
+    const csrfToken = await getCsrfToken();
+
+    if (!csrfToken) {
+      throw new Error("Nao foi possivel preparar o login com seguranca.");
+    }
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "/api/auth/callback/credentials";
+    form.style.display = "none";
+
+    const fields = {
+      callbackUrl: input.callbackUrl,
+      csrfToken,
+      email: input.email,
+      password: input.password,
+    };
+
+    for (const [name, value] of Object.entries(fields)) {
+      const field = document.createElement("input");
+      field.type = "hidden";
+      field.name = name;
+      field.value = value;
+      form.appendChild(field);
+    }
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+
   async function handleCredentialsAuth() {
     setAuthFeedback(null);
     setIsSubmittingAuth(true);
@@ -228,32 +263,11 @@ export default function MainApp() {
         });
       }
 
-      const loginResult = await signIn("credentials", {
+      await submitCredentialsForm({
+        callbackUrl: postLoginPath,
         email,
         password,
-        redirect: false,
-        callbackUrl: postLoginPath,
       });
-
-      if (loginResult?.error) {
-        setAuthFeedback({
-          tone: "error",
-          message:
-            authMode === "register" &&
-            loginResult.error === "CredentialsSignin"
-              ? "Sua conta foi criada, mas o login automatico falhou. Tente entrar novamente."
-              : mapAuthErrorMessage(loginResult.error) ??
-                buildUnknownAuthErrorMessage(loginResult.error),
-        });
-        return;
-      }
-
-      setName("");
-      setPassword("");
-
-      if (postLoginPath !== "/") {
-        window.location.assign(loginResult?.url ?? postLoginPath);
-      }
     } catch (error) {
       setAuthFeedback({
         tone: "error",
