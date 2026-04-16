@@ -3,6 +3,7 @@ import "server-only";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import type { JWT } from "next-auth/jwt";
 
 import {
   normalizeEmailInput,
@@ -27,6 +28,21 @@ const useSecureCookies =
 
 function logAuthError(context: string, error: unknown) {
   console.error(`[auth:${context}]`, error);
+}
+
+function buildMinimalJwt(token: JWT, user?: { id?: string; email?: string | null }) {
+  return {
+    sub: user?.id ?? token.sub,
+    email:
+      typeof user?.email === "string"
+        ? user.email
+        : typeof token.email === "string"
+          ? token.email
+          : undefined,
+    iat: token.iat,
+    exp: token.exp,
+    jti: token.jti,
+  };
 }
 
 const providers: NextAuthOptions["providers"] = [
@@ -79,9 +95,7 @@ const providers: NextAuthOptions["providers"] = [
 
         return {
           id: user.id,
-          name: user.name,
           email: user.email,
-          image: user.image ?? undefined,
         };
       } catch (error) {
         logAuthError("credentials-authorize", error);
@@ -137,15 +151,7 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async jwt({ token, user }) {
-      if (user?.id) {
-        token.sub = user.id;
-      }
-
-      if (user?.email) {
-        token.email = user.email;
-      }
-
-      return token;
+      return buildMinimalJwt(token, user);
     },
     async session({ session, token }) {
       try {
