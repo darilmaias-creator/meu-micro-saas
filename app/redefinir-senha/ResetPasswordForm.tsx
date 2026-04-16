@@ -104,29 +104,41 @@ export default function ResetPasswordForm({
 
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1">
+            <label
+              htmlFor="reset-password"
+              className="block text-xs font-bold text-slate-500 mb-1"
+            >
               Nova senha
             </label>
             <input
+              id="reset-password"
+              name="password"
               type="password"
+              autoComplete="new-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               disabled={!hasToken || isSubmitting}
-              className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-400"
+              className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-400"
               placeholder="Minimo de 6 caracteres"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1">
+            <label
+              htmlFor="reset-password-confirmation"
+              className="block text-xs font-bold text-slate-500 mb-1"
+            >
               Confirmar nova senha
             </label>
             <input
+              id="reset-password-confirmation"
+              name="confirmPassword"
               type="password"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               disabled={!hasToken || isSubmitting}
-              className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-400"
+              className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-400"
               placeholder="Repita a senha"
             />
           </div>
