@@ -52,58 +52,63 @@ const providers: NextAuthOptions["providers"] = [
       email: { label: "Email", type: "email", placeholder: "seu@email.com" },
       password: { label: "Senha", type: "password" },
     },
-    async authorize(credentials, req) {
-      try {
-        const email = normalizeEmailInput(credentials?.email);
-        const password = credentials?.password ?? "";
-
-        if (validateEmailAddress(email) || validatePasswordForLogin(password)) {
-          return null;
-        }
-
-        const rateLimitResult = await consumeAuthRateLimit({
-          action: "login",
-          email,
-          headers: req.headers,
-        });
-
-        if (!rateLimitResult.ok) {
-          logAuthError("credentials-rate-limit", {
-            email,
-            retryAfterSeconds: rateLimitResult.retryAfterSeconds,
-          });
-          return null;
-        }
-
-        const user = await findUserByEmail(email);
-
-        if (!user?.passwordHash) {
-          return null;
-        }
-
-        const passwordMatches = await verifyPassword(password, user.passwordHash);
-
-        if (!passwordMatches) {
-          return null;
-        }
-
-        await clearAuthRateLimit({
-          action: "login",
-          email,
-          headers: req.headers,
-        });
-
-        return {
-          id: user.id,
-          email: user.email,
-        };
-      } catch (error) {
-        logAuthError("credentials-authorize", error);
-        return null;
-      }
-    },
+    authorize: authorizeCredentials,
   }),
 ];
+
+export async function authorizeCredentials(
+  credentials: Record<string, string> | undefined,
+  req: { headers: Headers },
+) {
+  try {
+    const email = normalizeEmailInput(credentials?.email);
+    const password = credentials?.password ?? "";
+
+    if (validateEmailAddress(email) || validatePasswordForLogin(password)) {
+      return null;
+    }
+
+    const rateLimitResult = await consumeAuthRateLimit({
+      action: "login",
+      email,
+      headers: req.headers,
+    });
+
+    if (!rateLimitResult.ok) {
+      logAuthError("credentials-rate-limit", {
+        email,
+        retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+      });
+      return null;
+    }
+
+    const user = await findUserByEmail(email);
+
+    if (!user?.passwordHash) {
+      return null;
+    }
+
+    const passwordMatches = await verifyPassword(password, user.passwordHash);
+
+    if (!passwordMatches) {
+      return null;
+    }
+
+    await clearAuthRateLimit({
+      action: "login",
+      email,
+      headers: req.headers,
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+    };
+  } catch (error) {
+    logAuthError("credentials-authorize", error);
+    return null;
+  }
+}
 
 if (googleClientId && googleClientSecret) {
   providers.push(
