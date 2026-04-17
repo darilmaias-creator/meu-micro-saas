@@ -1,11 +1,12 @@
-const CACHE_NAME = "calculadora-do-produtor-pwa-v2";
+const CACHE_NAME = "calculadora-do-produtor-pwa-v3";
+const ICON_VERSION = "20260417-2";
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
-  "/icon",
-  "/apple-icon",
-  "/pwa-icon-512.png",
-  "/pwa-maskable-512.png",
-  "/pwa-monochrome-512.png",
+  `/icon?v=${ICON_VERSION}`,
+  `/apple-icon?v=${ICON_VERSION}`,
+  `/pwa-icon-512.png?v=${ICON_VERSION}`,
+  `/pwa-maskable-512.png?v=${ICON_VERSION}`,
+  `/pwa-monochrome-512.png?v=${ICON_VERSION}`,
 ];
 
 self.addEventListener("install", (event) => {
@@ -69,7 +70,7 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
-      const cached = await cache.match(request, { ignoreSearch: true });
+      const cached = await cache.match(request);
 
       if (cached) {
         void fetch(request)

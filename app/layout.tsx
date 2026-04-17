@@ -5,8 +5,13 @@ import { Providers } from "./providers";
 import {
   PWA_APP_DESCRIPTION,
   PWA_APP_NAME,
+  PWA_ICON_VERSION,
   PWA_THEME_COLOR,
 } from "@/lib/pwa/config";
+
+const APP_ICON_URL = `/icon?v=${PWA_ICON_VERSION}`;
+const APPLE_ICON_URL = `/apple-icon?v=${PWA_ICON_VERSION}`;
+const APP_MASKABLE_ICON_URL = `/pwa-maskable-512.png?v=${PWA_ICON_VERSION}`;
 
 export const metadata: Metadata = {
   title: {
@@ -19,24 +24,24 @@ export const metadata: Metadata = {
   icons: {
     shortcut: [
       {
-        url: "/icon",
+        url: APP_ICON_URL,
         type: "image/png",
       },
     ],
     icon: [
       {
-        url: "/icon",
+        url: APP_ICON_URL,
         type: "image/png",
       },
       {
-        url: "/pwa-maskable-512.png",
+        url: APP_MASKABLE_ICON_URL,
         sizes: "512x512",
         type: "image/png",
       },
     ],
     apple: [
       {
-        url: "/apple-icon",
+        url: APPLE_ICON_URL,
         sizes: "180x180",
         type: "image/png",
       },

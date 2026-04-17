@@ -5,8 +5,14 @@ import {
   PWA_APP_DESCRIPTION,
   PWA_APP_NAME,
   PWA_APP_SHORT_NAME,
+  PWA_ICON_VERSION,
   PWA_THEME_COLOR,
 } from "@/lib/pwa/config";
+
+const APP_ICON_URL = `/pwa-icon-512.png?v=${PWA_ICON_VERSION}`;
+const APP_MASKABLE_ICON_URL = `/pwa-maskable-512.png?v=${PWA_ICON_VERSION}`;
+const APP_MONOCHROME_ICON_URL = `/pwa-monochrome-512.png?v=${PWA_ICON_VERSION}`;
+const APPLE_ICON_URL = `/apple-icon?v=${PWA_ICON_VERSION}`;
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -61,25 +67,25 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     icons: [
       {
-        src: "/pwa-icon-512.png",
+        src: APP_ICON_URL,
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/pwa-maskable-512.png",
+        src: APP_MASKABLE_ICON_URL,
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
       },
       {
-        src: "/pwa-monochrome-512.png",
+        src: APP_MONOCHROME_ICON_URL,
         sizes: "512x512",
         type: "image/png",
         purpose: "monochrome",
       },
       {
-        src: "/apple-icon",
+        src: APPLE_ICON_URL,
         sizes: "180x180",
         type: "image/png",
       },
