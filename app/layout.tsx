@@ -16,6 +16,34 @@ export const metadata: Metadata = {
   description: PWA_APP_DESCRIPTION,
   applicationName: PWA_APP_NAME,
   manifest: "/manifest.webmanifest",
+  icons: {
+    shortcut: [
+      {
+        url: "/pwa-icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+    icon: [
+      {
+        url: "/pwa-icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+      {
+        url: "/pwa-maskable-512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+    apple: [
+      {
+        url: "/apple-icon",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
