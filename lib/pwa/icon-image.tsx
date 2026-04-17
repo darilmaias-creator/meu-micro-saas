@@ -4,6 +4,7 @@ import {
   PWA_BACKGROUND_COLOR,
   PWA_THEME_COLOR,
 } from "@/lib/pwa/config";
+import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
 
 type PwaIconVariant = "default" | "maskable" | "monochrome";
 
@@ -14,6 +15,7 @@ function renderPwaIcon(variant: PwaIconVariant) {
   const labelColor = isMonochrome ? "#111827" : PWA_THEME_COLOR;
   const subtitleColor = isMonochrome ? "#374151" : "#334155";
   const cardSize = variant === "maskable" ? 400 : 360;
+  const logoSize = variant === "maskable" ? 304 : 264;
 
   return (
     <div
@@ -43,26 +45,26 @@ function renderPwaIcon(variant: PwaIconVariant) {
           border: isMonochrome ? "24px solid #111827" : "none",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 18,
-          }}
-        >
+        {isMonochrome ? (
           <div
             style={{
-              fontSize: 78,
-              fontWeight: 900,
-              letterSpacing: "-0.06em",
-              color: labelColor,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 18,
             }}
           >
-            CP
-          </div>
-          {!isMonochrome && (
+            <div
+              style={{
+                fontSize: 78,
+                fontWeight: 900,
+                letterSpacing: "-0.06em",
+                color: labelColor,
+              }}
+            >
+              CP
+            </div>
             <div
               style={{
                 fontSize: 28,
@@ -72,8 +74,19 @@ function renderPwaIcon(variant: PwaIconVariant) {
             >
               Produtor
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <img
+            src={DEFAULT_STORE_LOGO}
+            alt="Logo da Calculadora do Produtor"
+            width={logoSize}
+            height={logoSize}
+            style={{
+              objectFit: "contain",
+              borderRadius: 72,
+            }}
+          />
+        )}
       </div>
     </div>
   );
