@@ -25,6 +25,36 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: PWA_THEME_COLOR,
     prefer_related_applications: false,
     categories: ["business", "finance", "productivity"],
+    screenshots: [
+      {
+        src: "/screenshots/login.png",
+        sizes: "542x930",
+        type: "image/png",
+        form_factor: "narrow",
+        label: "Tela de login da Calculadora do Produtor",
+      },
+      {
+        src: "/screenshots/estoque.png",
+        sizes: "679x566",
+        type: "image/png",
+        form_factor: "wide",
+        label: "Tela de estoque com cadastro de materiais",
+      },
+      {
+        src: "/screenshots/fichatecnica.png",
+        sizes: "646x568",
+        type: "image/png",
+        form_factor: "wide",
+        label: "Tela de ficha tecnica e precificacao de produtos",
+      },
+      {
+        src: "/screenshots/vendas.png",
+        sizes: "726x277",
+        type: "image/png",
+        form_factor: "wide",
+        label: "Tela de vendas, orcamentos e propostas",
+      },
+    ],
     icons: [
       {
         src: "/pwa-icon-512.png",
