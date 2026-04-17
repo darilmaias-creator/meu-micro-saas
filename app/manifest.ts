@@ -28,28 +28,28 @@ export default function manifest(): MetadataRoute.Manifest {
     screenshots: [
       {
         src: "/screenshots/login.png",
-        sizes: "542x930",
+        sizes: "380x824",
         type: "image/png",
         form_factor: "narrow",
         label: "Tela de login da Calculadora do Produtor",
       },
       {
         src: "/screenshots/estoque.png",
-        sizes: "679x566",
+        sizes: "957x844",
         type: "image/png",
         form_factor: "wide",
         label: "Tela de estoque com cadastro de materiais",
       },
       {
         src: "/screenshots/fichatecnica.png",
-        sizes: "646x568",
+        sizes: "712x872",
         type: "image/png",
         form_factor: "wide",
         label: "Tela de ficha tecnica e precificacao de produtos",
       },
       {
         src: "/screenshots/vendas.png",
-        sizes: "726x277",
+        sizes: "733x286",
         type: "image/png",
         form_factor: "wide",
         label: "Tela de vendas, orcamentos e propostas",
