@@ -10,15 +10,20 @@ import {
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/",
     name: PWA_APP_NAME,
     short_name: PWA_APP_SHORT_NAME,
     description: PWA_APP_DESCRIPTION,
+    lang: "pt-BR",
+    dir: "ltr",
     start_url: "/",
     scope: "/",
     display: "standalone",
+    display_override: ["standalone", "minimal-ui"],
     orientation: "portrait",
     background_color: PWA_BACKGROUND_COLOR,
     theme_color: PWA_THEME_COLOR,
+    prefer_related_applications: false,
     categories: ["business", "finance", "productivity"],
     icons: [
       {
