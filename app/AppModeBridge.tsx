@@ -40,6 +40,7 @@ function syncInstalledAppClass(isInstalledApp: boolean) {
 export default function AppModeBridge() {
   const [showLaunchScreen, setShowLaunchScreen] = useState(false);
   const launchTimeoutRef = useRef<number | null>(null);
+  const hasHandledInitialModeRef = useRef(false);
 
   useEffect(() => {
     const mediaQueries = DISPLAY_MODE_QUERIES.map((query) =>
@@ -56,8 +57,8 @@ export default function AppModeBridge() {
         return;
       }
 
-      if (!window.sessionStorage.getItem("calc-prod-launch-screen-shown")) {
-        window.sessionStorage.setItem("calc-prod-launch-screen-shown", "true");
+      if (!hasHandledInitialModeRef.current) {
+        hasHandledInitialModeRef.current = true;
         setShowLaunchScreen(true);
 
         if (launchTimeoutRef.current !== null) {
@@ -66,7 +67,7 @@ export default function AppModeBridge() {
 
         launchTimeoutRef.current = window.setTimeout(() => {
           setShowLaunchScreen(false);
-        }, 950);
+        }, 1650);
       }
     };
 
