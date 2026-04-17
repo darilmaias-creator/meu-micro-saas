@@ -282,13 +282,17 @@ export default function MainApp() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center border border-slate-100">
-          <div className="bg-amber-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(253,230,138,0.4),_rgba(255,247,237,0.75)_32%,_rgba(248,250,252,1)_62%)] p-4 md:flex md:items-center md:justify-center">
+        <div className="app-shell-surface mx-auto w-full max-w-md rounded-[32px] border border-white/80 bg-white/95 p-6 text-center shadow-[0_28px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl md:p-8">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-amber-800">
+            <Calculator size={12} />
+            Entrar no app
+          </div>
+          <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-amber-100 shadow-inner">
             <Calculator size={48} className="text-amber-600" />
           </div>
-          <h1 className="text-3xl font-black text-slate-800 mb-3">Calculadora do Produtor</h1>
-          <p className="text-slate-500 mb-6 text-sm">
+          <h1 className="mb-3 text-3xl font-black text-slate-800">Calculadora do Produtor</h1>
+          <p className="mb-6 text-sm text-slate-500">
             {authMode === "forgotPassword"
               ? "Informe o e-mail da conta para receber o link de recuperacao."
               : "Entre com e-mail e senha ou use sua conta Google para acessar o sistema e manter sua operacao em um unico lugar."}
@@ -320,7 +324,7 @@ export default function MainApp() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2 mb-6 bg-slate-100 p-1 rounded-2xl">
+          <div className="mb-6 grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
             <button
               type="button"
               onClick={() => {
@@ -353,10 +357,7 @@ export default function MainApp() {
             </button>
           </div>
 
-          <form
-            className="space-y-3 mb-6 text-left"
-            onSubmit={handleCredentialsSubmit}
-          >
+          <form className="mb-6 space-y-3 text-left" onSubmit={handleCredentialsSubmit}>
             {authMode === "register" && (
               <div>
                 <label
@@ -436,7 +437,7 @@ export default function MainApp() {
             <button
               type="submit"
               disabled={isSubmittingAuth}
-              className="w-full bg-amber-600 text-white font-bold text-base py-3 px-4 rounded-xl hover:bg-amber-700 disabled:bg-amber-300 disabled:cursor-not-allowed transition-colors shadow-sm"
+              className="w-full rounded-xl bg-amber-600 px-4 py-3 text-base font-bold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-300"
             >
               {isSubmittingAuth
                 ? "Processando..."
