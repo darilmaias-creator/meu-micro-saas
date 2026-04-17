@@ -3,8 +3,11 @@ export type GenericRecord = Record<string, unknown>;
 export const DEFAULT_STORE_NAME = "Calculadora do Produtor";
 export const DEFAULT_STORE_SUBTITLE =
   "Orçamentos claros. Clientes seguros. Negócios fechados.";
+export const DEFAULT_STORE_LOGO =
+  "https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png";
 export const LEGACY_STORE_NAME = "ATELIÊ";
 export const LEGACY_STORE_SUBTITLE = "Artesanato e Produtos";
+export const LEGACY_STORE_LOGO = "https://i.postimg.cc/hj2J824X/logo.png";
 
 export type AppConfigState = {
   unit: string;
@@ -43,7 +46,7 @@ export function createDefaultAppDataState(): AppDataState {
       machinePower: "96",
       hourlyRate: "",
       profitMargin: "50",
-      userLogo: "https://i.postimg.cc/hj2J824X/logo.png",
+      userLogo: DEFAULT_STORE_LOGO,
       storeName: DEFAULT_STORE_NAME,
       storeSubtitle: DEFAULT_STORE_SUBTITLE,
     },
@@ -64,6 +67,10 @@ export function normalizeBrandingValue(storageKey: string, storedValue: string) 
     storedValue === LEGACY_STORE_SUBTITLE
   ) {
     return DEFAULT_STORE_SUBTITLE;
+  }
+
+  if (storageKey.endsWith("calc_userLogo") && storedValue === LEGACY_STORE_LOGO) {
+    return DEFAULT_STORE_LOGO;
   }
 
   return storedValue;
