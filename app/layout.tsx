@@ -19,15 +19,13 @@ export const metadata: Metadata = {
   icons: {
     shortcut: [
       {
-        url: "/pwa-icon-512.png",
-        sizes: "512x512",
+        url: "/icon",
         type: "image/png",
       },
     ],
     icon: [
       {
-        url: "/pwa-icon-512.png",
-        sizes: "512x512",
+        url: "/icon",
         type: "image/png",
       },
       {

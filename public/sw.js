@@ -1,7 +1,6 @@
-const CACHE_NAME = "calculadora-do-produtor-pwa-v1";
+const CACHE_NAME = "calculadora-do-produtor-pwa-v2";
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
-  "/favicon.ico",
   "/icon",
   "/apple-icon",
   "/pwa-icon-512.png",
@@ -58,7 +57,6 @@ self.addEventListener("fetch", (event) => {
 
   const isPwaAsset =
     url.pathname === "/manifest.webmanifest" ||
-    url.pathname === "/favicon.ico" ||
     url.pathname === "/icon" ||
     url.pathname === "/apple-icon" ||
     url.pathname === "/pwa-icon-512.png" ||
