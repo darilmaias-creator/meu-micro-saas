@@ -1,11 +1,39 @@
 "use client";
 import React, { useState } from 'react';
-import { Package, Box, AlertCircle, Trash2, Save } from 'lucide-react';
+import { Package, Box, AlertCircle, Trash2, Save, Upload, X } from 'lucide-react';
 import { Card, InputGroup } from './ui';
 import { FREE_TIER_INSUMO_LIMIT } from '@/lib/app-data/plan-limits';
+import type { GenericRecord } from '@/lib/app-data/defaults';
 
-export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPremium }: any) {
-    const [insType, setInsType] = useState('area'); 
+type InsumoType = 'area' | 'length' | 'weight' | 'unit';
+
+type InventoryRecord = GenericRecord & {
+    id: number;
+    type: InsumoType;
+    name: string;
+    price: number;
+    packQty: number;
+    totalQty: number;
+    unit: string;
+    costPerUnit: number;
+    costPerItem: number;
+    stock: number;
+    minStock: number;
+    width: number | null;
+    height: number | null;
+    measurePerItem: number;
+};
+
+type InventoryTabProps = {
+    insumos: GenericRecord[];
+    setInsumos: (value: GenericRecord[] | ((prev: GenericRecord[]) => GenericRecord[])) => void;
+    unit: string;
+    setUnit: (value: string) => void;
+    isPremium: boolean;
+};
+
+export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPremium }: InventoryTabProps) {
+    const [insType, setInsType] = useState<InsumoType>('area'); 
     const [insName, setInsName] = useState('');
     const [insPrice, setInsPrice] = useState('');
     const [insPackQty, setInsPackQty] = useState('1'); 
@@ -14,6 +42,21 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
     const [insMeasure, setInsMeasure] = useState(''); 
     const [insStock, setInsStock] = useState('');
     const [insMinStock, setInsMinStock] = useState('');
+    const [editingInsumoId, setEditingInsumoId] = useState<number | null>(null);
+    const inventoryItems = insumos as InventoryRecord[];
+
+    const resetForm = () => {
+        setEditingInsumoId(null);
+        setInsType('area');
+        setInsName('');
+        setInsPrice('');
+        setInsPackQty('1');
+        setInsWidth('');
+        setInsHeight('');
+        setInsMeasure('');
+        setInsStock('');
+        setInsMinStock('');
+    };
 
     const toggleUnitGlobal = () => {
         const isToMM = unit === 'cm';
@@ -33,7 +76,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
     
     const handleSaveInsumo = () => {
         // Lógica FREEMIUM: Verifica limite antes de salvar
-        if (!isPremium && insumos.length >= FREE_TIER_INSUMO_LIMIT) {
+        if (!editingInsumoId && !isPremium && inventoryItems.length >= FREE_TIER_INSUMO_LIMIT) {
             alert(`Limite da conta gratuita atingido! Você só pode adicionar até ${FREE_TIER_INSUMO_LIMIT} insumos no estoque. Assine o plano Premium para adicionar itens ilimitados.`);
             return;
         }
@@ -60,24 +103,53 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
         const costPerUnit = Number(insPrice) / finalTotalQty; 
         const costPerItem = Number(insPrice) / pQty; 
         
-        const novoInsumo = {
-            id: Date.now(), type: insType, name: insName, price: Number(insPrice), packQty: pQty, totalQty: finalTotalQty, 
+        const novoInsumo: InventoryRecord = {
+            id: editingInsumoId ?? Date.now(), type: insType, name: insName, price: Number(insPrice), packQty: pQty, totalQty: finalTotalQty, 
             unit: unitLabel, costPerUnit, costPerItem, stock: Number(insStock) || 0, minStock: Number(insMinStock) || 0,
             width: insType === 'area' ? Number(insWidth) : null, height: insType === 'area' ? Number(insHeight) : null, measurePerItem: measurePItem
         };
-        
-        setInsumos([novoInsumo, ...insumos]);
-        setInsName(''); setInsPrice(''); setInsPackQty('1'); setInsWidth(''); setInsHeight(''); setInsMeasure(''); setInsStock(''); setInsMinStock('');
+
+        if (editingInsumoId) {
+            setInsumos(inventoryItems.map((i) => i.id === editingInsumoId ? novoInsumo : i));
+            resetForm();
+            alert(`Insumo "${insName}" atualizado no estoque!`);
+            return;
+        }
+
+        setInsumos([novoInsumo, ...inventoryItems]);
+        resetForm();
         alert(`Insumo "${insName}" cadastrado no estoque!`);
     };
 
-    const delInsumo = (id: any) => { if(window.confirm('Apagar este insumo do estoque?')) setInsumos(insumos.filter((i: any) => i.id !== id)); };
+    const delInsumo = (id: number) => { if(window.confirm('Apagar este insumo do estoque?')) setInsumos(inventoryItems.filter((i) => i.id !== id)); };
+
+    const loadInsumo = (insumo: InventoryRecord) => {
+        if (window.confirm(`Carregar "${insumo.name || 'Insumo'}" para edição?`)) {
+            setEditingInsumoId(insumo.id);
+            setInsType(insumo.type || 'area');
+            setInsName(insumo.name || '');
+            setInsPrice(String(insumo.price ?? ''));
+            setInsPackQty(String(insumo.packQty ?? '1'));
+            setInsWidth(insumo.type === 'area' && insumo.width != null ? String(insumo.width) : '');
+            setInsHeight(insumo.type === 'area' && insumo.height != null ? String(insumo.height) : '');
+            setInsMeasure(insumo.type !== 'area' && insumo.measurePerItem != null ? String(insumo.measurePerItem) : '');
+            setInsStock(String(insumo.stock ?? ''));
+            setInsMinStock(String(insumo.minStock ?? ''));
+
+            if ((insumo.type === 'area' || insumo.type === 'length') && typeof insumo.unit === 'string') {
+                if (insumo.unit.includes('mm')) setUnit('mm');
+                if (insumo.unit.includes('cm')) setUnit('cm');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn w-full">
             <Card className={`md:col-span-1 border-t-4 border-amber-500`}>
                 <div className="mb-4 flex items-center justify-between gap-3">
-                    <h2 className={`font-bold text-lg flex items-center gap-2 text-amber-600`}><Package size={20} /> Novo Insumo</h2>
+                    <h2 className={`font-bold text-lg flex items-center gap-2 text-amber-600`}><Package size={20} /> {editingInsumoId ? 'Editar Insumo' : 'Novo Insumo'}</h2>
                     {(insType === 'area' || insType === 'length') && (
                         <div className="flex bg-slate-100 p-1 rounded border shrink-0">
                             <button onClick={() => unit !== 'cm' && toggleUnitGlobal()} className={`px-3 py-1 rounded text-xs font-bold ${unit === 'cm' ? 'bg-white shadow text-amber-600' : 'text-slate-400'}`}>CM</button>
@@ -85,9 +157,17 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                         </div>
                     )}
                 </div>
+                {editingInsumoId && (
+                    <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 flex items-center justify-between gap-3">
+                        <span>Você está editando um insumo já salvo no estoque.</span>
+                        <button onClick={resetForm} className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100">
+                            <X size={14} /> Cancelar
+                        </button>
+                    </div>
+                )}
                 <div className="mb-4">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Tipo de Medida</label>
-                    <select value={insType} onChange={e=>setInsType(e.target.value)} className="w-full p-2.5 border border-slate-300 rounded-lg outline-none text-sm font-bold bg-white text-slate-700">
+                    <select value={insType} onChange={e=>setInsType(e.target.value as InsumoType)} className="w-full p-2.5 border border-slate-300 rounded-lg outline-none text-sm font-bold bg-white text-slate-700">
                         <option value="area">Área (Chapas, Placas, Acrílico)</option>
                         <option value="length">Comprimento (Fitas, Tecidos, Correntes)</option>
                         <option value="weight">Peso em Gramas (Barbantes, Fios, Resina)</option>
@@ -102,16 +182,23 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                 {(insType === 'weight' || insType === 'length' || insType === 'unit') && (<div className="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4"><InputGroup label={insType === 'weight' ? "Peso de 1 rolo/cone (em GRAMAS)" : insType === 'length' ? `Compr. de 1 rolo (${unit})` : "Quantidade por item"} value={insMeasure} onChange={setInsMeasure} className="mb-0" tooltip={insType === 'weight' ? "IMPORTANTE: Digite em gramas. Ex: 1Kg = 1000. Rolo de 600g = 600." : insType === 'length' ? unit === 'cm' ? "Ex: Um rolo tem 10 metros = 1000cm." : "Ex: Um rolo tem 10 metros = 10000mm." : "Para unidades, geralmente é 1."} suffix={insType === 'length' ? unit : undefined} /></div>)}
                 
                 <div className="border-t border-slate-100 pt-4"><InputGroup label={insType === 'weight' ? "Estoque Atual (Qtd de Cones/Rolos)" : "Estoque Atual (Qtd Pacotes/Unidades)"} value={insStock} onChange={setInsStock} tooltip={insType === 'weight' ? "Quantos cones ou rolos inteiros você tem na prateleira agora?" : "Quantas unidades físicas você tem aí na prateleira?"} /><InputGroup label="Alerta de Estoque Mínimo" value={insMinStock} onChange={setInsMinStock} /></div>
-                <button onClick={handleSaveInsumo} className={`w-full py-3 text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors bg-amber-600 hover:bg-amber-700`}><Save size={18} /> Salvar no Estoque</button>
+                <div className="flex flex-col gap-2">
+                    <button onClick={handleSaveInsumo} className={`w-full py-3 text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors bg-amber-600 hover:bg-amber-700`}><Save size={18} /> {editingInsumoId ? 'Atualizar no Estoque' : 'Salvar no Estoque'}</button>
+                    {editingInsumoId && (
+                        <button onClick={resetForm} className="w-full py-2.5 text-slate-700 font-bold rounded-lg flex justify-center items-center gap-2 transition-colors bg-slate-100 hover:bg-slate-200">
+                            <X size={16} /> Limpar edição
+                        </button>
+                    )}
+                </div>
             </Card>
             <Card className="md:col-span-2">
-                <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-700"><Box size={20} /> Controle de Estoque Completo {!isPremium && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">Grátis: {insumos.length}/{FREE_TIER_INSUMO_LIMIT}</span>}</h2>
+                    <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-700"><Box size={20} /> Controle de Estoque Completo {!isPremium && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">Grátis: {inventoryItems.length}/{FREE_TIER_INSUMO_LIMIT}</span>}</h2>
                 <div className="overflow-x-auto"><table className="w-full text-left text-sm text-slate-600 whitespace-nowrap"><thead className="bg-slate-50 uppercase text-xs font-bold text-slate-500"><tr><th className="p-3">Insumo</th><th className="p-3">Tipo</th><th className="p-3 text-right">Custo Unid.</th><th className="p-3 text-center">Estoque</th><th className="p-3 text-right text-green-600">Valor Parado</th><th className="p-3 text-center">Status</th><th className="p-3 text-center">Ação</th></tr></thead><tbody className="divide-y divide-slate-100">
-                    {insumos.map((i: any) => {
+                    {inventoryItems.map((i) => {
                         const isLow = i.stock <= i.minStock; const unitCost = i.costPerItem || i.price; const totalValueInStock = Number(i.stock) * unitCost;
-                        return (<tr key={i.id} className="hover:bg-slate-50"><td className="p-3 font-bold text-slate-800">{i.name}</td><td className="p-3 text-xs"><span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-medium">{i.type === 'area' ? 'Área' : i.type === 'length' ? 'Compr.' : i.type === 'weight' ? 'Peso' : 'Unid.'}</span></td><td className="p-3 font-medium text-right">R$ {Number(unitCost || 0).toFixed(2)}</td><td className={`p-3 font-mono font-bold text-center ${isLow ? 'text-red-500' : 'text-slate-700'}`}>{Number(i.stock).toFixed(2)} un</td><td className="p-3 font-bold text-right text-green-600">R$ {Number(totalValueInStock || 0).toFixed(2)}</td><td className="p-3 text-center">{isLow ? (<span className="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold inline-flex items-center gap-1 uppercase"><AlertCircle size={12} /> Comprar</span>) : (<span className="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold uppercase">OK</span>)}</td><td className="p-3 text-center"><button onClick={() => delInsumo(i.id)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50" title="Apagar Insumo"><Trash2 size={16} /></button></td></tr>)
+                        return (<tr key={i.id} className="hover:bg-slate-50"><td className="p-3 font-bold text-slate-800">{i.name}</td><td className="p-3 text-xs"><span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-medium">{i.type === 'area' ? 'Área' : i.type === 'length' ? 'Compr.' : i.type === 'weight' ? 'Peso' : 'Unid.'}</span></td><td className="p-3 font-medium text-right">R$ {Number(unitCost || 0).toFixed(2)}</td><td className={`p-3 font-mono font-bold text-center ${isLow ? 'text-red-500' : 'text-slate-700'}`}>{Number(i.stock).toFixed(2)} un</td><td className="p-3 font-bold text-right text-green-600">R$ {Number(totalValueInStock || 0).toFixed(2)}</td><td className="p-3 text-center">{isLow ? (<span className="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold inline-flex items-center gap-1 uppercase"><AlertCircle size={12} /> Comprar</span>) : (<span className="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold uppercase">OK</span>)}</td><td className="p-3 text-center"><button onClick={() => loadInsumo(i)} className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg font-bold text-xs inline-flex items-center gap-1 mr-2" title="Carregar para editar"><Upload size={14} /> Carregar</button><button onClick={() => delInsumo(i.id)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50" title="Apagar Insumo"><Trash2 size={16} /></button></td></tr>)
                     })}
-                    {insumos.length === 0 && (<tr><td colSpan={7} className="p-8 text-center text-slate-400">O seu estoque está vazio.</td></tr>)}
+                    {inventoryItems.length === 0 && (<tr><td colSpan={7} className="p-8 text-center text-slate-400">O seu estoque está vazio.</td></tr>)}
                 </tbody></table></div>
             </Card>
         </div>
