@@ -1,10 +1,102 @@
 "use client";
 import React, { useState } from 'react';
 import { ShoppingBag, FileText, Save, Clock, Upload, Trash2 } from 'lucide-react';
+import type { AppConfigState, GenericRecord } from '@/lib/app-data/defaults';
 import { Card, InputGroup } from './ui';
 
-export default function SalesTab({ appData, isPremium }: any) {
+type RecordId = string | number;
+
+type RecipeItem = Record<string, unknown> & {
+    insumoId: RecordId;
+    usedMeasure: number;
+};
+
+type SavedProduct = Record<string, unknown> & {
+    id: RecordId;
+    name?: string;
+    totalCost?: number | string;
+    activePrice?: number | string;
+    titheValue?: number | string;
+    finishTime?: number | string;
+    hourlyRate?: number | string;
+    chargeSupervision?: boolean;
+    cutTime?: number | string;
+    yieldQty?: number | string;
+    recipeItems?: RecipeItem[];
+};
+
+type Insumo = Record<string, unknown> & {
+    id: RecordId;
+    name: string;
+    stock: number;
+    minStock?: number;
+    measurePerItem?: number;
+};
+
+type Quote = Record<string, unknown> & {
+    id: RecordId;
+    quoteNumber: number;
+    productId: RecordId;
+    productName: string;
+    clientName: string;
+    clientPhone: string;
+    quantity: number;
+    date: string;
+    discountFixed: string;
+    discountPercent: string;
+    unitPrice: number;
+    netSale: number;
+    status: string;
+};
+
+type Sale = Record<string, unknown> & {
+    id: number;
+    productId: RecordId;
+    productName: string;
+    date: string;
+    quantity: number;
+    unitCost: number;
+    unitPrice: number;
+    discount: number;
+    totalCost: number;
+    totalSale: number;
+    totalTithe: number;
+    totalProfit: number;
+};
+
+type CurrentSaleData = {
+    p: SavedProduct;
+    q: number;
+    uCost: number;
+    uPrice: number;
+    grossSale: number;
+    discountTotal: number;
+    netSale: number;
+    totalC: number;
+    totalTithe: number;
+    totalProfit: number;
+};
+
+type SalesTabProps = {
+    appData: {
+        savedProducts: GenericRecord[];
+        insumos: GenericRecord[];
+        setInsumos: (items: GenericRecord[]) => void;
+        sales: GenericRecord[];
+        setSales: (items: GenericRecord[]) => void;
+        quotes: GenericRecord[];
+        setQuotes: (items: GenericRecord[]) => void;
+        config: AppConfigState;
+    };
+    isPremium: boolean;
+};
+
+export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     const { savedProducts, insumos, setInsumos, sales, setSales, quotes, setQuotes, config } = appData;
+    const savedProductItems = savedProducts as SavedProduct[];
+    const insumoItems = insumos as Insumo[];
+    const saleItems = sales as Sale[];
+    const quoteItems = quotes as Quote[];
 
     const [saleProductId, setSaleProductId] = useState('');
     const [saleQuantity, setSaleQuantity] = useState<number | string>(1);
@@ -15,7 +107,7 @@ export default function SalesTab({ appData, isPremium }: any) {
     const [clientName, setClientName] = useState('');
     const [clientPhone, setClientPhone] = useState('');
     
-    const [activeQuoteId, setActiveQuoteId] = useState<number | null>(null);
+    const [activeQuoteId, setActiveQuoteId] = useState<RecordId | null>(null);
     const [quoteNumber, setQuoteNumber] = useState(() => Math.floor(Math.random() * 90000) + 10000);
     const [docType, setDocType] = useState<'orcamento' | 'recibo'>('orcamento');
 
@@ -30,9 +122,9 @@ export default function SalesTab({ appData, isPremium }: any) {
         setDocType('orcamento');
     };
 
-    let currentSaleData: any = null;
+    let currentSaleData: CurrentSaleData | null = null;
     if (saleProductId) {
-        const p = savedProducts.find((prod: any) => prod && String(prod.id) === String(saleProductId));
+        const p = savedProductItems.find((prod) => prod && String(prod.id) === String(saleProductId));
         if (p) {
             const q = Number(saleQuantity) || 1;
             const uCost = Number(p.totalCost || 0);
@@ -77,26 +169,26 @@ export default function SalesTab({ appData, isPremium }: any) {
         };
 
         if (activeQuoteId) {
-            setQuotes(quotes.map((quote: any) => quote.id === activeQuoteId ? newQuote : quote));
+            setQuotes(quoteItems.map((quote) => quote.id === activeQuoteId ? newQuote : quote));
             alert("Orçamento atualizado!");
         } else {
-            setQuotes([newQuote, ...quotes]);
+            setQuotes([newQuote, ...quoteItems]);
             alert("Orçamento salvo nos Pendentes!");
         }
         resetSalesForm();
     };
 
-    const loadQuote = (q: any) => {
-        setSaleProductId(q.productId); setClientName(q.clientName || ''); setClientPhone(q.clientPhone || '');
+    const loadQuote = (q: Quote) => {
+        setSaleProductId(String(q.productId)); setClientName(q.clientName || ''); setClientPhone(q.clientPhone || '');
         setSaleQuantity(q.quantity); setSaleDate(q.date); setSaleDiscountFixed(q.discountFixed || '');
         setSaleDiscountPercent(q.discountPercent || ''); setQuoteNumber(q.quoteNumber);
         setActiveQuoteId(q.id); setDocType('orcamento');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const deleteQuote = (id: any) => {
+    const deleteQuote = (id: Quote['id']) => {
         if (window.confirm('Excluir este orçamento pendente?')) {
-            setQuotes(quotes.filter((q: any) => q.id !== id));
+            setQuotes(quoteItems.filter((q) => q.id !== id));
             if (activeQuoteId === id) resetSalesForm();
         }
     };
@@ -105,17 +197,17 @@ export default function SalesTab({ appData, isPremium }: any) {
         if (!currentSaleData) { alert("Selecione um produto e a quantidade."); return; }
         const { p, q, uCost, uPrice, discountTotal, netSale, totalC, totalTithe, totalProfit } = currentSaleData;
         
-        let updatedInsumos = [...insumos];
-        let stockWarnings: string[] = [];
-        let premiumLowStockWarnings: string[] = [];
+        const updatedInsumos = [...insumoItems];
+        const stockWarnings: string[] = [];
+        const premiumLowStockWarnings: string[] = [];
         
         if(p.recipeItems && p.recipeItems.length > 0) {
-            p.recipeItems.forEach((item: any) => {
-                const insumoIndex = updatedInsumos.findIndex(ins => String(ins.id) === String(item.insumoId));
+            p.recipeItems.forEach((item) => {
+                const insumoIndex = updatedInsumos.findIndex((ins) => String(ins.id) === String(item.insumoId));
                 if(insumoIndex >= 0) {
                     const insumo = updatedInsumos[insumoIndex];
                     const unitSize = insumo.measurePerItem || 1;
-                    const gastoPorUnidadeFinal = item.usedMeasure / (p.yieldQty || 1);
+                    const gastoPorUnidadeFinal = item.usedMeasure / Number(p.yieldQty || 1);
                     const totalGastoNestaVenda = gastoPorUnidadeFinal * q;
                     const deductionInUnits = totalGastoNestaVenda / unitSize;
                     insumo.stock -= deductionInUnits;
@@ -139,9 +231,9 @@ export default function SalesTab({ appData, isPremium }: any) {
             totalSale: netSale, totalTithe: totalTithe, totalProfit: totalProfit
         };
 
-        setSales([newSale, ...sales]);
+        setSales([newSale, ...saleItems]);
         setInsumos(updatedInsumos);
-        if (activeQuoteId) setQuotes(quotes.filter((quote: any) => quote.id !== activeQuoteId));
+        if (activeQuoteId) setQuotes(quoteItems.filter((quote) => quote.id !== activeQuoteId));
 
         alert("Venda Registrada! Estoque deduzido.");
         
@@ -154,10 +246,10 @@ export default function SalesTab({ appData, isPremium }: any) {
     };
 
     const generateQuotePDF = async () => {
+        if (!isPremium) { alert("O download em PDF está disponível apenas no plano Premium."); return; }
         if (!currentSaleData) { alert("Selecione um produto e a quantidade para gerar o documento."); return; }
         
         // Importação dinâmica para não quebrar o Next.js no lado do servidor
-        // @ts-ignore
         const html2pdf = (await import('html2pdf.js')).default;
 
         const originalScrollY = window.scrollY;
@@ -191,11 +283,11 @@ export default function SalesTab({ appData, isPremium }: any) {
             <Card className="border-t-4 border-t-amber-500 mb-8">
                 <div className="flex items-center gap-3 mb-6"><div className="bg-amber-100 p-3 rounded-full text-amber-600"><ShoppingBag size={28} /></div><div><h2 className="text-2xl font-bold text-slate-800">Orçamentos & Vendas</h2><p className="text-sm text-slate-500">Gere orçamentos e conclua vendas com baixa no estoque.</p></div></div>
 
-                {savedProducts.length === 0 ? (
+                {savedProductItems.length === 0 ? (
                     <div className="p-6 bg-slate-50 rounded-lg text-center text-slate-500 border border-slate-200"><p className="mb-2">Você precisa salvar produtos no seu catálogo antes de orçar ou vender.</p><p className="text-amber-600 font-bold">Vá para a aba de Ficha Técnica.</p></div>
                 ) : (
                     <div className="space-y-5">
-                        <div><label className="block text-sm font-bold text-slate-700 mb-1">Selecione o Produto:</label><select value={saleProductId} onChange={(e) => setSaleProductId(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm font-bold text-slate-700"><option value="">-- Escolher Produto do Catálogo --</option>{savedProducts.map((p: any) => (<option key={p.id} value={p.id}>{p.name || 'Produto'} (Venda Sugerida: R$ {Number(p.activePrice || 0).toFixed(2)})</option>))}</select></div>
+                        <div><label className="block text-sm font-bold text-slate-700 mb-1">Selecione o Produto:</label><select value={saleProductId} onChange={(e) => setSaleProductId(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm font-bold text-slate-700"><option value="">-- Escolher Produto do Catálogo --</option>{savedProductItems.map((p) => (<option key={p.id} value={p.id}>{p.name || 'Produto'} (Venda Sugerida: R$ {Number(p.activePrice || 0).toFixed(2)})</option>))}</select></div>
                         <div className="bg-slate-100 p-4 rounded-xl border border-slate-200"><div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3"><label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Dados do Cliente (Sai no PDF)</label><div className="flex bg-white rounded-lg border border-slate-200 p-1"><button onClick={() => setDocType('orcamento')} className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${docType === 'orcamento' ? 'bg-amber-100 text-amber-700' : 'text-slate-400 hover:text-slate-600'}`}>Orçamento</button><button onClick={() => setDocType('recibo')} className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${docType === 'recibo' ? 'bg-green-100 text-green-700' : 'text-slate-400 hover:text-slate-600'}`}>Recibo (Pago)</button></div></div><div className="grid grid-cols-2 gap-4"><InputGroup label="Nome do Cliente" type="text" value={clientName} onChange={setClientName} placeholder="Ex: João da Silva" /><InputGroup label="Telefone / Contato" type="text" value={clientPhone} onChange={setClientPhone} placeholder="(00) 00000-0000" /></div></div>
                         <div className="grid grid-cols-2 gap-4"><InputGroup label="Quantidade Solicitada" type="number" min="1" step="1" value={saleQuantity} onChange={setSaleQuantity} /><InputGroup label="Data" type="date" value={saleDate} onChange={setSaleDate} /></div>
                         <div className="bg-slate-100 p-4 rounded-xl border border-slate-200"><label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Aplicar Desconto ao Cliente</label><div className="grid grid-cols-2 gap-4"><InputGroup label="Desconto Fixo (R$)" type="number" min="0" step="0.01" value={saleDiscountFixed} onChange={setSaleDiscountFixed} prefix="R$" placeholder="0.00" /><InputGroup label="Desconto (%)" type="number" min="0" step="0.1" value={saleDiscountPercent} onChange={setSaleDiscountPercent} suffix="%" placeholder="0" /></div></div>
@@ -205,7 +297,17 @@ export default function SalesTab({ appData, isPremium }: any) {
                         )}
 
                         <div className="flex flex-col gap-3">
-                            <button onClick={generateQuotePDF} disabled={!currentSaleData} className={`py-4 text-white font-bold rounded-xl shadow-md transition-all flex justify-center items-center gap-2 ${!currentSaleData ? 'bg-slate-300' : docType === 'orcamento' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'}`}><FileText size={20} /> Baixar {docType === 'orcamento' ? 'Orçamento' : 'Recibo'} em PDF</button>
+                            {isPremium ? (
+                                <button onClick={generateQuotePDF} disabled={!currentSaleData} className={`py-4 text-white font-bold rounded-xl shadow-md transition-all flex justify-center items-center gap-2 ${!currentSaleData ? 'bg-slate-300' : docType === 'orcamento' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'}`}><FileText size={20} /> Baixar {docType === 'orcamento' ? 'Orçamento' : 'Recibo'} em PDF</button>
+                            ) : (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 flex items-start gap-3">
+                                    <FileText size={20} className="mt-0.5 shrink-0 text-amber-600" />
+                                    <div>
+                                        <p className="font-bold">PDF disponível no Premium</p>
+                                        <p className="text-amber-800">Você ainda pode salvar orçamentos pendentes e concluir vendas. Para baixar orçamento ou recibo em PDF, use o plano Premium.</p>
+                                    </div>
+                                </div>
+                            )}
                             <div className="flex gap-2">
                                 <button onClick={saveQuote} disabled={!currentSaleData} className="flex-1 py-3 bg-slate-700 hover:bg-slate-800 disabled:bg-slate-300 text-white font-bold rounded-xl shadow transition-all flex justify-center items-center gap-2 text-sm"><Save size={18} /> {activeQuoteId ? 'Atualizar Orçamento' : 'Salvar Pendente'}</button>
                                 <button onClick={registerSale} disabled={!currentSaleData} className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold rounded-xl shadow transition-all flex justify-center items-center gap-2 text-sm"><ShoppingBag size={18} /> Concluir Venda (Baixa Estoque)</button>
@@ -216,9 +318,9 @@ export default function SalesTab({ appData, isPremium }: any) {
                 )}
             </Card>
 
-            {quotes.length > 0 && (
+            {quoteItems.length > 0 && (
                 <Card className="mb-8"><div className="flex items-center gap-2 mb-4"><Clock size={20} className="text-slate-500" /><h3 className="font-bold text-lg text-slate-700">Orçamentos Pendentes</h3></div><div className="overflow-x-auto"><table className="w-full text-left text-sm text-slate-600 whitespace-nowrap"><thead className="bg-slate-50 uppercase text-xs font-bold text-slate-500 border-b border-slate-200"><tr><th className="p-3">Nº Doc</th><th className="p-3">Data</th><th className="p-3">Cliente</th><th className="p-3">Produto</th><th className="p-3 text-center">Qtd</th><th className="p-3 text-right">Total</th><th className="p-3 text-center">Ações</th></tr></thead><tbody className="divide-y divide-slate-100">
-                    {quotes.map((q: any) => (
+                    {quoteItems.map((q) => (
                         <tr key={q.id} className="hover:bg-slate-50"><td className="p-3 font-bold text-amber-700">{q.quoteNumber}</td><td className="p-3">{(q.date || '').includes('-') ? q.date.split('-').reverse().join('/') : q.date}</td><td className="p-3 font-medium text-slate-800">{q.clientName || '-'}</td><td className="p-3">{q.productName}</td><td className="p-3 text-center font-bold">{q.quantity}</td><td className="p-3 text-right font-bold text-green-700">R$ {Number(q.netSale).toFixed(2)}</td><td className="p-3 flex justify-center gap-2"><button onClick={() => loadQuote(q)} className="text-blue-600 hover:bg-blue-100 p-2 rounded-lg transition-colors"><Upload size={16} /></button><button onClick={() => deleteQuote(q.id)} className="text-red-500 hover:bg-red-100 p-2 rounded-lg transition-colors"><Trash2 size={16} /></button></td></tr>
                     ))}
                 </tbody></table></div></Card>
