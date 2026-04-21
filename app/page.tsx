@@ -512,6 +512,12 @@ export default function MainApp() {
 
           <div className="mt-6 border-t border-slate-100 pt-4 text-center">
             <Link
+              href="/apresentacao"
+              className="mb-3 block text-xs font-bold text-amber-700 transition-colors hover:text-amber-800"
+            >
+              Conhecer a Calculadora do Produtor
+            </Link>
+            <Link
               href="/politicas/cancelamento-e-reembolso"
               className="text-xs font-bold text-slate-500 transition-colors hover:text-amber-700"
             >
