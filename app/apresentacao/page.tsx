@@ -98,7 +98,7 @@ export default function PresentationPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(252,211,77,0.58),_transparent_34rem),linear-gradient(180deg,_#fff8e1_0%,_#f8fafc_42%,_#ffffff_100%)] text-slate-950">
       <header className="mx-auto flex w-[min(1180px,calc(100%-32px))] items-center justify-between gap-6 py-6">
-        <Link href="/apresentacao" className="flex items-center gap-3 font-black tracking-[-0.03em]">
+        <Link href="/" className="flex items-center gap-3 font-black tracking-[-0.03em]">
           <img
             src={DEFAULT_STORE_LOGO}
             alt="Logo da Calculadora do Produtor"
@@ -120,7 +120,7 @@ export default function PresentationPage() {
         </nav>
 
         <Link
-          href="/"
+          href="/entrar"
           className="inline-flex items-center justify-center rounded-full border border-amber-900/15 bg-white px-5 py-3 text-sm font-black text-amber-800 transition-transform hover:-translate-y-0.5"
         >
           Entrar no app
@@ -146,7 +146,7 @@ export default function PresentationPage() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              href="/"
+              href="/entrar"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-4 text-sm font-black text-white shadow-[0_16px_36px_rgba(15,23,42,0.2)] transition-transform hover:-translate-y-0.5"
             >
               Comecar agora
@@ -353,7 +353,7 @@ export default function PresentationPage() {
             </p>
           </div>
           <Link
-            href="/"
+            href="/entrar"
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-4 text-sm font-black text-amber-900 transition-transform hover:-translate-y-0.5"
           >
             Testar a calculadora

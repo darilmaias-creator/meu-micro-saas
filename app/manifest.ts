@@ -22,7 +22,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: PWA_APP_DESCRIPTION,
     lang: "pt-BR",
     dir: "ltr",
-    start_url: "/",
+    start_url: "/entrar",
     scope: "/",
     display: "standalone",
     display_override: [

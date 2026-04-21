@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import type { ActiveTab } from "../lib/app-tabs";
@@ -13,6 +15,18 @@ export default function ProtectedSectionApp({
   initialTab,
 }: ProtectedSectionAppProps) {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (status !== "unauthenticated") {
+      return;
+    }
+
+    const nextPath = pathname && pathname !== "/" ? pathname : "/estoque";
+    window.location.assign(
+      `/entrar?auth=required&next=${encodeURIComponent(nextPath)}`,
+    );
+  }, [pathname, status]);
 
   if (status === "loading" || !session) {
     return (
