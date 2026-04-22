@@ -16,9 +16,40 @@ import {
 import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
 
 export const metadata: Metadata = {
-  title: "Calculadora do Produtor | Sistema de estoque, precificacao e vendas",
+  title:
+    "Calculadora para artesao | Precificacao, estoque e orcamentos",
   description:
-    "Conheca a Calculadora do Produtor: organize materiais, monte fichas tecnicas, calcule preco de venda, crie orcamentos e acompanhe seu negocio em um unico lugar.",
+    "Calcula Artesao e Calculadora do Produtor: sistema para artesao e pequeno produtor calcular preco de venda, controlar estoque, montar ficha tecnica e criar orcamentos.",
+  keywords: [
+    "calcula artesao",
+    "calculadora para artesao",
+    "calculadora de artesanato",
+    "precificacao de artesanato",
+    "preco de venda artesanato",
+    "orcamento para artesanato",
+    "ficha tecnica artesanato",
+    "controle de estoque para artesao",
+    "calculadora do produtor",
+    "sistema para artesao",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Calculadora para artesao, estoque e orcamentos",
+    description:
+      "Organize materiais, calcule preco de venda, monte fichas tecnicas e crie orcamentos para artesanato e pequenos produtos.",
+    url: "/",
+    siteName: "Calculadora do Produtor",
+    locale: "pt_BR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Calculadora para artesao",
+    description:
+      "Precificacao, estoque, ficha tecnica e orcamentos para artesanato em um unico lugar.",
+  },
 };
 
 const features = [
@@ -77,6 +108,13 @@ const premiumPlanItems = [
   "Orcamentos, vendas e historico",
   "Backup, restauracao e recursos avancados",
   "Ferramentas extras para comunicacao e marketing",
+];
+
+const audienceItems = [
+  "Artesaos que precisam calcular preco de venda sem vender no prejuizo.",
+  "Quem faz personalizados, lembrancinhas, caixas, MDF, costura, laser ou papelaria criativa.",
+  "Pequenos produtores que precisam criar orcamentos claros para clientes.",
+  "MEIs e negocios criativos que querem controlar materiais, estoque e margem de lucro.",
 ];
 
 function PlanItem({ children, premium = false }: { children: React.ReactNode; premium?: boolean }) {
@@ -266,6 +304,36 @@ export default function PresentationPage() {
               </article>
             );
           })}
+        </div>
+      </section>
+
+      <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-16">
+        <div className="grid gap-7 rounded-[38px] border border-amber-900/15 bg-white p-7 shadow-[0_20px_54px_rgba(15,23,42,0.06)] lg:grid-cols-[0.9fr_1.1fr] lg:p-9">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
+              Calcula Artesao
+            </p>
+            <h2 className="mt-3 text-3xl font-black leading-none tracking-[-0.05em] text-slate-950 sm:text-4xl">
+              Uma calculadora para artesao que precisa precificar com seguranca.
+            </h2>
+            <p className="mt-4 leading-8 text-slate-600">
+              Se voce trabalha com artesanato, produtos personalizados ou
+              producao sob encomenda, a Calculadora do Produtor ajuda a somar
+              materiais, tempo, custos, margem de lucro, estoque e orcamento em
+              uma rotina simples de usar.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {audienceItems.map((item) => (
+              <div
+                key={item}
+                className="rounded-3xl border border-slate-950/10 bg-amber-50/70 p-5 text-sm font-bold leading-7 text-slate-700"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

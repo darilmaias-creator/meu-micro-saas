@@ -12,8 +12,10 @@ import {
 const APP_ICON_URL = `/icon?v=${PWA_ICON_VERSION}`;
 const APPLE_ICON_URL = `/apple-icon?v=${PWA_ICON_VERSION}`;
 const APP_MASKABLE_ICON_URL = `/pwa-maskable-512.png?v=${PWA_ICON_VERSION}`;
+const SITE_URL = "https://calculaartesao.com.br";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: PWA_APP_NAME,
     template: `%s | ${PWA_APP_NAME}`,
@@ -21,6 +23,9 @@ export const metadata: Metadata = {
   description: PWA_APP_DESCRIPTION,
   applicationName: PWA_APP_NAME,
   manifest: "/manifest.webmanifest",
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     shortcut: [
       {
