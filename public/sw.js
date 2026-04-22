@@ -1,5 +1,5 @@
-const CACHE_NAME = "calculadora-do-produtor-pwa-v3";
-const ICON_VERSION = "20260417-2";
+const CACHE_NAME = "calculadora-do-produtor-pwa-v4-logo";
+const ICON_VERSION = "20260421-logo";
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
   `/icon?v=${ICON_VERSION}`,

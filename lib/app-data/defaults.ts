@@ -4,10 +4,13 @@ export const DEFAULT_STORE_NAME = "Calculadora do Produtor";
 export const DEFAULT_STORE_SUBTITLE =
   "Orçamentos claros. Clientes seguros. Negócios fechados.";
 export const DEFAULT_STORE_LOGO =
-  "https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png";
+  "https://i.postimg.cc/52qj8Q2P/logo.png";
 export const LEGACY_STORE_NAME = "ATELIÊ";
 export const LEGACY_STORE_SUBTITLE = "Artesanato e Produtos";
-export const LEGACY_STORE_LOGO = "https://i.postimg.cc/hj2J824X/logo.png";
+export const LEGACY_STORE_LOGOS = [
+  "https://i.postimg.cc/hj2J824X/logo.png",
+  "https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png",
+];
 
 export type AppConfigState = {
   unit: string;
@@ -69,7 +72,10 @@ export function normalizeBrandingValue(storageKey: string, storedValue: string) 
     return DEFAULT_STORE_SUBTITLE;
   }
 
-  if (storageKey.endsWith("calc_userLogo") && storedValue === LEGACY_STORE_LOGO) {
+  if (
+    storageKey.endsWith("calc_userLogo") &&
+    LEGACY_STORE_LOGOS.includes(storedValue)
+  ) {
     return DEFAULT_STORE_LOGO;
   }
 
@@ -96,6 +102,12 @@ export function normalizeAppDataState(
         typeof input?.config?.storeSubtitle === "string"
           ? input.config.storeSubtitle
           : defaults.config.storeSubtitle,
+      ),
+      userLogo: normalizeBrandingValue(
+        "calc_userLogo",
+        typeof input?.config?.userLogo === "string"
+          ? input.config.userLogo
+          : defaults.config.userLogo,
       ),
     },
     insumos: Array.isArray(input?.insumos) ? input.insumos : defaults.insumos,

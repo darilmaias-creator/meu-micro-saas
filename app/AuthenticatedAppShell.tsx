@@ -21,6 +21,7 @@ import InventoryTab from "./InventoryTab";
 import ProfileModal from "./ProfileModal";
 import SalesTab from "./SalesTab";
 import { useAppData } from "./hooks/useAppData";
+import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
 import type { ActiveTab } from "../lib/app-tabs";
 import { getPathForActiveTab } from "../lib/app-tabs";
 
@@ -85,7 +86,7 @@ export default function AuthenticatedAppShell({
             <div className="flex items-center gap-3">
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-white p-1.5 shadow-sm md:h-16 md:w-16">
                 <img
-                  src="https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png"
+                  src={DEFAULT_STORE_LOGO}
                   alt="Logo da Calculadora do Produtor"
                   className="h-full w-full object-contain"
                 />
