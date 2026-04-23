@@ -160,4 +160,45 @@ describe("app data route", () => {
       message: "Voce atingiu o limite de produtos do plano gratis.",
     });
   });
+
+  it("rejects stale saves when another device has newer app data", async () => {
+    vi.mocked(createSupabaseServerClient).mockReturnValue({
+      from: vi.fn().mockReturnValue(
+        createSelectBuilder({
+          data: {
+            user_id: "user-1",
+            config: {},
+            insumos: [],
+            saved_products: [{ id: "remote-1", name: "Produto novo" }],
+            sales: [],
+            quotes: [],
+            updated_at: "2026-04-23T15:00:00.000Z",
+          },
+          error: null,
+        }),
+      ),
+    } as unknown as ReturnType<typeof createSupabaseServerClient>);
+
+    const response = await PUT(
+      new Request("https://calculaartesao.com.br/api/app-data", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-app-data-base-updated-at": "2026-04-23T14:00:00.000Z",
+        },
+        body: JSON.stringify({
+          savedProducts: [{ id: "local-1", name: "Produto antigo" }],
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "REMOTE_STATE_CONFLICT",
+      updatedAt: "2026-04-23T15:00:00.000Z",
+      data: {
+        savedProducts: [{ id: "remote-1", name: "Produto novo" }],
+      },
+    });
+  });
 });

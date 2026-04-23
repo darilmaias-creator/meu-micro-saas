@@ -29,6 +29,13 @@ type AppDataRow = {
   updated_at: string;
 };
 
+type AppDataConflictResponse = {
+  code: "REMOTE_STATE_CONFLICT";
+  data: AppDataState;
+  message: string;
+  updatedAt: string | null;
+};
+
 function getErrorDetails(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -49,6 +56,10 @@ function buildAppDataStateFromRow(row: AppDataRow | null): AppDataState {
     sales: row.sales,
     quotes: row.quotes,
   });
+}
+
+function serializeAppDataState(state: AppDataState) {
+  return JSON.stringify(normalizeAppDataState(state));
 }
 
 export async function GET() {
@@ -131,6 +142,11 @@ export async function PUT(request: Request) {
   }
 
   const normalizedState = normalizeAppDataState(body);
+  const baseUpdatedAtHeader = request.headers.get("x-app-data-base-updated-at");
+  const baseUpdatedAt =
+    baseUpdatedAtHeader && baseUpdatedAtHeader !== "null"
+      ? baseUpdatedAtHeader
+      : null;
 
   try {
     const supabase = createSupabaseServerClient();
@@ -145,6 +161,7 @@ export async function PUT(request: Request) {
     }
 
     const currentState = buildAppDataStateFromRow(existingRow as AppDataRow | null);
+    const currentUpdatedAt = (existingRow as AppDataRow | null)?.updated_at ?? null;
     const planLimitViolation = validateAppDataPlanLimits({
       currentState,
       isPremium: Boolean(session.user.isPremium),
@@ -169,6 +186,36 @@ export async function PUT(request: Request) {
         },
         { status: 403 },
       );
+    }
+
+    const currentSerializedState = serializeAppDataState(currentState);
+    const nextSerializedState = serializeAppDataState(normalizedState);
+    const hasRemoteVersionConflict =
+      Boolean(currentUpdatedAt) &&
+      currentUpdatedAt !== baseUpdatedAt &&
+      currentSerializedState !== nextSerializedState;
+
+    if (hasRemoteVersionConflict) {
+      const conflictResponse: AppDataConflictResponse = {
+        code: "REMOTE_STATE_CONFLICT",
+        data: currentState,
+        message:
+          "Seus dados foram atualizados em outro aparelho. Recarregamos a versao mais recente para evitar perda de informacoes.",
+        updatedAt: currentUpdatedAt,
+      };
+
+      logServerEvent({
+        scope: "app-data:put",
+        level: "warn",
+        message: "app data save blocked by remote state conflict",
+        context: {
+          userId: session.user.id,
+          baseUpdatedAt,
+          currentUpdatedAt,
+        },
+      });
+
+      return NextResponse.json(conflictResponse, { status: 409 });
     }
 
     const { data, error } = await supabase

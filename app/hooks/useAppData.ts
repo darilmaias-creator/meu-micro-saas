@@ -18,6 +18,12 @@ type AppDataMutationResponse = {
   ok: boolean;
   updatedAt: string | null;
 };
+type AppDataConflictResponse = {
+  code: "REMOTE_STATE_CONFLICT";
+  data: AppDataState;
+  message: string;
+  updatedAt: string | null;
+};
 
 const STORAGE_NAMESPACE = "meu-micro-saas";
 const SYNC_POLL_INTERVAL_MS = 15_000;
@@ -357,9 +363,11 @@ export function useAppData(userId: string) {
 
         if (shouldKeepLocalState) {
           setState(localState);
+          latestSerializedStateRef.current = localSerializedState;
+          lastSyncedStateRef.current = "";
           runtimeAppDataCache.set(userId, {
             lastRemoteUpdatedAt: payload.updatedAt,
-            lastSyncedState: localSerializedState,
+            lastSyncedState: "",
             latestSerializedState: localSerializedState,
             state: localState,
           });
@@ -437,6 +445,7 @@ export function useAppData(userId: string) {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            "x-app-data-base-updated-at": lastRemoteUpdatedAtRef.current ?? "",
           },
           body: serializedState,
         });
@@ -454,6 +463,31 @@ export function useAppData(userId: string) {
             state: normalizedState,
           });
           return;
+        }
+
+        if (response.status === 409) {
+          const payload =
+            (await response.json().catch(() => null)) as AppDataConflictResponse | null;
+
+          if (payload?.code === "REMOTE_STATE_CONFLICT") {
+            const remoteState = normalizeAppDataState(payload.data);
+            const remoteSerializedState = serializeAppDataState(remoteState);
+
+            setState(remoteState);
+            writeLocalAppData(userId, remoteState);
+            latestSerializedStateRef.current = remoteSerializedState;
+            lastSyncedStateRef.current = remoteSerializedState;
+            lastRemoteUpdatedAtRef.current = payload.updatedAt;
+            runtimeAppDataCache.set(userId, {
+              lastRemoteUpdatedAt: payload.updatedAt,
+              lastSyncedState: remoteSerializedState,
+              latestSerializedState: remoteSerializedState,
+              state: remoteState,
+            });
+
+            console.warn(payload.message);
+            return;
+          }
         }
 
         console.error(await readResponseError(response));
