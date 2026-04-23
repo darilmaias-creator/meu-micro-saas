@@ -46,6 +46,15 @@ const STORAGE_KEYS = {
   userLogo: "calc_userLogo",
   storeName: "calc_storeName",
   storeSubtitle: "calc_storeSubtitle",
+  quoteValidityDays: "calc_quoteValidityDays",
+  quoteLeadTimeText: "calc_quoteLeadTimeText",
+  quoteDeliveryText: "calc_quoteDeliveryText",
+  quotePaymentText: "calc_quotePaymentText",
+  quoteAdvanceText: "calc_quoteAdvanceText",
+  quoteApprovalText: "calc_quoteApprovalText",
+  quoteNotesText: "calc_quoteNotesText",
+  businessInstagram: "calc_businessInstagram",
+  businessWhatsapp: "calc_businessWhatsapp",
   insumos: "art_calc_insumos",
   sales: "art_calc_sales",
   quotes: "art_calc_quotes",
@@ -139,6 +148,42 @@ function readLocalAppData(userId: string) {
         buildScopedStorageKey(userId, STORAGE_KEYS.storeSubtitle),
         defaults.config.storeSubtitle,
       ),
+      quoteValidityDays: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.quoteValidityDays),
+        defaults.config.quoteValidityDays,
+      ),
+      quoteLeadTimeText: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.quoteLeadTimeText),
+        defaults.config.quoteLeadTimeText,
+      ),
+      quoteDeliveryText: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.quoteDeliveryText),
+        defaults.config.quoteDeliveryText,
+      ),
+      quotePaymentText: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.quotePaymentText),
+        defaults.config.quotePaymentText,
+      ),
+      quoteAdvanceText: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.quoteAdvanceText),
+        defaults.config.quoteAdvanceText,
+      ),
+      quoteApprovalText: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.quoteApprovalText),
+        defaults.config.quoteApprovalText,
+      ),
+      quoteNotesText: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.quoteNotesText),
+        defaults.config.quoteNotesText,
+      ),
+      businessInstagram: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.businessInstagram),
+        defaults.config.businessInstagram,
+      ),
+      businessWhatsapp: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.businessWhatsapp),
+        defaults.config.businessWhatsapp,
+      ),
     },
     insumos: readStorageValue(
       buildScopedStorageKey(userId, STORAGE_KEYS.insumos),
@@ -201,6 +246,42 @@ function writeLocalAppData(userId: string, state: AppDataState) {
   writeStorageValue(
     buildScopedStorageKey(userId, STORAGE_KEYS.storeSubtitle),
     normalizedState.config.storeSubtitle,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.quoteValidityDays),
+    normalizedState.config.quoteValidityDays,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.quoteLeadTimeText),
+    normalizedState.config.quoteLeadTimeText,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.quoteDeliveryText),
+    normalizedState.config.quoteDeliveryText,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.quotePaymentText),
+    normalizedState.config.quotePaymentText,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.quoteAdvanceText),
+    normalizedState.config.quoteAdvanceText,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.quoteApprovalText),
+    normalizedState.config.quoteApprovalText,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.quoteNotesText),
+    normalizedState.config.quoteNotesText,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.businessInstagram),
+    normalizedState.config.businessInstagram,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.businessWhatsapp),
+    normalizedState.config.businessWhatsapp,
   );
   writeStorageValue(
     buildScopedStorageKey(userId, STORAGE_KEYS.insumos),
@@ -637,6 +718,21 @@ export function useAppData(userId: string) {
       setUserLogo: buildConfigFieldSetter(setState, "userLogo"),
       setStoreName: buildConfigFieldSetter(setState, "storeName"),
       setStoreSubtitle: buildConfigFieldSetter(setState, "storeSubtitle"),
+      setQuoteValidityDays: buildConfigFieldSetter(setState, "quoteValidityDays"),
+      setQuoteLeadTimeText: buildConfigFieldSetter(setState, "quoteLeadTimeText"),
+      setQuoteDeliveryText: buildConfigFieldSetter(setState, "quoteDeliveryText"),
+      setQuotePaymentText: buildConfigFieldSetter(setState, "quotePaymentText"),
+      setQuoteAdvanceText: buildConfigFieldSetter(setState, "quoteAdvanceText"),
+      setQuoteApprovalText: buildConfigFieldSetter(setState, "quoteApprovalText"),
+      setQuoteNotesText: buildConfigFieldSetter(setState, "quoteNotesText"),
+      setBusinessInstagram: buildConfigFieldSetter(
+        setState,
+        "businessInstagram",
+      ),
+      setBusinessWhatsapp: buildConfigFieldSetter(
+        setState,
+        "businessWhatsapp",
+      ),
     },
     insumos: state.insumos,
     setInsumos: buildCollectionSetter(setState, "insumos"),

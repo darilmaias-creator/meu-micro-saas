@@ -1,4 +1,5 @@
 import {
+  QUOTE_DOCUMENT_CONFIG_KEYS,
   createDefaultAppDataState,
   type AppDataState,
 } from "@/lib/app-data/defaults";
@@ -17,6 +18,10 @@ type PlanLimitViolation =
     }
   | {
       code: "FREE_BRANDING_LOCKED";
+      message: string;
+    }
+  | {
+      code: "FREE_QUOTE_SETTINGS_LOCKED";
       message: string;
     };
 
@@ -80,6 +85,22 @@ export function validateAppDataPlanLimits(input: {
       code: "FREE_BRANDING_LOCKED",
       message:
         "Personalizacao da marca nos documentos e exclusiva do plano Premium. No plano gratis, voce pode manter o que ja tinha salvo ou voltar ao padrao.",
+    };
+  }
+
+  for (const quoteConfigKey of QUOTE_DOCUMENT_CONFIG_KEYS) {
+    const currentValue = input.currentState.config[quoteConfigKey];
+    const nextValue = input.nextState.config[quoteConfigKey];
+    const defaultValue = defaultState.config[quoteConfigKey];
+
+    if (nextValue === currentValue || nextValue === defaultValue) {
+      continue;
+    }
+
+    return {
+      code: "FREE_QUOTE_SETTINGS_LOCKED",
+      message:
+        "As configuracoes do orçamento com textos e contatos personalizados sao exclusivas do plano Premium. No plano gratis, o app usa os textos padrao sem apagar o que voce ja deixou salvo.",
     };
   }
 
