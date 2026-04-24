@@ -49,6 +49,7 @@ export type SessionUser = {
   name: string;
   email: string;
   image?: string | null;
+  createdAt: string;
   plan: UserPlan;
   isPremium: boolean;
   canChangeName: boolean;
@@ -656,6 +657,7 @@ export function getSessionUserFromStoredUser(user: StoredUser): SessionUser {
     name: user.name,
     email: user.email,
     image: user.image ?? null,
+    createdAt: user.createdAt,
     plan: user.plan,
     isPremium,
     canChangeName: isPremium || freeNameChangesRemaining > 0,

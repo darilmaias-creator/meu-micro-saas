@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
+  Clock3,
   Crown,
   Download,
   ImagePlus,
   Lock,
+  MessageSquareQuote,
   Share2,
   Trash2,
   Upload,
@@ -37,6 +39,11 @@ import {
   PREMIUM_FULL_REFUND_WINDOW_DAYS,
 } from "@/lib/billing/refund-policy";
 import { isPremiumActiveSubscriptionStatus } from "@/lib/billing/subscription-status";
+import {
+  getTestimonialEligibleAt,
+  getTestimonialRemainingDays,
+  TESTIMONIAL_MAX_LENGTH,
+} from "@/lib/testimonials/rules";
 import { clearLocalAppDataCache } from "./hooks/useAppData";
 
 type ProfileModalProps = {
@@ -104,6 +111,14 @@ export default function ProfileModal({
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [backupEmail, setBackupEmail] = useState("");
   const [backupFrequency, setBackupFrequency] = useState<BackupFrequency>("off");
+  const [testimonialMessage, setTestimonialMessage] = useState("");
+  const [testimonialFeedback, setTestimonialFeedback] =
+    useState<ProfileFeedback>(null);
+  const [isLoadingTestimonial, setIsLoadingTestimonial] = useState(false);
+  const [isSavingTestimonial, setIsSavingTestimonial] = useState(false);
+  const [savedTestimonialUpdatedAt, setSavedTestimonialUpdatedAt] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (!isOpen || !session?.user) {
@@ -116,7 +131,72 @@ export default function ProfileModal({
     setBackupEmail(session.user.backupEmail ?? session.user.email ?? "");
     setBackupFrequency(session.user.backupFrequency ?? "off");
     setFeedback(null);
+    setTestimonialFeedback(null);
   }, [isOpen, session]);
+
+  useEffect(() => {
+    if (!isOpen || !session?.user?.id) {
+      return;
+    }
+
+    let isActive = true;
+
+    async function loadTestimonial() {
+      setIsLoadingTestimonial(true);
+
+      try {
+        const response = await fetch("/api/account/testimonial", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const result = (await response.json().catch(() => null)) as
+          | {
+              message?: string;
+              testimonial?: {
+                message?: string;
+                updatedAt?: string | null;
+              } | null;
+            }
+          | null;
+
+        if (!isActive) {
+          return;
+        }
+
+        if (!response.ok) {
+          setTestimonialFeedback({
+            tone: "error",
+            message:
+              result?.message ??
+              "Nao foi possivel carregar o espaco de depoimento agora.",
+          });
+          return;
+        }
+
+        setTestimonialMessage(result?.testimonial?.message ?? "");
+        setSavedTestimonialUpdatedAt(result?.testimonial?.updatedAt ?? null);
+      } catch {
+        if (!isActive) {
+          return;
+        }
+
+        setTestimonialFeedback({
+          tone: "error",
+          message: "Nao foi possivel carregar o espaco de depoimento agora.",
+        });
+      } finally {
+        if (isActive) {
+          setIsLoadingTestimonial(false);
+        }
+      }
+    }
+
+    void loadTestimonial();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isOpen, session?.user?.id]);
 
   useEffect(() => {
     if (!feedback) {
@@ -169,6 +249,72 @@ export default function ProfileModal({
   const stripeSubscriptionStatusLabel = user.stripeSubscriptionStatus
     ? user.stripeSubscriptionStatus.replaceAll("_", " ")
     : null;
+  const testimonialDaysRemaining = getTestimonialRemainingDays(user.createdAt);
+  const testimonialEligibleAt = getTestimonialEligibleAt(user.createdAt);
+  const canWriteTestimonial = testimonialDaysRemaining === 0;
+
+  async function handleSaveTestimonial() {
+    setTestimonialFeedback(null);
+
+    if (!canWriteTestimonial) {
+      setTestimonialFeedback({
+        tone: "error",
+        message:
+          "O envio do depoimento fica disponivel somente apos 7 dias de uso da conta.",
+      });
+      return;
+    }
+
+    setIsSavingTestimonial(true);
+
+    try {
+      const response = await fetch("/api/account/testimonial", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: testimonialMessage,
+        }),
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | {
+            message?: string;
+            testimonial?: {
+              message?: string;
+              updatedAt?: string | null;
+            } | null;
+          }
+        | null;
+
+      if (!response.ok) {
+        setTestimonialFeedback({
+          tone: "error",
+          message:
+            result?.message ??
+            "Nao foi possivel salvar o seu depoimento agora.",
+        });
+        return;
+      }
+
+      setTestimonialMessage(result?.testimonial?.message ?? testimonialMessage);
+      setSavedTestimonialUpdatedAt(result?.testimonial?.updatedAt ?? null);
+      setTestimonialFeedback({
+        tone: "success",
+        message:
+          result?.message ??
+          "Depoimento salvo com sucesso para o site.",
+      });
+    } catch {
+      setTestimonialFeedback({
+        tone: "error",
+        message: "Nao foi possivel salvar o seu depoimento agora.",
+      });
+    } finally {
+      setIsSavingTestimonial(false);
+    }
+  }
 
   async function handleStartPremiumCheckout() {
     setIsStartingPremiumCheckout(true);
@@ -1051,6 +1197,114 @@ export default function ProfileModal({
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-800">
+                  <MessageSquareQuote size={13} />
+                  Depoimento para o site
+                </div>
+                <h3 className="mt-3 text-base font-black text-slate-800">
+                  Compartilhe sua experiencia com a Calculadora do Produtor
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  O depoimento e escrito dentro do app e pode aparecer
+                  automaticamente no site depois que sua conta completar 7 dias
+                  de uso.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                <p className="font-bold text-slate-700">Regras</p>
+                <p className="mt-1">
+                  Liberado apos 7 dias para incentivar depoimentos mais sinceros.
+                </p>
+              </div>
+            </div>
+
+            {!canWriteTestimonial && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-amber-100 p-2 text-amber-800">
+                    <Clock3 size={16} />
+                  </div>
+                  <div>
+                    <p className="font-bold">
+                      Seu espaco de depoimento abre em {testimonialDaysRemaining}{" "}
+                      {testimonialDaysRemaining === 1 ? "dia" : "dias"}.
+                    </p>
+                    <p className="mt-1">
+                      Ele sera liberado em{" "}
+                      {testimonialEligibleAt.toLocaleDateString("pt-BR")}. Assim
+                      o depoimento aparece depois que voce tiver mais vivencia
+                      real com o app.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                Seu depoimento
+              </label>
+              <textarea
+                rows={4}
+                value={testimonialMessage}
+                disabled={!canWriteTestimonial || isLoadingTestimonial}
+                maxLength={TESTIMONIAL_MAX_LENGTH}
+                onChange={(event) => setTestimonialMessage(event.target.value)}
+                placeholder="Conte o que melhorou na sua rotina, no controle do estoque, na precificacao ou nos orcamentos."
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 disabled:bg-slate-100 disabled:text-slate-400"
+              />
+              <div className="mt-2 flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                <span>
+                  Esse texto fica ligado ao nome da sua conta e podera aparecer
+                  no site quando a area de depoimentos estiver ativa.
+                </span>
+                <span>{testimonialMessage.length}/{TESTIMONIAL_MAX_LENGTH}</span>
+              </div>
+            </div>
+
+            {savedTestimonialUpdatedAt && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                Ultima atualizacao do seu depoimento em{" "}
+                {new Date(savedTestimonialUpdatedAt).toLocaleDateString("pt-BR")}.
+              </div>
+            )}
+
+            {testimonialFeedback && (
+              <div
+                className={`rounded-2xl px-4 py-3 text-sm ${
+                  testimonialFeedback.tone === "error"
+                    ? "border border-red-100 bg-red-50 text-red-700"
+                    : "border border-emerald-100 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {testimonialFeedback.message}
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleSaveTestimonial}
+                disabled={
+                  !canWriteTestimonial ||
+                  isLoadingTestimonial ||
+                  isSavingTestimonial
+                }
+                className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                <MessageSquareQuote size={16} />
+                {isSavingTestimonial
+                  ? "Salvando depoimento..."
+                  : savedTestimonialUpdatedAt
+                    ? "Atualizar depoimento"
+                    : "Salvar depoimento"}
+              </button>
+            </div>
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 space-y-3">

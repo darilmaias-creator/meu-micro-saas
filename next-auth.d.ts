@@ -7,6 +7,7 @@ declare module "next-auth" {
   interface Session {
     user: DefaultSession["user"] & {
       id: string;
+      createdAt: string;
       plan: UserPlan;
       isPremium: boolean;
       canChangeName: boolean;

@@ -50,6 +50,51 @@ body.app-installed {
   background: transparent;
 }
 
+.marketing-glass {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 12px 32px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.marketing-card {
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.marketing-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.1);
+  border-color: rgba(180, 83, 9, 0.18);
+}
+
+.marketing-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 560ms ease,
+    transform 560ms ease;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.marketing-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-card,
+  .marketing-reveal {
+    transition: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
 .app-safe-top {
   padding-top: max(1rem, env(safe-area-inset-top));
 }

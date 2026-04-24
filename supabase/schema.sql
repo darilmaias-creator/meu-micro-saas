@@ -108,6 +108,20 @@ create table if not exists public.user_app_data (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.user_testimonials (
+  id text primary key,
+  user_id text not null unique references public.auth_users (id) on delete cascade,
+  author_name text not null,
+  message text not null,
+  publish_after timestamptz not null,
+  is_public boolean not null default true,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists user_testimonials_publish_idx
+  on public.user_testimonials (is_public, publish_after desc);
+
 create or replace function public.set_user_app_data_updated_at()
 returns trigger
 language plpgsql
@@ -138,6 +152,16 @@ begin
 end;
 $$;
 
+create or replace function public.set_user_testimonials_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = timezone('utc', now());
+  return new;
+end;
+$$;
+
 drop trigger if exists trg_auth_users_updated_at on public.auth_users;
 
 create trigger trg_auth_users_updated_at
@@ -159,6 +183,14 @@ before update on public.user_app_data
 for each row
 execute function public.set_user_app_data_updated_at();
 
+drop trigger if exists trg_user_testimonials_updated_at on public.user_testimonials;
+
+create trigger trg_user_testimonials_updated_at
+before update on public.user_testimonials
+for each row
+execute function public.set_user_testimonials_updated_at();
+
 alter table public.auth_users enable row level security;
 alter table public.auth_rate_limits enable row level security;
 alter table public.user_app_data enable row level security;
+alter table public.user_testimonials enable row level security;
