@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+import { SEARCH_INTENT_PAGES } from "./apresentacao/search-intents";
+
 const SITE_URL = "https://calculaartesao.com.br";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -18,5 +20,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.4,
     },
+    ...SEARCH_INTENT_PAGES.map((page) => ({
+      url: `${SITE_URL}/${page.slug}`,
+      lastModified,
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
   ];
 }

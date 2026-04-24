@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
+import { SEARCH_INTENT_PAGES } from "./search-intents";
 
 export const metadata: Metadata = {
   title:
@@ -24,11 +25,14 @@ export const metadata: Metadata = {
     "calcula artesao",
     "calculadora para artesao",
     "calculadora de artesanato",
+    "como precificar artesanato",
     "precificacao de artesanato",
     "preco de venda artesanato",
     "orcamento para artesanato",
     "ficha tecnica artesanato",
     "controle de estoque para artesao",
+    "como calcular artesanato",
+    "aplicativo para artesao",
     "calculadora do produtor",
     "sistema para artesao",
   ],
@@ -117,6 +121,54 @@ const audienceItems = [
   "MEIs e negocios criativos que querem controlar materiais, estoque e margem de lucro.",
 ];
 
+const faqItems = [
+  {
+    question: "Como precificar artesanato de um jeito mais seguro?",
+    answer:
+      "O caminho mais confiavel e reunir custo de material, tempo, despesas extras e margem de lucro. A Calculadora do Produtor organiza esse processo em um unico lugar.",
+  },
+  {
+    question: "A calculadora serve para orcamento de artesanato?",
+    answer:
+      "Sim. Alem de ajudar na precificacao, o sistema tambem ajuda a montar orcamentos mais claros para o cliente entender o valor final.",
+  },
+  {
+    question: "Funciona para quem faz personalizados e sob encomenda?",
+    answer:
+      "Sim. O app atende rotinas de quem trabalha com personalizados, caixas, MDF, costura, papelaria criativa, laser e outras producoes sob encomenda.",
+  },
+];
+
+const homeStructuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Calculadora do Produtor",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web, Android, Windows",
+    url: "https://calculaartesao.com.br",
+    description:
+      "Sistema para artesao e pequeno produtor calcular preco de venda, controlar estoque, montar ficha tecnica e criar orcamentos.",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "BRL",
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqItems.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  },
+];
+
 function PlanItem({ children, premium = false }: { children: React.ReactNode; premium?: boolean }) {
   return (
     <li className="flex gap-3 text-sm leading-6">
@@ -135,6 +187,15 @@ function PlanItem({ children, premium = false }: { children: React.ReactNode; pr
 export default function PresentationPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(252,211,77,0.58),_transparent_34rem),linear-gradient(180deg,_#fff8e1_0%,_#f8fafc_42%,_#ffffff_100%)] text-slate-950">
+      {homeStructuredData.map((item, index) => (
+        <script
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
+          key={index}
+          type="application/ld+json"
+        />
+      ))}
+
       <header className="mx-auto flex w-[min(1180px,calc(100%-32px))] items-center justify-between gap-6 py-6">
         <Link href="/" className="flex items-center gap-3 font-black tracking-[-0.03em]">
           <img
@@ -337,6 +398,40 @@ export default function PresentationPage() {
         </div>
       </section>
 
+      <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-16">
+        <div className="mb-9 max-w-3xl">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
+            Buscas relacionadas
+          </p>
+          <h2 className="mt-3 text-4xl font-black leading-none tracking-[-0.06em] text-slate-950 sm:text-5xl">
+            Paginas feitas para quem pesquisa de formas diferentes.
+          </h2>
+          <p className="mt-4 text-lg leading-8 text-slate-600">
+            Nem todo mundo procura do mesmo jeito. Algumas pessoas buscam
+            calculadora para artesao, outras pesquisam sobre precificacao de
+            artesanato, controle de estoque ou orcamento para encomendas.
+          </p>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {SEARCH_INTENT_PAGES.map((page) => (
+            <Link
+              key={page.slug}
+              href={`/${page.slug}`}
+              className="rounded-[30px] border border-slate-950/10 bg-white p-6 shadow-[0_20px_54px_rgba(15,23,42,0.06)] transition-transform hover:-translate-y-1"
+            >
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
+                {page.eyebrow}
+              </p>
+              <h3 className="mt-3 text-2xl font-black tracking-[-0.04em] text-slate-950">
+                {page.metadataTitle}
+              </h3>
+              <p className="mt-3 leading-7 text-slate-600">{page.metadataDescription}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <section id="como-funciona" className="mx-auto w-[min(1180px,calc(100%-32px))] py-20">
         <div className="mb-9 max-w-3xl">
           <h2 className="text-4xl font-black leading-none tracking-[-0.06em] text-slate-950 sm:text-5xl">
@@ -359,6 +454,33 @@ export default function PresentationPage() {
               </span>
               <h3 className="mt-7 text-2xl font-black">{step.title}</h3>
               <p className="mt-3 leading-7 text-white/70">{step.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-20">
+        <div className="mb-9 max-w-3xl">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
+            FAQ
+          </p>
+          <h2 className="mt-3 text-4xl font-black leading-none tracking-[-0.06em] text-slate-950 sm:text-5xl">
+            Respostas curtas para quem quer calcular artesanato com mais confianca.
+          </h2>
+          <p className="mt-4 text-lg leading-8 text-slate-600">
+            Essas respostas ajudam o visitante e tambem reforcam para o Google
+            quais problemas a Calculadora do Produtor resolve na pratica.
+          </p>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-3">
+          {faqItems.map((item) => (
+            <article
+              key={item.question}
+              className="rounded-[32px] border border-slate-950/10 bg-white p-6 shadow-[0_20px_54px_rgba(15,23,42,0.06)]"
+            >
+              <h3 className="text-xl font-black text-slate-950">{item.question}</h3>
+              <p className="mt-4 leading-8 text-slate-600">{item.answer}</p>
             </article>
           ))}
         </div>
