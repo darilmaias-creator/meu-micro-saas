@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Info } from 'lucide-react';
 
 export const Card = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
@@ -8,23 +8,30 @@ export const Card = ({ children, className = "" }: { children: React.ReactNode, 
     </div>
 );
 
+export const sanitizeDecimalInput = (rawValue: string) => {
+    let value = rawValue;
+    if (value.includes(',')) {
+        value = value.split('.').join('');
+        value = value.replace(',', '.');
+    }
+    value = value.replace(/[^0-9.]/g, '');
+    const parts = value.split('.');
+    if (parts.length > 2) {
+        value = parts[0] + '.' + parts.slice(1).join('');
+    }
+    return value;
+};
+
+export const sanitizeIntegerInput = (rawValue: string) => rawValue.replace(/[^0-9]/g, '');
+
 export const InputGroup = ({ label, value, onChange, prefix = "", suffix = "", type = "number", step = "0.01", tooltip = "", className="", placeholder="", disabled = false }: any) => {
     const handleChange = (e: any) => {
         if (disabled) return;
-        let val = e.target.value;
+        const rawValue = e.target.value;
         if (type === 'number') {
-            if (val.includes(',')) {
-                val = val.split('.').join('');
-                val = val.replace(',', '.');
-            }
-            val = val.replace(/[^0-9.]/g, '');
-            const parts = val.split('.');
-            if (parts.length > 2) {
-                val = parts[0] + '.' + parts.slice(1).join('');
-            }
-            onChange(val);
+            onChange(sanitizeDecimalInput(rawValue));
         } else {
-            onChange(val);
+            onChange(rawValue);
         }
     };
 
@@ -61,6 +68,23 @@ export const TimeInputGroup = ({ label, totalMinutes, onChange, tooltip }: any) 
     const safeMinutes = Number(totalMinutes) || 0;
     const hours = Math.floor(safeMinutes / 60);
     const minutes = Math.round(safeMinutes % 60);
+    const [hoursInput, setHoursInput] = useState(String(hours));
+    const [minutesInput, setMinutesInput] = useState(String(minutes));
+
+    useEffect(() => {
+        const nextHours = String(hours);
+        const nextMinutes = String(minutes);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setHoursInput((current: string) => current === nextHours ? current : nextHours);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMinutesInput((current: string) => current === nextMinutes ? current : nextMinutes);
+    }, [hours, minutes]);
+
+    const commitTimeChange = (nextHoursRaw: string, nextMinutesRaw: string) => {
+        const nextHours = nextHoursRaw === '' ? 0 : Number(nextHoursRaw);
+        const nextMinutes = nextMinutesRaw === '' ? 0 : Math.min(59, Number(nextMinutesRaw));
+        onChange((nextHours * 60) + nextMinutes);
+    };
 
     return (
         <div className="mb-4">
@@ -70,12 +94,47 @@ export const TimeInputGroup = ({ label, totalMinutes, onChange, tooltip }: any) 
             </div>
             <div className="flex items-center gap-2">
                 <div className="relative flex-1">
-                    <input type="number" min="0" value={hours} onChange={(e) => onChange((parseFloat(e.target.value) || 0) * 60 + minutes)} className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-center" />
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        value={hoursInput}
+                        onChange={(e) => {
+                            const nextValue = sanitizeIntegerInput(e.target.value);
+                            setHoursInput(nextValue);
+                            if (nextValue !== '') {
+                                commitTimeChange(nextValue, minutesInput);
+                            }
+                        }}
+                        onBlur={() => {
+                            const normalizedValue = hoursInput === '' ? '0' : hoursInput;
+                            setHoursInput(normalizedValue);
+                            commitTimeChange(normalizedValue, minutesInput);
+                        }}
+                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-center"
+                    />
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">h</span>
                 </div>
                 <span className="text-slate-400 font-bold">:</span>
                 <div className="relative flex-1">
-                    <input type="number" min="0" max="59" value={minutes} onChange={(e) => onChange(hours * 60 + (parseFloat(e.target.value) || 0))} className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-center" />
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        value={minutesInput}
+                        onChange={(e) => {
+                            const nextValue = sanitizeIntegerInput(e.target.value);
+                            const normalizedValue = nextValue === '' ? '' : String(Math.min(59, Number(nextValue)));
+                            setMinutesInput(normalizedValue);
+                            if (normalizedValue !== '') {
+                                commitTimeChange(hoursInput, normalizedValue);
+                            }
+                        }}
+                        onBlur={() => {
+                            const normalizedValue = minutesInput === '' ? '0' : String(Math.min(59, Number(minutesInput)));
+                            setMinutesInput(normalizedValue);
+                            commitTimeChange(hoursInput, normalizedValue);
+                        }}
+                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-center"
+                    />
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">min</span>
                 </div>
             </div>

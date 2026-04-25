@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Settings, Package, Plus, Trash2, DollarSign, RefreshCw, Heart, Sparkles, Save, Copy, Download, Upload, Crown } from 'lucide-react';
-import { Card, InputGroup, TimeInputGroup, Toggle } from './ui';
+import { Card, InputGroup, TimeInputGroup, Toggle, sanitizeDecimalInput, sanitizeIntegerInput } from './ui';
 import { FREE_TIER_PRODUCT_LIMIT } from '@/lib/app-data/plan-limits';
 import { calculateOperationCostBreakdown } from '@/lib/app-data/operation-costs';
 
@@ -546,7 +546,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                         <div className="bg-slate-800/80 rounded-lg p-4 space-y-2 border border-slate-700">
                             <div className="flex justify-between items-center bg-slate-800 p-2 rounded mb-2">
                                 <label className="text-sm font-bold text-slate-300 block">Rende quantas un.?</label>
-                                <input type="number" min="1" step="1" value={yieldQty} onChange={e=>setYieldQty(e.target.value)} className="w-16 text-center p-1 font-bold border border-slate-600 rounded bg-slate-700 outline-none text-white" />
+                                <input type="text" inputMode="numeric" value={yieldQty} onChange={e=>setYieldQty(sanitizeIntegerInput(e.target.value))} className="w-16 text-center p-1 font-bold border border-slate-600 rounded bg-slate-700 outline-none text-white" />
                             </div>
                             <div className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 mb-3">
                                 <p className="text-[10px] uppercase tracking-wide font-bold text-slate-400">Operacao do negocio</p>
@@ -578,7 +578,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                             <div className="flex justify-between items-center mb-2">
                                 <div className="flex items-center gap-2">
                                     <label className="text-sm font-bold text-amber-400">Lucro Desejado</label>
-                                    <input type="number" value={config.profitMargin} onChange={(e) => config.setProfitMargin(e.target.value)} className="w-16 text-xs p-1 rounded bg-slate-800 border border-slate-700 text-center text-white" />
+                                    <input type="text" inputMode="decimal" value={config.profitMargin} onChange={(e) => config.setProfitMargin(sanitizeDecimalInput(e.target.value))} className="w-16 text-xs p-1 rounded bg-slate-800 border border-slate-700 text-center text-white" />
                                     <span className="text-xs text-amber-400">%</span>
                                 </div>
                             </div>
@@ -589,7 +589,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                             </div>
                             <div className="relative group">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg pointer-events-none z-10">R$</span>
-                                <input type="number" step="0.10" value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} placeholder={Number(suggestedPrice || 0).toFixed(2)} className={`w-full p-4 pl-12 rounded-xl font-bold text-2xl outline-none ring-2 transition-all ${isManual ? 'bg-amber-500 text-white ring-amber-400 placeholder-white/50' : 'bg-slate-800 text-slate-200 ring-slate-700 focus:ring-amber-500/50 placeholder-slate-500'}`} />
+                                <input type="text" inputMode="decimal" value={manualPrice} onChange={(e) => setManualPrice(sanitizeDecimalInput(e.target.value))} placeholder={Number(suggestedPrice || 0).toFixed(2)} className={`w-full p-4 pl-12 rounded-xl font-bold text-2xl outline-none ring-2 transition-all ${isManual ? 'bg-amber-500 text-white ring-amber-400 placeholder-white/50' : 'bg-slate-800 text-slate-200 ring-slate-700 focus:ring-amber-500/50 placeholder-slate-500'}`} />
                             </div>
                         </div>
                         <div className={`mt-4 p-4 rounded-xl border flex justify-between items-center ${activeProfitValue > 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
