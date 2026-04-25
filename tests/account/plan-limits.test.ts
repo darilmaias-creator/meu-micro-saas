@@ -53,4 +53,58 @@ describe("app data plan limits", () => {
 
     expect(violation).toBeNull();
   });
+
+  it("allows free accounts to edit the basic operation costs", () => {
+    const currentState = createDefaultAppDataState();
+    const nextState = createDefaultAppDataState();
+    nextState.config.fixedCostRent = "950";
+    nextState.config.variableCostPackaging = "120";
+    nextState.config.monthlyProductionTarget = "40";
+
+    const violation = validateAppDataPlanLimits({
+      currentState,
+      isPremium: false,
+      nextState,
+    });
+
+    expect(violation).toBeNull();
+  });
+
+  it("allows a free account to keep advanced operation cost settings saved while it was premium", () => {
+    const currentState = createDefaultAppDataState();
+    currentState.config.productiveHoursPerMonth = "80";
+    currentState.config.operationCostMode = "per_hour";
+    currentState.config.operationCostMarkup = "10";
+    currentState.config.customOperationCosts = [
+      { id: "custom-1", name: "Contador", amount: "180", kind: "fixed" },
+    ];
+
+    const nextState = structuredClone(currentState);
+
+    const violation = validateAppDataPlanLimits({
+      currentState,
+      isPremium: false,
+      nextState,
+    });
+
+    expect(violation).toBeNull();
+  });
+
+  it("blocks free accounts from changing advanced operation cost settings to a new custom value", () => {
+    const currentState = createDefaultAppDataState();
+    const nextState = createDefaultAppDataState();
+    nextState.config.productiveHoursPerMonth = "90";
+
+    const violation = validateAppDataPlanLimits({
+      currentState,
+      isPremium: false,
+      nextState,
+    });
+
+    expect(violation).toEqual({
+      code: "FREE_OPERATION_COST_ADVANCED_LOCKED",
+      message:
+        "Os recursos avancados de custos operacionais ficam no Premium. No plano gratis, voce usa os custos basicos e o rateio simples por unidade sem perder o que ja deixou salvo.",
+    });
+  });
 });

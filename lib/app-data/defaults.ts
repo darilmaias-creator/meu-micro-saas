@@ -19,12 +19,24 @@ export const DEFAULT_QUOTE_APPROVAL_TEXT =
 export const DEFAULT_QUOTE_NOTES_TEXT = "";
 export const DEFAULT_BUSINESS_INSTAGRAM = "";
 export const DEFAULT_BUSINESS_WHATSAPP = "";
+export const DEFAULT_MONTHLY_PRODUCTION_TARGET = "";
+export const DEFAULT_PRODUCTIVE_HOURS_PER_MONTH = "";
+export const DEFAULT_OPERATION_COST_MARKUP = "0";
 export const LEGACY_STORE_NAME = "ATELIÊ";
 export const LEGACY_STORE_SUBTITLE = "Artesanato e Produtos";
 export const LEGACY_STORE_LOGOS = [
   "https://i.postimg.cc/hj2J824X/logo.png",
   "https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png",
 ];
+
+export type OperationCostKind = "fixed" | "variable";
+export type OperationCostMode = "per_unit" | "per_hour";
+export type OperationCostEntry = {
+  id: string;
+  name: string;
+  amount: string;
+  kind: OperationCostKind;
+};
 
 export type AppConfigState = {
   unit: string;
@@ -46,6 +58,18 @@ export type AppConfigState = {
   quoteNotesText: string;
   businessInstagram: string;
   businessWhatsapp: string;
+  fixedCostRent: string;
+  fixedCostWater: string;
+  fixedCostElectricity: string;
+  fixedCostInternet: string;
+  variableCostPackaging: string;
+  variableCostTransport: string;
+  variableCostFees: string;
+  monthlyProductionTarget: string;
+  productiveHoursPerMonth: string;
+  operationCostMode: OperationCostMode;
+  operationCostMarkup: string;
+  customOperationCosts: OperationCostEntry[];
 };
 
 export type QuoteDocumentConfig = Pick<
@@ -71,6 +95,23 @@ export const QUOTE_DOCUMENT_CONFIG_KEYS: Array<keyof QuoteDocumentConfig> = [
   "quoteNotesText",
   "businessInstagram",
   "businessWhatsapp",
+];
+
+export type PremiumOperationCostConfig = Pick<
+  AppConfigState,
+  | "productiveHoursPerMonth"
+  | "operationCostMode"
+  | "operationCostMarkup"
+  | "customOperationCosts"
+>;
+
+export const PREMIUM_OPERATION_COST_CONFIG_KEYS: Array<
+  keyof PremiumOperationCostConfig
+> = [
+  "productiveHoursPerMonth",
+  "operationCostMode",
+  "operationCostMarkup",
+  "customOperationCosts",
 ];
 
 export type AppDataState = {
@@ -109,6 +150,18 @@ export function createDefaultAppDataState(): AppDataState {
       quoteNotesText: DEFAULT_QUOTE_NOTES_TEXT,
       businessInstagram: DEFAULT_BUSINESS_INSTAGRAM,
       businessWhatsapp: DEFAULT_BUSINESS_WHATSAPP,
+      fixedCostRent: "",
+      fixedCostWater: "",
+      fixedCostElectricity: "",
+      fixedCostInternet: "",
+      variableCostPackaging: "",
+      variableCostTransport: "",
+      variableCostFees: "",
+      monthlyProductionTarget: DEFAULT_MONTHLY_PRODUCTION_TARGET,
+      productiveHoursPerMonth: DEFAULT_PRODUCTIVE_HOURS_PER_MONTH,
+      operationCostMode: "per_unit",
+      operationCostMarkup: DEFAULT_OPERATION_COST_MARKUP,
+      customOperationCosts: [],
     },
     insumos: [],
     savedProducts: [],
@@ -153,6 +206,46 @@ export function normalizeBrandingValue(storageKey: string, storedValue: string) 
   }
 
   return storedValue;
+}
+
+function normalizeOperationCostMode(value: unknown): OperationCostMode {
+  return value === "per_hour" ? "per_hour" : "per_unit";
+}
+
+function normalizeOperationCostKind(value: unknown): OperationCostKind {
+  return value === "variable" ? "variable" : "fixed";
+}
+
+function normalizeCustomOperationCosts(value: unknown): OperationCostEntry[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item, index) => {
+      if (!item || typeof item !== "object") {
+        return null;
+      }
+
+      const candidate = item as Partial<OperationCostEntry>;
+      const name = typeof candidate.name === "string" ? candidate.name.trim() : "";
+
+      if (!name) {
+        return null;
+      }
+
+      return {
+        id:
+          typeof candidate.id === "string" && candidate.id.trim()
+            ? candidate.id
+            : `custom-cost-${index + 1}`,
+        name,
+        amount:
+          typeof candidate.amount === "string" ? candidate.amount.trim() : "",
+        kind: normalizeOperationCostKind(candidate.kind),
+      } satisfies OperationCostEntry;
+    })
+    .filter((item): item is OperationCostEntry => item !== null);
 }
 
 export function normalizeAppDataState(
@@ -218,6 +311,52 @@ export function normalizeAppDataState(
         typeof input?.config?.businessWhatsapp === "string"
           ? input.config.businessWhatsapp
           : defaults.config.businessWhatsapp,
+      fixedCostRent:
+        typeof input?.config?.fixedCostRent === "string"
+          ? input.config.fixedCostRent
+          : defaults.config.fixedCostRent,
+      fixedCostWater:
+        typeof input?.config?.fixedCostWater === "string"
+          ? input.config.fixedCostWater
+          : defaults.config.fixedCostWater,
+      fixedCostElectricity:
+        typeof input?.config?.fixedCostElectricity === "string"
+          ? input.config.fixedCostElectricity
+          : defaults.config.fixedCostElectricity,
+      fixedCostInternet:
+        typeof input?.config?.fixedCostInternet === "string"
+          ? input.config.fixedCostInternet
+          : defaults.config.fixedCostInternet,
+      variableCostPackaging:
+        typeof input?.config?.variableCostPackaging === "string"
+          ? input.config.variableCostPackaging
+          : defaults.config.variableCostPackaging,
+      variableCostTransport:
+        typeof input?.config?.variableCostTransport === "string"
+          ? input.config.variableCostTransport
+          : defaults.config.variableCostTransport,
+      variableCostFees:
+        typeof input?.config?.variableCostFees === "string"
+          ? input.config.variableCostFees
+          : defaults.config.variableCostFees,
+      monthlyProductionTarget:
+        typeof input?.config?.monthlyProductionTarget === "string"
+          ? input.config.monthlyProductionTarget
+          : defaults.config.monthlyProductionTarget,
+      productiveHoursPerMonth:
+        typeof input?.config?.productiveHoursPerMonth === "string"
+          ? input.config.productiveHoursPerMonth
+          : defaults.config.productiveHoursPerMonth,
+      operationCostMode: normalizeOperationCostMode(
+        input?.config?.operationCostMode,
+      ),
+      operationCostMarkup:
+        typeof input?.config?.operationCostMarkup === "string"
+          ? input.config.operationCostMarkup
+          : defaults.config.operationCostMarkup,
+      customOperationCosts: normalizeCustomOperationCosts(
+        input?.config?.customOperationCosts,
+      ),
     },
     insumos: Array.isArray(input?.insumos) ? input.insumos : defaults.insumos,
     savedProducts: Array.isArray(input?.savedProducts)

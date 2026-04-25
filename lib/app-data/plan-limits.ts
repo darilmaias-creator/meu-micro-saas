@@ -1,4 +1,5 @@
 import {
+  PREMIUM_OPERATION_COST_CONFIG_KEYS,
   QUOTE_DOCUMENT_CONFIG_KEYS,
   createDefaultAppDataState,
   type AppDataState,
@@ -22,6 +23,10 @@ type PlanLimitViolation =
     }
   | {
       code: "FREE_QUOTE_SETTINGS_LOCKED";
+      message: string;
+    }
+  | {
+      code: "FREE_OPERATION_COST_ADVANCED_LOCKED";
       message: string;
     };
 
@@ -101,6 +106,25 @@ export function validateAppDataPlanLimits(input: {
       code: "FREE_QUOTE_SETTINGS_LOCKED",
       message:
         "As configuracoes do orçamento com textos e contatos personalizados sao exclusivas do plano Premium. No plano gratis, o app usa os textos padrao sem apagar o que voce ja deixou salvo.",
+    };
+  }
+
+  for (const premiumOperationCostKey of PREMIUM_OPERATION_COST_CONFIG_KEYS) {
+    const currentValue = input.currentState.config[premiumOperationCostKey];
+    const nextValue = input.nextState.config[premiumOperationCostKey];
+    const defaultValue = defaultState.config[premiumOperationCostKey];
+
+    if (
+      JSON.stringify(nextValue) === JSON.stringify(currentValue) ||
+      JSON.stringify(nextValue) === JSON.stringify(defaultValue)
+    ) {
+      continue;
+    }
+
+    return {
+      code: "FREE_OPERATION_COST_ADVANCED_LOCKED",
+      message:
+        "Os recursos avancados de custos operacionais ficam no Premium. No plano gratis, voce usa os custos basicos e o rateio simples por unidade sem perder o que ja deixou salvo.",
     };
   }
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { Info } from 'lucide-react';
 
@@ -7,8 +8,9 @@ export const Card = ({ children, className = "" }: { children: React.ReactNode, 
     </div>
 );
 
-export const InputGroup = ({ label, value, onChange, prefix = "", suffix = "", type = "number", step = "0.01", tooltip = "", className="", placeholder="" }: any) => {
+export const InputGroup = ({ label, value, onChange, prefix = "", suffix = "", type = "number", step = "0.01", tooltip = "", className="", placeholder="", disabled = false }: any) => {
     const handleChange = (e: any) => {
+        if (disabled) return;
         let val = e.target.value;
         if (type === 'number') {
             if (val.includes(',')) {
@@ -45,8 +47,9 @@ export const InputGroup = ({ label, value, onChange, prefix = "", suffix = "", t
                     step={step}
                     value={value}
                     onChange={handleChange}
+                    disabled={disabled}
                     placeholder={placeholder || "0.00"}
-                    className={`w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all ${prefix ? 'pl-8' : ''} ${suffix ? 'pr-8' : ''}`}
+                    className={`w-full p-2 border rounded-lg outline-none transition-all ${prefix ? 'pl-8' : ''} ${suffix ? 'pr-8' : ''} ${disabled ? 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed' : 'border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500'}`}
                 />
                 {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">{suffix}</span>}
             </div>

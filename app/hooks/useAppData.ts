@@ -55,6 +55,18 @@ const STORAGE_KEYS = {
   quoteNotesText: "calc_quoteNotesText",
   businessInstagram: "calc_businessInstagram",
   businessWhatsapp: "calc_businessWhatsapp",
+  fixedCostRent: "calc_fixedCostRent",
+  fixedCostWater: "calc_fixedCostWater",
+  fixedCostElectricity: "calc_fixedCostElectricity",
+  fixedCostInternet: "calc_fixedCostInternet",
+  variableCostPackaging: "calc_variableCostPackaging",
+  variableCostTransport: "calc_variableCostTransport",
+  variableCostFees: "calc_variableCostFees",
+  monthlyProductionTarget: "calc_monthlyProductionTarget",
+  productiveHoursPerMonth: "calc_productiveHoursPerMonth",
+  operationCostMode: "calc_operationCostMode",
+  operationCostMarkup: "calc_operationCostMarkup",
+  customOperationCosts: "calc_customOperationCosts",
   insumos: "art_calc_insumos",
   sales: "art_calc_sales",
   quotes: "art_calc_quotes",
@@ -184,6 +196,54 @@ function readLocalAppData(userId: string) {
         buildScopedStorageKey(userId, STORAGE_KEYS.businessWhatsapp),
         defaults.config.businessWhatsapp,
       ),
+      fixedCostRent: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.fixedCostRent),
+        defaults.config.fixedCostRent,
+      ),
+      fixedCostWater: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.fixedCostWater),
+        defaults.config.fixedCostWater,
+      ),
+      fixedCostElectricity: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.fixedCostElectricity),
+        defaults.config.fixedCostElectricity,
+      ),
+      fixedCostInternet: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.fixedCostInternet),
+        defaults.config.fixedCostInternet,
+      ),
+      variableCostPackaging: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.variableCostPackaging),
+        defaults.config.variableCostPackaging,
+      ),
+      variableCostTransport: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.variableCostTransport),
+        defaults.config.variableCostTransport,
+      ),
+      variableCostFees: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.variableCostFees),
+        defaults.config.variableCostFees,
+      ),
+      monthlyProductionTarget: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.monthlyProductionTarget),
+        defaults.config.monthlyProductionTarget,
+      ),
+      productiveHoursPerMonth: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.productiveHoursPerMonth),
+        defaults.config.productiveHoursPerMonth,
+      ),
+      operationCostMode: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.operationCostMode),
+        defaults.config.operationCostMode,
+      ),
+      operationCostMarkup: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.operationCostMarkup),
+        defaults.config.operationCostMarkup,
+      ),
+      customOperationCosts: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.customOperationCosts),
+        defaults.config.customOperationCosts,
+      ),
     },
     insumos: readStorageValue(
       buildScopedStorageKey(userId, STORAGE_KEYS.insumos),
@@ -282,6 +342,54 @@ function writeLocalAppData(userId: string, state: AppDataState) {
   writeStorageValue(
     buildScopedStorageKey(userId, STORAGE_KEYS.businessWhatsapp),
     normalizedState.config.businessWhatsapp,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.fixedCostRent),
+    normalizedState.config.fixedCostRent,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.fixedCostWater),
+    normalizedState.config.fixedCostWater,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.fixedCostElectricity),
+    normalizedState.config.fixedCostElectricity,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.fixedCostInternet),
+    normalizedState.config.fixedCostInternet,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.variableCostPackaging),
+    normalizedState.config.variableCostPackaging,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.variableCostTransport),
+    normalizedState.config.variableCostTransport,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.variableCostFees),
+    normalizedState.config.variableCostFees,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.monthlyProductionTarget),
+    normalizedState.config.monthlyProductionTarget,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.productiveHoursPerMonth),
+    normalizedState.config.productiveHoursPerMonth,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.operationCostMode),
+    normalizedState.config.operationCostMode,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.operationCostMarkup),
+    normalizedState.config.operationCostMarkup,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.customOperationCosts),
+    normalizedState.config.customOperationCosts,
   );
   writeStorageValue(
     buildScopedStorageKey(userId, STORAGE_KEYS.insumos),
@@ -732,6 +840,39 @@ export function useAppData(userId: string) {
       setBusinessWhatsapp: buildConfigFieldSetter(
         setState,
         "businessWhatsapp",
+      ),
+      setFixedCostRent: buildConfigFieldSetter(setState, "fixedCostRent"),
+      setFixedCostWater: buildConfigFieldSetter(setState, "fixedCostWater"),
+      setFixedCostElectricity: buildConfigFieldSetter(
+        setState,
+        "fixedCostElectricity",
+      ),
+      setFixedCostInternet: buildConfigFieldSetter(setState, "fixedCostInternet"),
+      setVariableCostPackaging: buildConfigFieldSetter(
+        setState,
+        "variableCostPackaging",
+      ),
+      setVariableCostTransport: buildConfigFieldSetter(
+        setState,
+        "variableCostTransport",
+      ),
+      setVariableCostFees: buildConfigFieldSetter(setState, "variableCostFees"),
+      setMonthlyProductionTarget: buildConfigFieldSetter(
+        setState,
+        "monthlyProductionTarget",
+      ),
+      setProductiveHoursPerMonth: buildConfigFieldSetter(
+        setState,
+        "productiveHoursPerMonth",
+      ),
+      setOperationCostMode: buildConfigFieldSetter(setState, "operationCostMode"),
+      setOperationCostMarkup: buildConfigFieldSetter(
+        setState,
+        "operationCostMarkup",
+      ),
+      setCustomOperationCosts: buildConfigFieldSetter(
+        setState,
+        "customOperationCosts",
       ),
     },
     insumos: state.insumos,
