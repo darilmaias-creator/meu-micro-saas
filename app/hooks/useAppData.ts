@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   createDefaultAppDataState,
@@ -423,6 +423,27 @@ function serializeAppDataState(state: AppDataState) {
   return JSON.stringify(normalizeAppDataState(state));
 }
 
+function updateRuntimeAppDataCache({
+  userId,
+  state,
+  lastRemoteUpdatedAt,
+  lastSyncedState,
+  latestSerializedState,
+}: {
+  userId: string;
+  state: AppDataState;
+  lastRemoteUpdatedAt: string | null;
+  lastSyncedState: string;
+  latestSerializedState: string;
+}) {
+  runtimeAppDataCache.set(userId, {
+    lastRemoteUpdatedAt,
+    lastSyncedState,
+    latestSerializedState,
+    state,
+  });
+}
+
 async function readResponseError(response: Response) {
   try {
     const payload = (await response.json()) as {
@@ -510,7 +531,136 @@ export function useAppData(userId: string) {
   const hasHydratedRef = useRef(false);
   const lastSyncedStateRef = useRef("");
   const lastRemoteUpdatedAtRef = useRef<string | null>(null);
+  const isLoadedRef = useRef(isLoaded);
+  const latestNormalizedStateRef = useRef(normalizeAppDataState(state));
   const latestSerializedStateRef = useRef(serializeAppDataState(state));
+  const saveInFlightRef = useRef(false);
+  const pendingSaveSerializedRef = useRef<string | null>(null);
+  const saveTimeoutRef = useRef<number | null>(null);
+  const flushPendingSaveRef = useRef<(() => Promise<void>) | null>(null);
+
+  const schedulePendingSave = useCallback((delayMs = 300) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (saveTimeoutRef.current !== null) {
+      window.clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = window.setTimeout(() => {
+      saveTimeoutRef.current = null;
+      void flushPendingSaveRef.current?.();
+    }, delayMs);
+  }, []);
+
+  const flushPendingSave = useCallback(async () => {
+    if (!isLoadedRef.current || !hasHydratedRef.current || saveInFlightRef.current) {
+      return;
+    }
+
+    const serializedState = pendingSaveSerializedRef.current;
+
+    if (!serializedState || serializedState === lastSyncedStateRef.current) {
+      return;
+    }
+
+    const requestBaseUpdatedAt = lastRemoteUpdatedAtRef.current ?? "";
+    saveInFlightRef.current = true;
+
+    try {
+      const response = await fetch("/api/app-data", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-app-data-base-updated-at": requestBaseUpdatedAt,
+        },
+        body: serializedState,
+      });
+
+      if (response.ok) {
+        const payload =
+          (await response.json().catch(() => null)) as AppDataMutationResponse | null;
+        const latestSerializedState = latestSerializedStateRef.current;
+        const latestState =
+          latestSerializedState === serializedState
+            ? latestNormalizedStateRef.current
+            : normalizeAppDataState(JSON.parse(serializedState) as AppDataState);
+
+        lastRemoteUpdatedAtRef.current = payload?.updatedAt ?? null;
+
+        if (pendingSaveSerializedRef.current === serializedState) {
+          pendingSaveSerializedRef.current = null;
+        }
+
+        if (latestSerializedState === serializedState) {
+          lastSyncedStateRef.current = serializedState;
+        }
+
+        updateRuntimeAppDataCache({
+          userId,
+          state: latestState,
+          lastRemoteUpdatedAt: lastRemoteUpdatedAtRef.current,
+          lastSyncedState: lastSyncedStateRef.current,
+          latestSerializedState,
+        });
+        return;
+      }
+
+      if (response.status === 409) {
+        const payload =
+          (await response.json().catch(() => null)) as AppDataConflictResponse | null;
+
+        if (payload?.code === "REMOTE_STATE_CONFLICT") {
+          const remoteState = normalizeAppDataState(payload.data);
+          const remoteSerializedState = serializeAppDataState(remoteState);
+          const hasNewerLocalChanges =
+            latestSerializedStateRef.current !== serializedState;
+
+          lastRemoteUpdatedAtRef.current = payload.updatedAt;
+
+          if (hasNewerLocalChanges) {
+            console.warn(payload.message);
+            return;
+          }
+
+          setState(remoteState);
+          writeLocalAppData(userId, remoteState);
+          latestNormalizedStateRef.current = remoteState;
+          latestSerializedStateRef.current = remoteSerializedState;
+          pendingSaveSerializedRef.current = null;
+          lastSyncedStateRef.current = remoteSerializedState;
+          updateRuntimeAppDataCache({
+            userId,
+            state: remoteState,
+            lastRemoteUpdatedAt: payload.updatedAt,
+            lastSyncedState: remoteSerializedState,
+            latestSerializedState: remoteSerializedState,
+          });
+
+          console.warn(payload.message);
+          return;
+        }
+      }
+
+      console.error(await readResponseError(response));
+    } catch (error) {
+      // Fall back to the local cache if the database is unavailable.
+      console.error(
+        "Nao foi possivel salvar os dados no Supabase. Os dados ficaram apenas no navegador por enquanto.",
+      );
+      console.error(error);
+    } finally {
+      saveInFlightRef.current = false;
+
+      if (
+        pendingSaveSerializedRef.current &&
+        pendingSaveSerializedRef.current !== lastSyncedStateRef.current
+      ) {
+        schedulePendingSave(0);
+      }
+    }
+  }, [schedulePendingSave, userId]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -553,23 +703,27 @@ export function useAppData(userId: string) {
         if (shouldKeepLocalState) {
           setState(localState);
           latestSerializedStateRef.current = localSerializedState;
+          latestNormalizedStateRef.current = localState;
           lastSyncedStateRef.current = "";
-          runtimeAppDataCache.set(userId, {
+          updateRuntimeAppDataCache({
+            userId,
+            state: localState,
             lastRemoteUpdatedAt: payload.updatedAt,
             lastSyncedState: "",
             latestSerializedState: localSerializedState,
-            state: localState,
           });
         } else {
           setState(remoteState);
           writeLocalAppData(userId, remoteState);
           latestSerializedStateRef.current = remoteSerializedState;
+          latestNormalizedStateRef.current = remoteState;
           lastSyncedStateRef.current = remoteSerializedState;
-          runtimeAppDataCache.set(userId, {
+          updateRuntimeAppDataCache({
+            userId,
+            state: remoteState,
             lastRemoteUpdatedAt: payload.updatedAt,
             lastSyncedState: remoteSerializedState,
             latestSerializedState: remoteSerializedState,
-            state: remoteState,
           });
         }
 
@@ -600,15 +754,30 @@ export function useAppData(userId: string) {
   }, [userId]);
 
   useEffect(() => {
-    latestSerializedStateRef.current = serializeAppDataState(state);
+    isLoadedRef.current = isLoaded;
+  }, [isLoaded]);
 
-    runtimeAppDataCache.set(userId, {
+  useEffect(() => {
+    const normalizedState = normalizeAppDataState(state);
+    latestNormalizedStateRef.current = normalizedState;
+    latestSerializedStateRef.current = serializeAppDataState(normalizedState);
+
+    updateRuntimeAppDataCache({
+      userId,
+      state: normalizedState,
       lastRemoteUpdatedAt: lastRemoteUpdatedAtRef.current,
       lastSyncedState: lastSyncedStateRef.current,
       latestSerializedState: latestSerializedStateRef.current,
-      state,
     });
   }, [state]);
+
+  useEffect(() => {
+    flushPendingSaveRef.current = flushPendingSave;
+
+    return () => {
+      flushPendingSaveRef.current = null;
+    };
+  }, [flushPendingSave]);
 
   useEffect(() => {
     if (!isLoaded || !hasHydratedRef.current) {
@@ -628,71 +797,16 @@ export function useAppData(userId: string) {
       return;
     }
 
-    const timeoutId = setTimeout(async () => {
-      try {
-        const response = await fetch("/api/app-data", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "x-app-data-base-updated-at": lastRemoteUpdatedAtRef.current ?? "",
-          },
-          body: serializedState,
-        });
-
-        if (response.ok) {
-          const payload =
-            (await response.json().catch(() => null)) as AppDataMutationResponse | null;
-
-          lastSyncedStateRef.current = serializedState;
-          lastRemoteUpdatedAtRef.current = payload?.updatedAt ?? null;
-          runtimeAppDataCache.set(userId, {
-            lastRemoteUpdatedAt: lastRemoteUpdatedAtRef.current,
-            lastSyncedState: serializedState,
-            latestSerializedState: serializedState,
-            state: normalizedState,
-          });
-          return;
-        }
-
-        if (response.status === 409) {
-          const payload =
-            (await response.json().catch(() => null)) as AppDataConflictResponse | null;
-
-          if (payload?.code === "REMOTE_STATE_CONFLICT") {
-            const remoteState = normalizeAppDataState(payload.data);
-            const remoteSerializedState = serializeAppDataState(remoteState);
-
-            setState(remoteState);
-            writeLocalAppData(userId, remoteState);
-            latestSerializedStateRef.current = remoteSerializedState;
-            lastSyncedStateRef.current = remoteSerializedState;
-            lastRemoteUpdatedAtRef.current = payload.updatedAt;
-            runtimeAppDataCache.set(userId, {
-              lastRemoteUpdatedAt: payload.updatedAt,
-              lastSyncedState: remoteSerializedState,
-              latestSerializedState: remoteSerializedState,
-              state: remoteState,
-            });
-
-            console.warn(payload.message);
-            return;
-          }
-        }
-
-        console.error(await readResponseError(response));
-      } catch (error) {
-        // Fall back to the local cache if the database is unavailable.
-        console.error(
-          "Nao foi possivel salvar os dados no Supabase. Os dados ficaram apenas no navegador por enquanto.",
-        );
-        console.error(error);
-      }
-    }, 300);
+    pendingSaveSerializedRef.current = serializedState;
+    schedulePendingSave();
 
     return () => {
-      clearTimeout(timeoutId);
+      if (saveTimeoutRef.current !== null) {
+        window.clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
     };
-  }, [isLoaded, state, userId]);
+  }, [isLoaded, schedulePendingSave, state, userId]);
 
   useEffect(() => {
     if (!isLoaded || typeof window === "undefined") {
@@ -773,14 +887,16 @@ export function useAppData(userId: string) {
 
         setState(remoteState);
         writeLocalAppData(userId, remoteState);
+        latestNormalizedStateRef.current = remoteState;
         latestSerializedStateRef.current = remoteSerializedState;
         lastSyncedStateRef.current = remoteSerializedState;
         lastRemoteUpdatedAtRef.current = payload.updatedAt;
-        runtimeAppDataCache.set(userId, {
+        updateRuntimeAppDataCache({
+          userId,
+          state: remoteState,
           lastRemoteUpdatedAt: payload.updatedAt,
           lastSyncedState: remoteSerializedState,
           latestSerializedState: remoteSerializedState,
-          state: remoteState,
         });
       } catch (error) {
         console.error(
