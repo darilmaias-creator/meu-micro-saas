@@ -233,6 +233,98 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
       },
     ],
   },
+  {
+    slug: "como-calcular-preco-de-venda-no-artesanato",
+    metadataTitle:
+      "Como calcular preco de venda no artesanato | Guia simples para iniciantes",
+    metadataDescription:
+      "Aprenda como calcular preco de venda no artesanato considerando materiais, tempo, custos do negocio e margem de lucro sem depender de planilhas confusas.",
+    eyebrow: "Preco de venda no artesanato",
+    heroTitle:
+      "Como calcular preco de venda no artesanato de um jeito simples e mais seguro.",
+    heroDescription:
+      "Muita gente soma o valor do material e acha que isso basta. Mas para cobrar melhor, voce precisa olhar tambem para tempo, custos da operacao e margem. A Calculadora do Produtor ajuda a organizar isso sem complicar sua rotina.",
+    lead:
+      "Se voce procura como calcular preco de venda no artesanato, provavelmente quer parar de cobrar no improviso e entender melhor o valor real da sua peca. Esta pagina mostra esse caminho de forma simples, com exemplos que fazem sentido para quem esta comecando ou quer mais clareza.",
+    benefits: [
+      "Ajuda a somar materiais, tempo e custos do negocio de uma forma mais organizada.",
+      "Mostra o preco sugerido com base em margem, em vez de deixar tudo no chute.",
+      "Transforma o calculo em uma rotina que pode ser repetida sempre que voce criar um novo produto.",
+    ],
+    steps: [
+      {
+        title: "1. Descubra quanto o produto realmente consome",
+        description:
+          "O primeiro passo e cadastrar os materiais e informar a quantidade usada em cada peca. Assim voce para de estimar e passa a enxergar o custo real do que sai do estoque.",
+      },
+      {
+        title: "2. Inclua o tempo e os custos da operacao",
+        description:
+          "Depois voce considera o tempo de producao e os custos do negocio, como despesas da operacao, para nao deixar partes importantes do preco de fora.",
+      },
+      {
+        title: "3. Defina a margem e veja o valor final",
+        description:
+          "Com a base organizada, voce escolhe a margem desejada e o sistema mostra um preco mais coerente para vender com mais seguranca.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Menos preco no olho",
+        description:
+          "Ajuda a parar de passar valor so pela intuicao ou pelo que o concorrente cobra.",
+      },
+      {
+        title: "Mais seguranca para responder clientes",
+        description:
+          "Quando voce entende o calculo, fica mais facil defender o valor da peca.",
+      },
+      {
+        title: "Base melhor para orcamentos",
+        description:
+          "O preco de venda bem calculado facilita a criacao de propostas mais claras.",
+      },
+      {
+        title: "Mais consistencia no negocio",
+        description:
+          "Mesmo quando o produto muda pouco, voce consegue repetir o processo sem recomecar do zero.",
+      },
+    ],
+    example: {
+      title: "Exemplo facil para entender",
+      description:
+        "Imagine uma artesa que faz lembrancinhas personalizadas e quer saber quanto cobrar por cada unidade.",
+      bullets: [
+        "Ela cadastra papel, fita, cola, embalagem e os outros materiais usados na lembrancinha.",
+        "Depois informa o tempo medio de producao e observa os custos da operacao do negocio.",
+        "O app soma a base do produto, aplica a margem desejada e mostra um preco final mais claro para vender.",
+      ],
+      result:
+        "Em vez de cobrar um valor aleatorio, ela passa a vender sabendo melhor quanto custa produzir e quanto quer ganhar.",
+    },
+    faqs: [
+      {
+        question: "Posso calcular o preco de venda so pelo valor do material?",
+        answer:
+          "Voce ate pode, mas isso costuma deixar muita coisa de fora. Tempo, desperdicio, custos da operacao e margem tambem influenciam no valor final e ajudam a evitar prejuizo.",
+      },
+      {
+        question: "Quem esta comecando tambem precisa pensar em margem de lucro?",
+        answer:
+          "Sim. Mesmo no inicio, entender a margem ajuda voce a saber se o valor cobrado esta cobrindo o custo e deixando retorno para o negocio continuar.",
+      },
+      {
+        question: "A Calculadora do Produtor faz esse calculo automaticamente?",
+        answer:
+          "Sim. O objetivo do app e justamente organizar os dados e mostrar um preco mais seguro sem que voce precise refazer a conta toda vez manualmente.",
+      },
+      {
+        question: "Esse calculo serve para encomendas e produtos personalizados?",
+        answer:
+          "Serve sim. Principalmente quando cada pedido muda um pouco, ter uma base organizada ajuda muito a adaptar o preco sem perder a logica do calculo.",
+      },
+    ],
+  },
 ];
 
 export function getSearchIntentPage(

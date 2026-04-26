@@ -139,7 +139,7 @@ const footerSections = [
   },
   {
     title: "Paginas publicas",
-    links: SEARCH_INTENT_PAGES.slice(0, 4).map((page) => ({
+    links: SEARCH_INTENT_PAGES.slice(0, 5).map((page) => ({
       href: `/${page.slug}`,
       label: page.eyebrow,
     })),
