@@ -90,6 +90,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
 
     const rawIngredientsCost = recipeItems.reduce((acc, item) => item.type !== 'area' ? acc + (item.cost * (1 + Number(wasteFactor || 0) / 100)) : acc + item.cost, 0);
     const materialTotalCost = rawIngredientsCost + Number(extraCosts || 0);
+    const materialUnitCost = materialTotalCost / (Number(yieldQty) || 1);
     const depreciationPerHour = Number(config.machineCost || 0) / Number(config.diodeLife || 1);
     const energyPerHour = (Number(config.machinePower || 96) / 1000) * Number(config.energyCost || 0);
     const machinePureHourlyCost = depreciationPerHour + energyPerHour;
@@ -122,8 +123,8 @@ export default function CalculatorTab({ appData, isPremium }: any) {
     const activePrice = isManual ? parseFloat(manualPrice) : suggestedPrice;
     const activeProfitValue = activePrice - unitCost;
     const activeProfitMargin = unitCost > 0 ? (activeProfitValue / unitCost) * 100 : 0;
-    const realGainBeforeTithe = Math.max(0, activeProfitValue);
-    const titheValue = realGainBeforeTithe * 0.10;
+    const titheBaseValue = Math.max(0, activePrice - materialUnitCost);
+    const titheValue = titheBaseValue * 0.10;
 
     const saveProduct = () => {
         // Lógica FREEMIUM: Verifica limite antes de salvar
@@ -341,7 +342,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                         <div className="mt-2 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex justify-between items-center">
                             <div>
                                 <p className="text-xs text-indigo-300 uppercase font-bold tracking-wider flex items-center gap-1"><Heart size={14}/> Dízimo (10%)</p>
-                                <p className="text-[10px] text-indigo-200/70 mt-1 leading-tight">Sobre o Ganho Real</p>
+                                <p className="text-[10px] text-indigo-200/70 mt-1 leading-tight">Base: venda menos materiais diretos</p>
                             </div>
                             <p className="text-xl font-bold text-indigo-400">R$ {Number(titheValue || 0).toFixed(2)}</p>
                         </div>
