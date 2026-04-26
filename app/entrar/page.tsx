@@ -520,6 +520,12 @@ export default function MainApp() {
               Politica de cancelamento e reembolso
             </Link>
             <Link
+              href="/politicas/termos-de-uso"
+              className="mt-2 block text-xs font-bold text-slate-500 transition-colors hover:text-amber-700"
+            >
+              Termos de uso
+            </Link>
+            <Link
               href="/politicas/privacidade"
               className="mt-2 block text-xs font-bold text-slate-500 transition-colors hover:text-amber-700"
             >

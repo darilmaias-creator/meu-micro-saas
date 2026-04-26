@@ -3,21 +3,21 @@ import Link from "next/link";
 import {
   ArrowLeft,
   BadgeInfo,
-  Database,
-  FileLock2,
-  Mail,
+  CircleCheckBig,
+  Crown,
+  FileText,
   ShieldCheck,
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Politica de privacidade | Calculadora do Produtor",
+  title: "Termos de uso | Calculadora do Produtor",
   description:
-    "Entenda, em linguagem simples, como a Calculadora do Produtor trata dados de conta, autenticacao, cobranca, backup e comunicacoes do app.",
+    "Leia os termos de uso públicos da Calculadora do Produtor, incluindo acesso à conta, uso do sistema, plano Premium e regras gerais da plataforma.",
 };
 
 const LAST_UPDATED_LABEL = "26/04/2026";
 
-export default function PrivacyPolicyPage() {
+export default function TermsOfUsePage() {
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-4xl space-y-5">
@@ -39,16 +39,16 @@ export default function PrivacyPolicyPage() {
         <div className="rounded-3xl border border-amber-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600">
-              Privacidade e dados
+              Uso do sistema
             </p>
             <h1 className="mt-3 text-3xl font-black text-slate-900">
-              Politica de privacidade
+              Termos de uso
             </h1>
             <p className="mt-4 text-sm text-slate-600">
-              Esta pagina explica, em linguagem simples, quais dados podem ser
-              usados para operar a Calculadora do Produtor, por que esses dados
-              existem no sistema e como eles se relacionam com autenticacao,
-              cobranca, backup, e-mails e recursos opcionais do app.
+              Esta pagina apresenta, em linguagem simples, as regras gerais de
+              uso da Calculadora do Produtor, incluindo acesso ao sistema,
+              recursos da conta, plano Premium e condutas esperadas durante o
+              uso da plataforma.
             </p>
             <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
               Atualizado em {LAST_UPDATED_LABEL}
@@ -60,57 +60,53 @@ export default function PrivacyPolicyPage() {
           <div className="space-y-5">
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-2">
-                <Database size={18} className="text-amber-600" />
+                <FileText size={18} className="text-amber-600" />
                 <h2 className="text-xl font-black text-slate-900">
-                  Quais dados o app pode tratar
+                  Aceite e objetivo da plataforma
                 </h2>
               </div>
               <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
                 <p>
-                  Para o funcionamento da conta, o app pode tratar dados como
-                  nome, e-mail, foto de perfil, metodo de acesso usado na conta
-                  e informacoes tecnicas ligadas ao plano.
+                  Ao usar a Calculadora do Produtor, o usuario concorda com
+                  estas regras publicas de uso. O objetivo do sistema e ajudar
+                  pequenos produtores a organizar materiais, calcular preco,
+                  controlar estoque, montar fichas tecnicas, criar orcamentos e
+                  acompanhar a operacao.
                 </p>
                 <p>
-                  Para o funcionamento do sistema em si, o app tambem pode
-                  armazenar os dados que voce cadastrar, como materiais,
-                  produtos, fichas tecnicas, orcamentos, vendas, configuracoes,
-                  backup, preferencia de conta e outros registros ligados ao uso
-                  da ferramenta.
-                </p>
-                <p>
-                  Se voce usar recursos opcionais, o app tambem pode tratar
-                  dados relacionados a envio de backup por e-mail, recuperacao
-                  de senha, depoimento enviado por voce e historico da
-                  assinatura Premium.
+                  O app pode oferecer recursos gratuitos e recursos ligados ao
+                  plano Premium, conforme a configuracao e a disponibilidade da
+                  conta.
                 </p>
               </div>
             </section>
 
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-2">
-                <ShieldCheck size={18} className="text-emerald-600" />
+                <CircleCheckBig size={18} className="text-emerald-600" />
                 <h2 className="text-xl font-black text-slate-900">
-                  Como esses dados sao usados
+                  Conta, acesso e responsabilidade do usuario
                 </h2>
               </div>
               <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
-                <p>Os dados do app sao usados principalmente para:</p>
-                <ul className="list-disc space-y-2 pl-5">
-                  <li>autenticar a conta e manter o acesso seguro;</li>
-                  <li>salvar materiais, produtos, vendas e configuracoes;</li>
-                  <li>sincronizar o uso da conta entre dispositivos;</li>
-                  <li>enviar recuperacao de senha e e-mails ligados ao app;</li>
-                  <li>processar cobranca, assinatura, cancelamento e reembolso do Premium;</li>
-                  <li>gerar, exportar e enviar backups quando voce pedir ou configurar;</li>
-                  <li>publicar depoimentos apenas quando voce enviar esse conteudo de forma voluntaria.</li>
-                </ul>
+                <p>
+                  O usuario e responsavel pelas informacoes usadas no acesso da
+                  propria conta e pelos dados cadastrados dentro do sistema,
+                  incluindo materiais, produtos, configuracoes, orcamentos,
+                  vendas, backup e demais registros criados durante o uso.
+                </p>
+                <p>
+                  Tambem e responsabilidade do usuario revisar os dados que
+                  informa ao app antes de usar esses numeros para decidir preco,
+                  margem, orcamento ou estrategia de venda.
+                </p>
                 <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-slate-700">
                   <p className="font-bold text-sky-900">Importante</p>
                   <p className="mt-2">
-                    O app usa os dados para operar o servico e melhorar a
-                    experiencia de uso. O envio de depoimento e opcional e so
-                    acontece por acao direta do usuario dentro do app.
+                    A Calculadora do Produtor e uma ferramenta de apoio a
+                    organizacao e decisao. O usuario continua responsavel por
+                    validar os dados do proprio negocio antes de aplicar esses
+                    resultados em operacoes reais.
                   </p>
                 </div>
               </div>
@@ -118,53 +114,48 @@ export default function PrivacyPolicyPage() {
 
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-2">
-                <FileLock2 size={18} className="text-sky-600" />
+                <Crown size={18} className="text-sky-600" />
                 <h2 className="text-xl font-black text-slate-900">
-                  Servicos e ferramentas envolvidos
+                  Recursos Premium, cobranca e alteracoes
                 </h2>
               </div>
               <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
                 <p>
-                  A Calculadora do Produtor pode usar servicos de terceiros para
-                  operar partes especificas do sistema, como autenticacao,
-                  armazenamento, cobranca e envio de e-mails.
+                  Parte da plataforma pode funcionar em plano gratuito, enquanto
+                  alguns recursos sao disponibilizados apenas para contas com
+                  assinatura Premium ativa.
                 </p>
-                <ul className="list-disc space-y-2 pl-5">
-                  <li>Google, quando voce escolhe entrar com conta Google;</li>
-                  <li>Stripe, para assinatura Premium, checkout, cancelamento e reembolso;</li>
-                  <li>servicos de e-mail, para recuperacao de senha e backups enviados por e-mail;</li>
-                  <li>infraestrutura de banco e sincronizacao usada pelo proprio app.</li>
-                </ul>
                 <p>
-                  Dados de pagamento, como numero completo de cartao, nao sao
-                  armazenados diretamente pela interface principal do app. O
-                  processamento de pagamento acontece no ambiente do provedor de
-                  cobranca usado para a assinatura.
+                  Valores, recursos, limites, condicoes de uso e detalhes da
+                  assinatura podem ser ajustados ao longo do tempo, sempre com
+                  reflexo nas paginas publicas e no fluxo apresentado no app.
+                </p>
+                <p>
+                  Regras especificas sobre cancelamento e reembolso da
+                  assinatura Premium ficam descritas em pagina publica propria.
                 </p>
               </div>
             </section>
 
             <section className="rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
               <div className="flex items-center gap-2">
-                <Mail size={18} className="text-amber-700" />
+                <ShieldCheck size={18} className="text-amber-700" />
                 <h2 className="text-xl font-black text-slate-900">
-                  Backup, contato e atualizacoes desta politica
+                  Uso adequado da plataforma
                 </h2>
               </div>
               <div className="mt-4 space-y-3 text-sm leading-7 text-amber-900">
+                <p>Espera-se que o uso da plataforma seja feito de forma licita e adequada.</p>
+                <ul className="list-disc space-y-2 pl-5">
+                  <li>nao usar o sistema para atividade ilegal;</li>
+                  <li>nao tentar acessar contas de terceiros sem permissao;</li>
+                  <li>nao tentar prejudicar a disponibilidade ou a seguranca do app;</li>
+                  <li>nao usar o sistema de forma contraria a estas regras publicas.</li>
+                </ul>
                 <p>
-                  Quando voce configura backup por e-mail, o sistema usa o
-                  endereco informado por voce para enviar o arquivo exportado da
-                  conta conforme a sua configuracao ou a sua solicitacao manual.
-                </p>
-                <p>
-                  Esta politica pode ser atualizada quando o app ganhar novos
-                  recursos, novas integracoes ou mudancas relevantes na forma de
-                  operar a conta.
-                </p>
-                <p>
-                  Sempre que houver uma alteracao importante no texto publico,
-                  esta pagina passara a mostrar a data da ultima atualizacao.
+                  O servico pode ser ajustado, corrigido, ampliado ou revisado
+                  ao longo do tempo para melhorar seguranca, estabilidade,
+                  desempenho e experiencia do usuario.
                 </p>
               </div>
             </section>
@@ -176,11 +167,11 @@ export default function PrivacyPolicyPage() {
                 Resumo rapido
               </h2>
               <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-                <li>O app trata dados da conta e dados cadastrados por voce no sistema.</li>
-                <li>Login com Google e opcional.</li>
-                <li>Pagamentos Premium usam provedor de cobranca dedicado.</li>
-                <li>Recuperacao de senha e backup por e-mail dependem do e-mail configurado.</li>
-                <li>Depoimento so aparece se voce enviar isso de forma voluntaria.</li>
+                <li>O usuario continua responsavel pelos dados que cadastra e usa no proprio negocio.</li>
+                <li>O app ajuda no calculo e na organizacao, mas nao substitui validacao do usuario.</li>
+                <li>Plano Premium pode liberar recursos extras conforme a conta.</li>
+                <li>Valores e recursos podem evoluir com o tempo.</li>
+                <li>Uso inadequado do sistema nao e permitido.</li>
               </ul>
             </section>
 
@@ -190,10 +181,10 @@ export default function PrivacyPolicyPage() {
               </h2>
               <div className="mt-4 space-y-3">
                 <Link
-                  href="/politicas/termos-de-uso"
+                  href="/politicas/privacidade"
                   className="block rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
                 >
-                  Termos de uso
+                  Politica de privacidade
                 </Link>
                 <Link
                   href="/politicas/cancelamento-e-reembolso"

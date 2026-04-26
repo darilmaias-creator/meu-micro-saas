@@ -148,6 +148,10 @@ const footerSections = [
     title: "Segurança",
     links: [
       {
+        href: "/politicas/termos-de-uso",
+        label: "Termos de uso",
+      },
+      {
         href: "/politicas/privacidade",
         label: "Politica de privacidade",
       },

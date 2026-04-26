@@ -26,6 +26,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.4,
     },
+    {
+      url: `${SITE_URL}/politicas/termos-de-uso`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.4,
+    },
     ...SEARCH_INTENT_PAGES.map((page) => ({
       url: `${SITE_URL}/${page.slug}`,
       lastModified,
