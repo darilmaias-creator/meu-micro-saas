@@ -80,6 +80,43 @@ function SectionTitle({
   );
 }
 
+function ExampleCard({
+  title,
+  description,
+  bullets,
+  result,
+}: NonNullable<SearchIntentPageContent["example"]>) {
+  return (
+    <article className="rounded-[34px] border border-amber-900/15 bg-[linear-gradient(180deg,_rgba(255,251,235,0.95),_rgba(255,255,255,0.98))] p-7 shadow-[0_24px_60px_rgba(154,79,0,0.1)] sm:p-8">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
+        Exemplo pratico
+      </p>
+      <h3 className="mt-3 text-2xl font-black tracking-[-0.04em] text-slate-950 sm:text-3xl">
+        {title}
+      </h3>
+      <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
+        {description}
+      </p>
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        {bullets.map((bullet, index) => (
+          <div
+            key={bullet}
+            className="rounded-[26px] border border-slate-950/10 bg-white/90 p-5"
+          >
+            <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-sm font-black text-amber-800">
+              {index + 1}
+            </div>
+            <p className="mt-4 text-sm leading-7 text-slate-600">{bullet}</p>
+          </div>
+        ))}
+      </div>
+      <p className="mt-6 rounded-[24px] border border-emerald-900/10 bg-emerald-50/80 p-5 text-base leading-8 text-emerald-900">
+        {result}
+      </p>
+    </article>
+  );
+}
+
 export function SearchIntentPage({
   content,
 }: {
@@ -156,9 +193,9 @@ export function SearchIntentPage({
 
         <div className="rounded-[38px] border border-amber-900/15 bg-white/90 p-6 shadow-[0_36px_90px_rgba(154,79,0,0.18)]">
           <SectionTitle
-            eyebrow="O que voce encontra aqui"
-            title="Beneficios praticos para quem vende artesanal."
-            description="Em vez de depender so da memoria ou de anotacoes espalhadas, o sistema ajuda a organizar a base do negocio com mais consistencia."
+            eyebrow="O que voce resolve aqui"
+            title="Mais clareza para precificar e mais organizacao para vender."
+            description="Em vez de depender so da memoria, de contas manuais ou de anotacoes espalhadas, voce passa a enxergar melhor o que entra no preco e no orcamento."
           />
 
           <div className="mt-8 grid gap-4">
@@ -177,10 +214,62 @@ export function SearchIntentPage({
         </div>
       </section>
 
+      {content.steps?.length ? (
+        <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-18">
+          <SectionTitle
+            eyebrow="Como funciona"
+            title="Um processo simples para quem quer sair do improviso."
+            description="A ideia nao e complicar sua rotina. E justamente transformar a conta do dia a dia em um fluxo mais facil de repetir."
+          />
+
+          <div className="mt-8 grid gap-5 lg:grid-cols-3">
+            {content.steps.map((step) => (
+              <article
+                key={step.title}
+                className="rounded-[32px] border border-slate-950/10 bg-white p-6 shadow-[0_20px_54px_rgba(15,23,42,0.06)]"
+              >
+                <h3 className="text-2xl font-black tracking-[-0.04em] text-slate-950">
+                  {step.title}
+                </h3>
+                <p className="mt-4 leading-8 text-slate-600">{step.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {content.useCases?.length ? (
+        <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-18">
+          <SectionTitle
+            eyebrow="O que voce consegue fazer"
+            title="Beneficios que fazem sentido na rotina de quem produz."
+            description="Nao e so uma calculadora. E uma base para organizar melhor materiais, produto, preco e apresentacao para o cliente."
+          />
+
+          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {content.useCases.map((useCase) => (
+              <article
+                key={useCase.title}
+                className="rounded-[30px] border border-slate-950/10 bg-white p-6 shadow-[0_20px_54px_rgba(15,23,42,0.06)]"
+              >
+                <h3 className="text-xl font-black text-slate-950">{useCase.title}</h3>
+                <p className="mt-4 leading-7 text-slate-600">{useCase.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {content.example ? (
+        <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-18">
+          <ExampleCard {...content.example} />
+        </section>
+      ) : null}
+
       <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-18">
         <SectionTitle
           eyebrow="Perguntas frequentes"
-          title="Duvudas comuns de quem pesquisa esse assunto no Google."
+          title="Dúvidas comuns de quem pesquisa esse assunto no Google."
           description="Quanto mais clara a resposta, mais facil fica entender se a Calculadora do Produtor encaixa na rotina do seu negocio."
         />
 
