@@ -24,31 +24,31 @@ import { SEARCH_INTENT_PAGES } from "./search-intents";
 
 export const metadata: Metadata = {
   title:
-    "Calculadora para artesao | Precificacao, estoque e orcamentos",
+    "Calculadora para artesão | Precificação, estoque e orçamentos",
   description:
-    "Calcula Artesao e Calculadora do Produtor: sistema para artesao e pequeno produtor calcular preco de venda, controlar estoque, montar ficha tecnica e criar orcamentos.",
+    "Calcula Artesão e Calculadora do Produtor: sistema para artesão e pequeno produtor calcular preço de venda, controlar estoque, montar ficha técnica e criar orçamentos.",
   keywords: [
-    "calcula artesao",
-    "calculadora para artesao",
+    "calcula artesão",
+    "calculadora para artesão",
     "calculadora de artesanato",
     "como precificar artesanato",
-    "precificacao de artesanato",
-    "preco de venda artesanato",
-    "orcamento para artesanato",
-    "ficha tecnica artesanato",
-    "controle de estoque para artesao",
+    "precificação de artesanato",
+    "preço de venda artesanato",
+    "orçamento para artesanato",
+    "ficha técnica artesanato",
+    "controle de estoque para artesão",
     "como calcular artesanato",
-    "aplicativo para artesao",
+    "aplicativo para artesão",
     "calculadora do produtor",
-    "sistema para artesao",
+    "sistema para artesão",
   ],
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Calculadora para artesao, estoque e orcamentos",
+    title: "Calculadora para artesão, estoque e orçamentos",
     description:
-      "Organize materiais, calcule preco de venda, monte fichas tecnicas e crie orcamentos para artesanato e pequenos produtos.",
+      "Organize materiais, calcule preço de venda, monte fichas técnicas e crie orçamentos para artesanato e pequenos produtos.",
     url: "/",
     siteName: "Calculadora do Produtor",
     locale: "pt_BR",
@@ -56,9 +56,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Calculadora para artesao",
+    title: "Calculadora para artesão",
     description:
-      "Precificacao, estoque, ficha tecnica e orcamentos para artesanato em um unico lugar.",
+      "Precificação, estoque, ficha técnica e orçamentos para artesanato em um único lugar.",
   },
 };
 
@@ -67,25 +67,25 @@ const features = [
     icon: Boxes,
     title: "Estoque completo",
     description:
-      "Cadastre insumos, medidas, custos, quantidade atual, valor parado e alerta de estoque minimo.",
+      "Cadastre insumos, medidas, custos, quantidade atual, valor parado e alerta de estoque mínimo.",
   },
   {
     icon: ClipboardList,
-    title: "Ficha tecnica",
+    title: "Ficha técnica",
     description:
-      "Monte produtos usando materiais do estoque, tempo de maquina, mao de obra e custos extras.",
+      "Monte produtos usando materiais do estoque, tempo de máquina, mão de obra e custos extras.",
   },
   {
     icon: Calculator,
-    title: "Preco de venda",
+    title: "Preço de venda",
     description:
-      "Veja custo por unidade, margem, lucro, preco sugerido e ajuste manual sem perder clareza.",
+      "Veja custo por unidade, margem, lucro, preço sugerido e ajuste manual sem perder clareza.",
   },
   {
     icon: FileText,
-    title: "Orcamentos e vendas",
+    title: "Orçamentos e vendas",
     description:
-      "Crie propostas, registre vendas e acompanhe o historico do que foi negociado com cada cliente.",
+      "Crie propostas, registre vendas e acompanhe o histórico do que foi negociado com cada cliente.",
   },
 ];
 
@@ -93,7 +93,7 @@ const workflow = [
   {
     title: "Cadastre seus materiais",
     description:
-      "Informe preco pago, medida, estoque atual e minimo para saber quanto cada material custa de verdade.",
+      "Informe preço pago, medida, estoque atual e mínimo para saber quanto cada material custa de verdade.",
   },
   {
     title: "Monte a ficha do produto",
@@ -103,33 +103,33 @@ const workflow = [
   {
     title: "Venda com margem clara",
     description:
-      "Receba sugestao de preco, lucro, margem e registro para orcamento ou venda final.",
+      "Receba sugestão de preço, lucro, margem e registro para orçamento ou venda final.",
   },
 ];
 
 const freePlanItems = [
   "Controle inicial de insumos",
-  "Calculo de preco de venda",
+  "Cálculo de preço de venda",
   "Acesso pelo celular e computador",
 ];
 
 const premiumPlanItems = [
-  "Mais capacidade para organizar a operacao",
-  "Orcamentos, vendas e historico",
-  "Backup, restauracao e recursos avancados",
-  "Ferramentas extras para comunicacao e marketing",
+  "Mais capacidade para organizar a operação",
+  "Orçamentos, vendas e histórico",
+  "Backup, restauração e recursos avançados",
+  "Ferramentas extras para comunicação e marketing",
 ];
 
 const audienceItems = [
-  "Artesaos que precisam calcular preco de venda sem vender no prejuizo.",
+  "Artesãos que precisam calcular preço de venda sem vender no prejuízo.",
   "Quem faz personalizados, lembrancinhas, caixas, MDF, costura, laser ou papelaria criativa.",
-  "Pequenos produtores que precisam criar orcamentos claros para clientes.",
-  "MEIs e negocios criativos que querem controlar materiais, estoque e margem de lucro.",
+  "Pequenos produtores que precisam criar orçamentos claros para clientes.",
+  "MEIs e negócios criativos que querem controlar materiais, estoque e margem de lucro.",
 ];
 
 const footerSections = [
   {
-    title: "Navegacao",
+    title: "Navegação",
     links: [
       { href: "#funcionalidades", label: "Funcionalidades" },
       { href: "#como-funciona", label: "Como funciona" },
@@ -138,18 +138,18 @@ const footerSections = [
     ],
   },
   {
-    title: "Paginas publicas",
+    title: "Páginas públicas",
     links: SEARCH_INTENT_PAGES.slice(0, 5).map((page) => ({
       href: `/${page.slug}`,
       label: page.eyebrow,
     })),
   },
   {
-    title: "Seguranca",
+    title: "Segurança",
     links: [
       {
         href: "/politicas/cancelamento-e-reembolso",
-        label: "Politica Premium",
+        label: "Política Premium",
       },
       { href: "/entrar", label: "Acessar calculadora" },
     ],
@@ -160,17 +160,17 @@ const faqItems = [
   {
     question: "Como precificar artesanato de um jeito mais seguro?",
     answer:
-      "O caminho mais confiavel e reunir custo de material, tempo, despesas extras e margem de lucro. A Calculadora do Produtor organiza esse processo em um unico lugar.",
+      "O caminho mais confiável e reunir custo de material, tempo, despesas extras e margem de lucro. A Calculadora do Produtor organiza esse processo em um único lugar.",
   },
   {
-    question: "A calculadora serve para orcamento de artesanato?",
+    question: "A calculadora serve para orçamento de artesanato?",
     answer:
-      "Sim. Alem de ajudar na precificacao, o sistema tambem ajuda a montar orcamentos mais claros para o cliente entender o valor final.",
+      "Sim. Além de ajudar na precificação, o sistema também ajuda a montar orçamentos mais claros para o cliente entender o valor final.",
   },
   {
     question: "Funciona para quem faz personalizados e sob encomenda?",
     answer:
-      "Sim. O app atende rotinas de quem trabalha com personalizados, caixas, MDF, costura, papelaria criativa, laser e outras producoes sob encomenda.",
+      "Sim. O app atende rotinas de quem trabalha com personalizados, caixas, MDF, costura, papelaria criativa, laser e outras produções sob encomenda.",
   },
 ];
 
@@ -183,7 +183,7 @@ const homeStructuredData = [
     operatingSystem: "Web, Android, Windows",
     url: "https://calculaartesao.com.br",
     description:
-      "Sistema para artesao e pequeno produtor calcular preco de venda, controlar estoque, montar ficha tecnica e criar orcamentos.",
+      "Sistema para artesão e pequeno produtor calcular preço de venda, controlar estoque, montar ficha técnica e criar orçamentos.",
     offers: {
       "@type": "Offer",
       price: "0",
@@ -281,7 +281,7 @@ export default async function PresentationPage() {
             </div>
 
             <h1 className="mt-6 max-w-4xl text-5xl font-extrabold leading-[0.92] tracking-[-0.07em] text-slate-950 sm:text-6xl lg:text-7xl">
-              Calcule com clareza. Venda com seguranca.
+              Calcule com clareza. Venda com segurança.
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
@@ -316,7 +316,7 @@ export default async function PresentationPage() {
                 {
                   icon: TrendingUp,
                   value: "Mais controle",
-                  text: "sobre materiais, margem e operacao",
+                  text: "sobre materiais, margem e operação",
                 },
                 {
                   icon: Smartphone,
@@ -387,7 +387,7 @@ export default async function PresentationPage() {
                 <div className="mt-4 space-y-3">
                   {[
                     "Nome do material",
-                    "Preco pago",
+                    "Preço pago",
                     "Quantidade comprada",
                     "Estoque atual",
                   ].map((line) => (
@@ -405,7 +405,7 @@ export default async function PresentationPage() {
                 </div>
                 <div className="mt-4 space-y-4">
                   {[
-                    ["MDF 3mm", "Area", "OK"],
+                    ["MDF 3mm", "Área", "OK"],
                     ["Barbante", "Peso", "OK"],
                     ["Fita cetim", "Compr.", "Comprar"],
                   ].map(([name, type, status]) => (
