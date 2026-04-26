@@ -1,4 +1,9 @@
-export type ActiveTab = "calculator" | "inventory" | "sales" | "dashboard";
+export type ActiveTab =
+  | "calculator"
+  | "inventory"
+  | "operationCosts"
+  | "sales"
+  | "dashboard";
 
 export function resolveActiveTabFromParam(
   tab: string | string[] | null | undefined,
@@ -8,6 +13,8 @@ export function resolveActiveTabFromParam(
   switch (normalizedTab) {
     case "estoque":
       return "inventory";
+    case "custos-operacao":
+      return "operationCosts";
     case "vendas":
       return "sales";
     case "dashboard":
@@ -21,6 +28,8 @@ export function getPathForActiveTab(activeTab: ActiveTab) {
   switch (activeTab) {
     case "inventory":
       return "/estoque";
+    case "operationCosts":
+      return "/custos-operacao";
     case "sales":
       return "/vendas";
     case "dashboard":

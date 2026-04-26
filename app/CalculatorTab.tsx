@@ -1,10 +1,12 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import Link from 'next/link';
 import React, { useState } from 'react';
-import { Settings, Package, Plus, Trash2, DollarSign, RefreshCw, Heart, Sparkles, Save, Copy, Download, Upload, Crown } from 'lucide-react';
+import { Settings, Package, Plus, Trash2, DollarSign, RefreshCw, Heart, Sparkles, Save, Copy, Download, Upload } from 'lucide-react';
 import { Card, InputGroup, TimeInputGroup, Toggle, sanitizeDecimalInput, sanitizeIntegerInput } from './ui';
 import { FREE_TIER_PRODUCT_LIMIT } from '@/lib/app-data/plan-limits';
 import { calculateOperationCostBreakdown } from '@/lib/app-data/operation-costs';
+import { OperationCostsSummary } from './OperationCostsTab';
 
 export default function CalculatorTab({ appData, isPremium }: any) {
     const { config, insumos, savedProducts, setSavedProducts } = appData;
@@ -26,10 +28,6 @@ export default function CalculatorTab({ appData, isPremium }: any) {
     
     const [manualPrice, setManualPrice] = useState(''); 
     const [productName, setProductName] = useState('');
-    const [customCostName, setCustomCostName] = useState('');
-    const [customCostAmount, setCustomCostAmount] = useState('');
-    const [customCostKind, setCustomCostKind] = useState<'fixed' | 'variable'>('fixed');
-
     const [aiContent, setAiContent] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState('');
@@ -90,38 +88,6 @@ export default function CalculatorTab({ appData, isPremium }: any) {
 
     const removeRecipeItem = (idx: number) => setRecipeItems(recipeItems.filter((_, i) => i !== idx));
 
-    const addCustomOperationCost = () => {
-        const trimmedName = customCostName.trim();
-        const normalizedAmount = Number(customCostAmount.replace(',', '.'));
-        if (!trimmedName) {
-            alert("Informe o nome do custo personalizado.");
-            return;
-        }
-        if (!(normalizedAmount > 0)) {
-            alert("Informe um valor valido para o custo personalizado.");
-            return;
-        }
-
-        config.setCustomOperationCosts((previous: any[] = []) => [
-            ...previous,
-            {
-                id: `${Date.now()}-${Math.random()}`,
-                name: trimmedName,
-                amount: String(normalizedAmount),
-                kind: customCostKind,
-            },
-        ]);
-        setCustomCostName('');
-        setCustomCostAmount('');
-        setCustomCostKind('fixed');
-    };
-
-    const removeCustomOperationCost = (id: string) => {
-        config.setCustomOperationCosts((previous: any[] = []) =>
-            previous.filter((item: any) => item?.id !== id),
-        );
-    };
-
     const rawIngredientsCost = recipeItems.reduce((acc, item) => item.type !== 'area' ? acc + (item.cost * (1 + Number(wasteFactor || 0) / 100)) : acc + item.cost, 0);
     const materialTotalCost = rawIngredientsCost + Number(extraCosts || 0);
     const depreciationPerHour = Number(config.machineCost || 0) / Number(config.diodeLife || 1);
@@ -146,9 +112,6 @@ export default function CalculatorTab({ appData, isPremium }: any) {
     const totalOperationCostPerUnit = operationCostBreakdown.appliedOperationCostPerUnit;
     const operationMarkupValuePerUnit = operationCostBreakdown.markupValuePerUnit;
     const totalBatchCostWithOperations = operationCostBreakdown.adjustedBatchCost;
-    const customOperationCosts = Array.isArray(config.customOperationCosts)
-        ? config.customOperationCosts
-        : [];
     const operationModeLabel =
         operationCostBreakdown.operationCostMode === 'per_hour'
             ? 'Rateio por hora produtiva'
@@ -236,9 +199,6 @@ export default function CalculatorTab({ appData, isPremium }: any) {
         } catch (err) { setError(err instanceof Error ? err.message : "Erro na IA. Tente novamente."); } finally { setIsGenerating(false); }
     };
 
-    const freeModeOperationHint = "No plano gratis, voce usa custos basicos e rateio simples por unidade.";
-    const premiumModeOperationHint = "No Premium, voce libera custos personalizados, rateio por hora e acrescimo operacional.";
-
     return (
         <div className="animate-fadeIn grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* COLUNA ESQUERDA: CONFIGS E INSERÇÃO */}
@@ -253,237 +213,9 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                     </div>
                 </Card>
 
-                <Card className="border-t-4 border-indigo-500">
-                    <div className="flex items-center justify-between gap-3 mb-4 border-b border-slate-100 pb-3">
-                        <div>
-                            <div className="flex items-center gap-2 text-indigo-700 mb-1">
-                                <DollarSign size={20} />
-                                <h2 className="font-bold text-lg text-slate-800">2. Custos da Operação</h2>
-                            </div>
-                            <p className="text-sm text-slate-500">Traga aluguel, agua, luz e outros gastos para dentro da precificacao.</p>
-                        </div>
-                        {!isPremium && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800 border border-amber-200">
-                                <Crown size={14} />
-                                Modelo misto
-                            </span>
-                        )}
-                    </div>
-
-                    <div className={`rounded-xl border p-4 mb-4 ${isPremium ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
-                        <p className="text-sm font-semibold text-slate-700">
-                            {isPremium ? "Seus custos operacionais entram automaticamente no preco sugerido." : freeModeOperationHint}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                            {isPremium ? premiumModeOperationHint : "O Premium libera custos personalizados, rateio por hora produtiva e acrescimo operacional."}
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
-                            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Custos fixos mensais</h3>
-                            <InputGroup label="Aluguel" value={config.fixedCostRent} onChange={config.setFixedCostRent} prefix="R$" tooltip="Valor mensal do atelie, sala ou espaco de producao." />
-                            <InputGroup label="Agua" value={config.fixedCostWater} onChange={config.setFixedCostWater} prefix="R$" />
-                            <InputGroup label="Luz" value={config.fixedCostElectricity} onChange={config.setFixedCostElectricity} prefix="R$" />
-                            <InputGroup label="Internet" value={config.fixedCostInternet} onChange={config.setFixedCostInternet} prefix="R$" className="mb-0" />
-                        </div>
-
-                        <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
-                            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Custos variaveis mensais</h3>
-                            <InputGroup label="Embalagem" value={config.variableCostPackaging} onChange={config.setVariableCostPackaging} prefix="R$" tooltip="Gasto medio com fitas, etiquetas, caixas e embalagens." />
-                            <InputGroup label="Transporte" value={config.variableCostTransport} onChange={config.setVariableCostTransport} prefix="R$" tooltip="Compras, entregas e deslocamentos ligados a producao." />
-                            <InputGroup label="Taxas" value={config.variableCostFees} onChange={config.setVariableCostFees} prefix="R$" tooltip="Taxas de maquininha, plataforma e outras cobrancas variaveis." className="mb-0" />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-                        <div className="lg:col-span-1">
-                            <InputGroup
-                                label="Producao media por mes"
-                                value={config.monthlyProductionTarget}
-                                onChange={config.setMonthlyProductionTarget}
-                                placeholder="Ex: 80"
-                                tooltip="Quantidade media de pecas produzidas por mes para o rateio simples."
-                            />
-                        </div>
-                        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div className={`rounded-xl border p-4 ${isPremium ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-slate-50'}`}>
-                                <p className="text-xs uppercase tracking-wide font-bold text-slate-500 mb-1">Total fixo / mes</p>
-                                <p className="text-2xl font-bold text-slate-800">R$ {operationCostBreakdown.fixedMonthlyTotal.toFixed(2)}</p>
-                            </div>
-                            <div className={`rounded-xl border p-4 ${isPremium ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-slate-50'}`}>
-                                <p className="text-xs uppercase tracking-wide font-bold text-slate-500 mb-1">Total variavel / mes</p>
-                                <p className="text-2xl font-bold text-slate-800">R$ {operationCostBreakdown.variableMonthlyTotal.toFixed(2)}</p>
-                            </div>
-                            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                                <p className="text-xs uppercase tracking-wide font-bold text-amber-700 mb-1">Rateio atual</p>
-                                <p className="text-sm font-bold text-amber-800">{operationModeLabel}</p>
-                                <p className="text-xs text-amber-700 mt-1">
-                                    {operationCostBreakdown.operationCostMode === 'per_hour'
-                                        ? `R$ ${operationCostBreakdown.monthlyCostPerHour.toFixed(2)} / hora`
-                                        : `R$ ${operationCostBreakdown.monthlyCostPerUnit.toFixed(2)} / unidade`}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mt-4 rounded-xl border border-slate-200 overflow-hidden">
-                        <div className="flex items-center justify-between gap-3 bg-slate-900 px-4 py-3">
-                            <div className="flex items-center gap-2 text-white">
-                                <Crown size={18} className={isPremium ? 'text-amber-300' : 'text-slate-400'} />
-                                <div>
-                                    <h3 className="font-bold">Recursos avancados de custos operacionais</h3>
-                                    <p className="text-xs text-slate-300">Custos personalizados, rateio por hora e acrescimo operacional.</p>
-                                </div>
-                            </div>
-                            {!isPremium && (
-                                <span className="rounded-full bg-amber-400/15 border border-amber-300/30 px-3 py-1 text-xs font-bold text-amber-200">
-                                    Premium
-                                </span>
-                            )}
-                        </div>
-
-                        <div className="p-4 bg-white space-y-4">
-                            {!isPremium && (
-                                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                                    O plano gratis continua usando seus custos basicos e o rateio simples por unidade. Se quiser aprofundar a operacao, o Premium libera tudo.
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className={isPremium ? '' : 'opacity-70'}>
-                                    <InputGroup
-                                        label="Horas produtivas por mes"
-                                        value={config.productiveHoursPerMonth}
-                                        onChange={config.setProductiveHoursPerMonth}
-                                        disabled={!isPremium}
-                                        placeholder="Ex: 120"
-                                        tooltip="Usado para transformar o custo mensal em custo por hora produtiva."
-                                    />
-                                </div>
-                                <div className={isPremium ? '' : 'opacity-70'}>
-                                    <div className="mb-4">
-                                        <label className="text-sm font-medium text-slate-700 mb-1 block">Modo de rateio</label>
-                                        <select
-                                            value={config.operationCostMode}
-                                            onChange={(e) => isPremium && config.setOperationCostMode(e.target.value)}
-                                            disabled={!isPremium}
-                                            className={`w-full p-2 border rounded-lg outline-none transition-all ${isPremium ? 'border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white' : 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed'}`}
-                                        >
-                                            <option value="per_unit">Por unidade produzida</option>
-                                            <option value="per_hour">Por hora produtiva</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className={isPremium ? '' : 'opacity-70'}>
-                                    <InputGroup
-                                        label="Acrescimo operacional"
-                                        value={config.operationCostMarkup}
-                                        onChange={config.setOperationCostMarkup}
-                                        disabled={!isPremium}
-                                        suffix="%"
-                                        placeholder="0"
-                                        tooltip="Percentual extra para imprevistos, reinvestimento e protecao de margem."
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
-                                <div className="flex items-center justify-between gap-3 mb-3">
-                                    <div>
-                                        <h4 className="font-bold text-slate-800">Custos personalizados</h4>
-                                        <p className="text-xs text-slate-500">Adicione custos extras do seu negocio quando quiser uma precificacao ainda mais completa.</p>
-                                    </div>
-                                    {isPremium && (
-                                        <span className="text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 rounded-full px-3 py-1">
-                                            Premium ativo
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className={`grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 ${isPremium ? '' : 'opacity-70'}`}>
-                                    <div className="md:col-span-2">
-                                        <InputGroup
-                                            label="Nome do custo"
-                                            type="text"
-                                            value={customCostName}
-                                            onChange={setCustomCostName}
-                                            disabled={!isPremium}
-                                            placeholder="Ex: Contador, plataforma, manutencao"
-                                            className="mb-0"
-                                        />
-                                    </div>
-                                    <div>
-                                        <InputGroup
-                                            label="Valor mensal"
-                                            value={customCostAmount}
-                                            onChange={setCustomCostAmount}
-                                            disabled={!isPremium}
-                                            prefix="R$"
-                                            className="mb-0"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 mb-1 block">Tipo</label>
-                                        <select
-                                            value={customCostKind}
-                                            onChange={(e) => isPremium && setCustomCostKind(e.target.value as 'fixed' | 'variable')}
-                                            disabled={!isPremium}
-                                            className={`w-full p-2 border rounded-lg outline-none transition-all ${isPremium ? 'border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white' : 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed'}`}
-                                        >
-                                            <option value="fixed">Fixo</option>
-                                            <option value="variable">Variavel</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={addCustomOperationCost}
-                                        disabled={!isPremium}
-                                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition-colors ${isPremium ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-200 text-slate-500 cursor-not-allowed'}`}
-                                    >
-                                        <Plus size={16} />
-                                        Adicionar custo
-                                    </button>
-                                </div>
-
-                                <div className="mt-4 space-y-2">
-                                    {customOperationCosts.length === 0 ? (
-                                        <div className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500 text-center">
-                                            Nenhum custo personalizado adicionado.
-                                        </div>
-                                    ) : (
-                                        customOperationCosts.map((item: any) => (
-                                            <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
-                                                <div>
-                                                    <p className="font-bold text-slate-800">{item.name}</p>
-                                                    <p className="text-xs text-slate-500 uppercase tracking-wide">{item.kind === 'variable' ? 'Variavel' : 'Fixo'}</p>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <span className="font-bold text-slate-700">R$ {Number(item.amount || 0).toFixed(2)}</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeCustomOperationCost(item.id)}
-                                                        disabled={!isPremium}
-                                                        className={`rounded-lg px-3 py-2 text-xs font-bold ${isPremium ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
-                                                    >
-                                                        Remover
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-
                 <Card className="border-t-4 border-amber-500">
                     <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                        <div className="flex items-center gap-2 text-amber-600"><Package size={20} /><h2 className="font-bold text-lg text-slate-800">3. Materiais & Tempos</h2></div>
+                        <div className="flex items-center gap-2 text-amber-600"><Package size={20} /><h2 className="font-bold text-lg text-slate-800">2. Materiais & Tempos</h2></div>
                         <div className="flex bg-slate-100 p-1 rounded border"><button onClick={() => config.unit !== 'cm' && toggleUnitGlobal()} className={`px-3 py-1 rounded text-xs font-bold ${config.unit === 'cm' ? 'bg-white shadow text-amber-600' : 'text-slate-400'}`}>CM</button><button onClick={() => config.unit !== 'mm' && toggleUnitGlobal()} className={`px-3 py-1 rounded text-xs font-bold ${config.unit === 'mm' ? 'bg-white shadow text-amber-600' : 'text-slate-400'}`}>MM</button></div>
                     </div>
 
@@ -548,11 +280,18 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                                 <label className="text-sm font-bold text-slate-300 block">Rende quantas un.?</label>
                                 <input type="text" inputMode="numeric" value={yieldQty} onChange={e=>setYieldQty(sanitizeIntegerInput(e.target.value))} className="w-16 text-center p-1 font-bold border border-slate-600 rounded bg-slate-700 outline-none text-white" />
                             </div>
-                            <div className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 mb-3">
-                                <p className="text-[10px] uppercase tracking-wide font-bold text-slate-400">Operacao do negocio</p>
-                                <div className="flex justify-between items-center mt-1">
-                                    <span className="text-xs text-slate-300">{operationModeLabel}</span>
-                                    <span className="text-xs font-bold text-amber-300">R$ {Number(operationCostBreakdown.monthlyTotal || 0).toFixed(2)}/mês</span>
+                            <div className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-3 mb-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-[10px] uppercase tracking-wide font-bold text-slate-400">Operacao do negocio</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-xs text-slate-300">{operationModeLabel}</span>
+                                            <span className="text-xs font-bold text-amber-300">R$ {Number(operationCostBreakdown.monthlyTotal || 0).toFixed(2)}/mes</span>
+                                        </div>
+                                    </div>
+                                    <Link href="/custos-operacao" className="rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-bold text-amber-300 transition-colors hover:border-amber-400 hover:text-amber-200">
+                                        Ajustar
+                                    </Link>
                                 </div>
                             </div>
                             <div className="flex justify-between text-xs text-slate-400"><span>Materiais (Lote)</span><span>R$ {Number(materialTotalCost || 0).toFixed(2)}</span></div>
@@ -606,6 +345,10 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                             </div>
                             <p className="text-xl font-bold text-indigo-400">R$ {Number(titheValue || 0).toFixed(2)}</p>
                         </div>
+                        <OperationCostsSummary
+                            isPremium={isPremium}
+                            operationCostBreakdown={operationCostBreakdown}
+                        />
                     </div>
                 </div>
                 

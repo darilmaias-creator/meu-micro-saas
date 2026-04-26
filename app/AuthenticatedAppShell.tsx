@@ -6,6 +6,7 @@ import {
   BarChart2,
   Calculator,
   Crown,
+  DollarSign,
   LogOut,
   Package,
   ShoppingBag,
@@ -18,6 +19,7 @@ import { signOut } from "next-auth/react";
 import CalculatorTab from "./CalculatorTab";
 import DashboardTab from "./DashboardTab";
 import InventoryTab from "./InventoryTab";
+import OperationCostsTab from "./OperationCostsTab";
 import ProfileModal from "./ProfileModal";
 import SalesTab from "./SalesTab";
 import { useAppData } from "./hooks/useAppData";
@@ -35,6 +37,11 @@ const TAB_ITEMS = [
     icon: Package,
     id: "inventory",
     label: "Meus Materiais",
+  },
+  {
+    icon: DollarSign,
+    id: "operationCosts",
+    label: "Custos da Operacao",
   },
   {
     icon: Calculator,
@@ -189,6 +196,10 @@ export default function AuthenticatedAppShell({
           <CalculatorTab appData={appData} isPremium={isPremium} />
         )}
 
+        {activeTab === "operationCosts" && (
+          <OperationCostsTab appData={appData} isPremium={isPremium} />
+        )}
+
         {activeTab === "sales" && (
           <SalesTab appData={appData} isPremium={isPremium} />
         )}
@@ -203,7 +214,7 @@ export default function AuthenticatedAppShell({
       />
 
       <nav className="app-safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 px-3 pt-2 backdrop-blur-xl md:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
           {TAB_ITEMS.map((tabItem) => {
             const Icon = tabItem.icon;
             const isActive = activeTab === tabItem.id;
@@ -222,6 +233,8 @@ export default function AuthenticatedAppShell({
                 <span className="text-center leading-tight">
                   {tabItem.id === "inventory"
                     ? "Materiais"
+                    : tabItem.id === "operationCosts"
+                      ? "Custos"
                     : tabItem.id === "calculator"
                       ? "Preco"
                       : tabItem.id === "sales"
