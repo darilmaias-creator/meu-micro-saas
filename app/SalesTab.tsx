@@ -47,6 +47,18 @@ type Insumo = Record<string, unknown> & {
   measurePerItem?: number;
 };
 
+type QuoteLineItem = {
+  id: RecordId;
+  productId: RecordId;
+  productName: string;
+  quantity: number;
+  unitCost: number;
+  unitPrice: number;
+  grossSale: number;
+  totalCost: number;
+  baseTithe: number;
+};
+
 type Quote = Record<string, unknown> & {
   id: RecordId;
   quoteNumber: number;
@@ -59,7 +71,11 @@ type Quote = Record<string, unknown> & {
   discountFixed: string;
   discountPercent: string;
   unitPrice: number;
+  grossSale?: number;
+  totalCost?: number;
+  totalTithe?: number;
   netSale: number;
+  items?: QuoteLineItem[];
   status: string;
 };
 
@@ -83,10 +99,21 @@ type CurrentSaleData = {
   q: number;
   uCost: number;
   uPrice: number;
+  baseTithe: number;
   grossSale: number;
   discountTotal: number;
   netSale: number;
   totalC: number;
+  totalTithe: number;
+  totalProfit: number;
+};
+
+type CurrentDocumentData = {
+  items: QuoteLineItem[];
+  grossSale: number;
+  discountTotal: number;
+  netSale: number;
+  totalCost: number;
   totalTithe: number;
   totalProfit: number;
 };
@@ -131,6 +158,24 @@ function buildQuoteValidityLabel(date: string, validityDays: string) {
   return `${baseDate.toLocaleDateString("pt-BR")} (${numericValidityDays} dias)`;
 }
 
+function summarizeQuoteProducts(items: QuoteLineItem[]) {
+  if (items.length === 0) {
+    return "Produto";
+  }
+
+  if (items.length === 1) {
+    return items[0].productName;
+  }
+
+  return `${items[0].productName} + ${items.length - 1} ${
+    items.length - 1 === 1 ? "item" : "itens"
+  }`;
+}
+
+function totalQuoteQuantity(items: QuoteLineItem[]) {
+  return items.reduce((total, item) => total + Number(item.quantity || 0), 0);
+}
+
 export default function SalesTab({ appData, isPremium }: SalesTabProps) {
   const {
     savedProducts,
@@ -163,6 +208,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     () => Math.floor(Math.random() * 90000) + 10000,
   );
   const [docType, setDocType] = useState<"orcamento" | "recibo">("orcamento");
+  const [quoteLineItems, setQuoteLineItems] = useState<QuoteLineItem[]>([]);
 
   const resolvedQuoteConfig = useMemo(
     () => resolveQuoteDocumentConfig(config, isPremium),
@@ -224,11 +270,13 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     docType === "orcamento" && resolvedQuoteConfig.quoteNotesText.trim().length > 0;
 
   function resetSalesForm() {
+    setSaleProductId("");
     setSaleQuantity(1);
     setSaleDiscountFixed("");
     setSaleDiscountPercent("");
     setClientName("");
     setClientPhone("");
+    setQuoteLineItems([]);
     setQuoteNumber(Math.floor(Math.random() * 90000) + 10000);
     setActiveQuoteId(null);
     setDocType("orcamento");
@@ -278,6 +326,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
         q: quantity,
         uCost: unitCost,
         uPrice: unitPrice,
+        baseTithe,
         grossSale,
         discountTotal,
         netSale,
@@ -288,27 +337,128 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     }
   }
 
-  function saveQuote() {
-    if (!currentSaleData) {
+  const previewQuoteItem: QuoteLineItem | null = currentSaleData
+    ? {
+        id: "preview",
+        productId: currentSaleData.p.id,
+        productName: currentSaleData.p.name || "Produto",
+        quantity: currentSaleData.q,
+        unitCost: currentSaleData.uCost,
+        unitPrice: currentSaleData.uPrice,
+        grossSale: currentSaleData.grossSale,
+        totalCost: currentSaleData.totalC,
+        baseTithe: currentSaleData.baseTithe,
+      }
+    : null;
+
+  const effectiveQuoteItems =
+    quoteLineItems.length > 0
+      ? quoteLineItems
+      : previewQuoteItem
+        ? [previewQuoteItem]
+        : [];
+
+  const currentDocumentData: CurrentDocumentData | null =
+    effectiveQuoteItems.length > 0
+      ? (() => {
+          const grossSale = effectiveQuoteItems.reduce(
+            (total, item) => total + Number(item.grossSale || 0),
+            0,
+          );
+          const discountTotal =
+            (Number(saleDiscountFixed) || 0) +
+            grossSale * ((Number(saleDiscountPercent) || 0) / 100);
+          const netSale = Math.max(0, grossSale - discountTotal);
+          const totalCost = effectiveQuoteItems.reduce(
+            (total, item) => total + Number(item.totalCost || 0),
+            0,
+          );
+          const totalBaseTithe = effectiveQuoteItems.reduce(
+            (total, item) => total + Number(item.baseTithe || 0),
+            0,
+          );
+          const totalTithe = Math.max(0, totalBaseTithe - discountTotal * 0.1);
+          const totalProfit = netSale - totalCost - totalTithe;
+
+          return {
+            items: effectiveQuoteItems,
+            grossSale,
+            discountTotal,
+            netSale,
+            totalCost,
+            totalTithe,
+            totalProfit,
+          };
+        })()
+      : null;
+
+  function addCurrentProductToQuote() {
+    if (!previewQuoteItem) {
       alert("Selecione um produto e a quantidade.");
       return;
     }
 
-    const { p, q, uPrice, netSale } = currentSaleData;
+    setQuoteLineItems((previous) => {
+      const existingIndex = previous.findIndex(
+        (item) => String(item.productId) === String(previewQuoteItem.productId),
+      );
+
+      if (existingIndex < 0) {
+        return [
+          ...previous,
+          {
+            ...previewQuoteItem,
+            id: `${previewQuoteItem.productId}-${Date.now()}`,
+          },
+        ];
+      }
+
+      return previous.map((item, index) =>
+        index === existingIndex
+          ? {
+              ...item,
+              quantity: item.quantity + previewQuoteItem.quantity,
+              grossSale: item.grossSale + previewQuoteItem.grossSale,
+              totalCost: item.totalCost + previewQuoteItem.totalCost,
+              baseTithe: item.baseTithe + previewQuoteItem.baseTithe,
+            }
+          : item,
+      );
+    });
+
+    setSaleProductId("");
+    setSaleQuantity(1);
+  }
+
+  function removeQuoteLineItem(id: QuoteLineItem["id"]) {
+    setQuoteLineItems((previous) => previous.filter((item) => item.id !== id));
+  }
+
+  function saveQuote() {
+    if (!currentDocumentData) {
+      alert("Selecione pelo menos um produto para o orçamento.");
+      return;
+    }
+
+    const firstItem = currentDocumentData.items[0];
 
     const nextQuote = {
       id: activeQuoteId || Date.now(),
       quoteNumber,
-      productId: p.id,
-      productName: p.name || "Produto",
+      productId: firstItem.productId,
+      productName: summarizeQuoteProducts(currentDocumentData.items),
       clientName,
       clientPhone,
-      quantity: q,
+      quantity: totalQuoteQuantity(currentDocumentData.items),
       date: saleDate || new Date().toISOString().split("T")[0],
       discountFixed: saleDiscountFixed,
       discountPercent: saleDiscountPercent,
-      unitPrice: uPrice,
-      netSale,
+      unitPrice: firstItem.unitPrice,
+      grossSale: currentDocumentData.grossSale,
+      totalCost: currentDocumentData.totalCost,
+      totalTithe: currentDocumentData.totalTithe,
+      netSale: currentDocumentData.netSale,
+      items: currentDocumentData.items,
       status: "pendente",
     };
 
@@ -328,16 +478,25 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
   }
 
   function loadQuote(quote: Quote) {
-    setSaleProductId(String(quote.productId));
     setClientName(quote.clientName || "");
     setClientPhone(quote.clientPhone || "");
-    setSaleQuantity(quote.quantity);
     setSaleDate(quote.date);
     setSaleDiscountFixed(quote.discountFixed || "");
     setSaleDiscountPercent(quote.discountPercent || "");
     setQuoteNumber(quote.quoteNumber);
     setActiveQuoteId(quote.id);
     setDocType("orcamento");
+
+    if (Array.isArray(quote.items) && quote.items.length > 0) {
+      setQuoteLineItems(quote.items);
+      setSaleProductId("");
+      setSaleQuantity(1);
+    } else {
+      setQuoteLineItems([]);
+      setSaleProductId(String(quote.productId));
+      setSaleQuantity(quote.quantity);
+    }
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -354,29 +513,40 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
   }
 
   function registerSale() {
-    if (!currentSaleData) {
-      alert("Selecione um produto e a quantidade.");
+    if (!currentDocumentData) {
+      alert("Selecione pelo menos um produto para concluir a venda.");
       return;
     }
-
-    const {
-      p,
-      q,
-      uCost,
-      uPrice,
-      discountTotal,
-      netSale,
-      totalC,
-      totalTithe,
-      totalProfit,
-    } = currentSaleData;
 
     const updatedInsumos = [...insumoItems];
     const stockWarnings: string[] = [];
     const premiumLowStockWarnings: string[] = [];
+    const missingProducts = currentDocumentData.items.filter(
+      (item) =>
+        !savedProductItems.find(
+          (product) => String(product.id) === String(item.productId),
+        ),
+    );
 
-    if (p.recipeItems && p.recipeItems.length > 0) {
-      p.recipeItems.forEach((item) => {
+    if (missingProducts.length > 0) {
+      alert(
+        `Os seguintes produtos não estão mais no catálogo e precisam ser recriados antes de concluir a venda: ${missingProducts
+          .map((item) => item.productName)
+          .join(", ")}.`,
+      );
+      return;
+    }
+
+    currentDocumentData.items.forEach((quoteItem) => {
+      const product = savedProductItems.find(
+        (candidate) => String(candidate.id) === String(quoteItem.productId),
+      );
+
+      if (!product || !product.recipeItems || product.recipeItems.length === 0) {
+        return;
+      }
+
+      product.recipeItems.forEach((item) => {
         const insumoIndex = updatedInsumos.findIndex(
           (insumo) => String(insumo.id) === String(item.insumoId),
         );
@@ -387,8 +557,10 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
 
         const insumo = updatedInsumos[insumoIndex];
         const unitSize = insumo.measurePerItem || 1;
-        const spentPerFinalUnit = item.usedMeasure / Number(p.yieldQty || 1);
-        const totalSpentOnSale = spentPerFinalUnit * q;
+        const spentPerFinalUnit =
+          item.usedMeasure / Number(product.yieldQty || 1);
+        const totalSpentOnSale =
+          spentPerFinalUnit * Number(quoteItem.quantity || 0);
         const deductionInUnits = totalSpentOnSale / unitSize;
 
         insumo.stock -= deductionInUnits;
@@ -406,7 +578,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
           premiumLowStockWarnings.push(insumo.name);
         }
       });
-    }
+    });
 
     if (stockWarnings.length > 0) {
       const shouldContinue = window.confirm(
@@ -420,22 +592,39 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
       }
     }
 
-    const nextSale = {
-      id: Date.now(),
-      productId: p.id,
-      productName: p.name || "Produto",
-      date: saleDate || new Date().toISOString().split("T")[0],
-      quantity: q,
-      unitCost: uCost,
-      unitPrice: uPrice,
-      discount: discountTotal,
-      totalCost: totalC,
-      totalSale: netSale,
-      totalTithe,
-      totalProfit,
-    };
+    let remainingDiscount = Number(currentDocumentData.discountTotal || 0);
+    const nextSales = currentDocumentData.items.map((quoteItem, index) => {
+      const isLastItem = index === currentDocumentData.items.length - 1;
+      const grossRatio =
+        currentDocumentData.grossSale > 0
+          ? quoteItem.grossSale / currentDocumentData.grossSale
+          : 1 / currentDocumentData.items.length;
+      const itemDiscount = isLastItem
+        ? remainingDiscount
+        : Number((currentDocumentData.discountTotal * grossRatio).toFixed(2));
+      const itemNetSale = Math.max(0, quoteItem.grossSale - itemDiscount);
+      const itemTotalTithe = Math.max(0, quoteItem.baseTithe - itemDiscount * 0.1);
+      const itemTotalProfit = itemNetSale - quoteItem.totalCost - itemTotalTithe;
 
-    setSales([nextSale, ...saleItems]);
+      remainingDiscount = Math.max(0, remainingDiscount - itemDiscount);
+
+      return {
+        id: Date.now() + index,
+        productId: quoteItem.productId,
+        productName: quoteItem.productName,
+        date: saleDate || new Date().toISOString().split("T")[0],
+        quantity: quoteItem.quantity,
+        unitCost: quoteItem.unitCost,
+        unitPrice: quoteItem.unitPrice,
+        discount: itemDiscount,
+        totalCost: quoteItem.totalCost,
+        totalSale: itemNetSale,
+        totalTithe: itemTotalTithe,
+        totalProfit: itemTotalProfit,
+      };
+    });
+
+    setSales([...nextSales, ...saleItems]);
     setInsumos(updatedInsumos);
 
     if (activeQuoteId) {
@@ -461,8 +650,8 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
       return;
     }
 
-    if (!currentSaleData) {
-      alert("Selecione um produto e a quantidade para gerar o documento.");
+    if (!currentDocumentData) {
+      alert("Selecione pelo menos um produto para gerar o documento.");
       return;
     }
 
@@ -485,13 +674,24 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
 
     window.setTimeout(() => {
       const docPrefix = docType === "orcamento" ? "Orcamento" : "Recibo";
+      const fileLabel =
+        currentDocumentData.items.length > 1
+          ? "Varios_Produtos"
+          : (currentDocumentData.items[0]?.productName || "Produto").replace(
+              /\s+/g,
+              "_",
+            );
 
       const options = {
         margin: 0,
-        filename: `${docPrefix}_${(currentSaleData?.p?.name || "Produto").replace(/\s+/g, "_")}_${saleDate}.pdf`,
+        filename: `${docPrefix}_${fileLabel}_${saleDate}.pdf`,
         image: { type: "jpeg" as const, quality: 1 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
+        pagebreak: {
+          mode: ["css", "legacy"] as const,
+          avoid: [".pdf-avoid-break"],
+        },
       };
 
       html2pdf()
@@ -615,6 +815,69 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               />
             </div>
 
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-bold text-amber-900">
+                    Monte um orçamento com vários produtos
+                  </p>
+                  <p className="text-xs text-amber-800">
+                    Adicione quantos itens quiser para o mesmo cliente. Se for só um
+                    produto, você também pode seguir direto.
+                  </p>
+                </div>
+                <button
+                  onClick={addCurrentProductToQuote}
+                  disabled={!currentSaleData}
+                  className="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-amber-700 disabled:bg-slate-300"
+                >
+                  Adicionar produto
+                </button>
+              </div>
+            </div>
+
+            {quoteLineItems.length > 0 && (
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase">
+                    Itens deste orçamento
+                  </h3>
+                  <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-full">
+                    {quoteLineItems.length}{" "}
+                    {quoteLineItems.length === 1 ? "produto" : "produtos"}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {quoteLineItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3"
+                    >
+                      <div>
+                        <p className="font-bold text-slate-800">{item.productName}</p>
+                        <p className="text-xs text-slate-500">
+                          {formatQuoteQuantity(item.quantity)} • R${" "}
+                          {Number(item.unitPrice || 0).toFixed(2)} cada
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-slate-800">
+                          R$ {Number(item.grossSale || 0).toFixed(2)}
+                        </span>
+                        <button
+                          onClick={() => removeQuoteLineItem(item.id)}
+                          className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-100"
+                          title="Remover item"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
                 Aplicar Desconto ao Cliente
@@ -643,36 +906,49 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               </div>
             </div>
 
-            {currentSaleData && (
+            {currentDocumentData && (
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <h3 className="text-xs font-bold text-slate-500 uppercase mb-3">
                   Resumo da Proposta
                 </h3>
+                {currentDocumentData.items.length > 1 && (
+                  <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                    <span className="font-bold text-slate-700">
+                      {currentDocumentData.items.length} itens neste orçamento:
+                    </span>{" "}
+                    {currentDocumentData.items
+                      .map(
+                        (item) =>
+                          `${item.productName} (${formatQuoteQuantity(item.quantity)})`,
+                      )
+                      .join(" • ")}
+                  </div>
+                )}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600">Subtotal:</span>
                     <span className="font-bold text-slate-800">
-                      R$ {Number(currentSaleData.grossSale || 0).toFixed(2)}
+                      R$ {Number(currentDocumentData.grossSale || 0).toFixed(2)}
                     </span>
                   </div>
-                  {currentSaleData.discountTotal > 0 && (
+                  {currentDocumentData.discountTotal > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Desconto Aplicado:</span>
                       <span className="font-bold text-red-500">
-                        - R$ {Number(currentSaleData.discountTotal || 0).toFixed(2)}
+                        - R$ {Number(currentDocumentData.discountTotal || 0).toFixed(2)}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600">Valor Final:</span>
                     <span className="font-bold text-green-600">
-                      R$ {Number(currentSaleData.netSale || 0).toFixed(2)}
+                      R$ {Number(currentDocumentData.netSale || 0).toFixed(2)}
                     </span>
                   </div>
                   <div className="border-t border-slate-200 pt-2 mt-2 flex justify-between text-lg">
                     <span className="font-bold text-slate-800">TOTAL A PAGAR:</span>
                     <span className="font-black text-amber-600">
-                      R$ {Number(currentSaleData.netSale || 0).toFixed(2)}
+                      R$ {Number(currentDocumentData.netSale || 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -683,9 +959,9 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               {isPremium ? (
                 <button
                   onClick={generateQuotePDF}
-                  disabled={!currentSaleData}
+                  disabled={!currentDocumentData}
                   className={`py-4 text-white font-bold rounded-xl shadow-md transition-all flex justify-center items-center gap-2 ${
-                    !currentSaleData
+                    !currentDocumentData
                       ? "bg-slate-300"
                       : docType === "orcamento"
                         ? "bg-amber-600 hover:bg-amber-700"
@@ -712,7 +988,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               <div className="flex gap-2">
                 <button
                   onClick={saveQuote}
-                  disabled={!currentSaleData}
+                  disabled={!currentDocumentData}
                   className="flex-1 py-3 bg-slate-700 hover:bg-slate-800 disabled:bg-slate-300 text-white font-bold rounded-xl shadow transition-all flex justify-center items-center gap-2 text-sm"
                 >
                   <Save size={18} />
@@ -720,7 +996,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                 </button>
                 <button
                   onClick={registerSale}
-                  disabled={!currentSaleData}
+                  disabled={!currentDocumentData}
                   className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold rounded-xl shadow transition-all flex justify-center items-center gap-2 text-sm"
                 >
                   <ShoppingBag size={18} />
@@ -799,7 +1075,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
         </Card>
       )}
 
-      {currentSaleData && (
+      {currentDocumentData && (
         <div
           id="pdf-container"
           style={{
@@ -813,12 +1089,13 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
             id="quote-receipt"
             style={{
               width: "794px",
-              height: "1123px",
+              minHeight: "1123px",
               backgroundColor: "#ffffff",
               fontFamily: "Arial, Helvetica, sans-serif",
               padding: "0",
               boxSizing: "border-box",
-              position: "relative",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             <div
@@ -829,8 +1106,17 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               }}
             />
 
-            <div style={{ padding: "40px 50px" }}>
+            <div
+              style={{
+                padding: "40px 50px",
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+              }}
+            >
+              <div>
               <table
+                className="pdf-avoid-break"
                 style={{
                   width: "100%",
                   borderBottom: "2px solid #f1f5f9",
@@ -1018,6 +1304,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               </table>
 
               <div
+                className="pdf-avoid-break"
                 style={{
                   backgroundColor: "#f8fafc",
                   border: "1px solid #e2e8f0",
@@ -1090,6 +1377,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               </div>
 
               <table
+                className="pdf-avoid-break"
                 style={{
                   width: "100%",
                   borderCollapse: "collapse",
@@ -1157,55 +1445,57 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td
-                      style={{
-                        padding: "20px 15px",
-                        borderBottom: "2px solid #f1f5f9",
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        color: "#1e293b",
-                      }}
-                    >
-                      {currentSaleData.p.name || "Produto Sem Nome"}
-                    </td>
-                    <td
-                      style={{
-                        padding: "20px 15px",
-                        borderBottom: "2px solid #f1f5f9",
-                        fontSize: "16px",
-                        textAlign: "center",
-                        color: "#475569",
-                      }}
-                    >
-                      {docType === "orcamento"
-                        ? formatQuoteQuantity(currentSaleData.q)
-                        : `${currentSaleData.q}x`}
-                    </td>
-                    <td
-                      style={{
-                        padding: "20px 15px",
-                        borderBottom: "2px solid #f1f5f9",
-                        fontSize: "16px",
-                        textAlign: "right",
-                        color: "#475569",
-                      }}
-                    >
-                      R$ {Number(currentSaleData.uPrice || 0).toFixed(2)}
-                    </td>
-                    <td
-                      style={{
-                        padding: "20px 15px",
-                        borderBottom: "2px solid #f1f5f9",
-                        fontSize: "16px",
-                        textAlign: "right",
-                        fontWeight: "bold",
-                        color: docType === "orcamento" ? "#d97706" : "#15803d",
-                      }}
-                    >
-                      R$ {Number(currentSaleData.grossSale || 0).toFixed(2)}
-                    </td>
-                  </tr>
+                  {currentDocumentData.items.map((item) => (
+                    <tr key={item.id}>
+                      <td
+                        style={{
+                          padding: "20px 15px",
+                          borderBottom: "2px solid #f1f5f9",
+                          fontSize: "16px",
+                          fontWeight: "bold",
+                          color: "#1e293b",
+                        }}
+                      >
+                        {item.productName || "Produto Sem Nome"}
+                      </td>
+                      <td
+                        style={{
+                          padding: "20px 15px",
+                          borderBottom: "2px solid #f1f5f9",
+                          fontSize: "16px",
+                          textAlign: "center",
+                          color: "#475569",
+                        }}
+                      >
+                        {docType === "orcamento"
+                          ? formatQuoteQuantity(item.quantity)
+                          : `${item.quantity}x`}
+                      </td>
+                      <td
+                        style={{
+                          padding: "20px 15px",
+                          borderBottom: "2px solid #f1f5f9",
+                          fontSize: "16px",
+                          textAlign: "right",
+                          color: "#475569",
+                        }}
+                      >
+                        R$ {Number(item.unitPrice || 0).toFixed(2)}
+                      </td>
+                      <td
+                        style={{
+                          padding: "20px 15px",
+                          borderBottom: "2px solid #f1f5f9",
+                          fontSize: "16px",
+                          textAlign: "right",
+                          fontWeight: "bold",
+                          color: docType === "orcamento" ? "#d97706" : "#15803d",
+                        }}
+                      >
+                        R$ {Number(item.grossSale || 0).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
 
@@ -1215,6 +1505,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                     <td style={{ width: "50%" }} />
                     <td style={{ width: "50%" }}>
                       <div
+                        className="pdf-avoid-break"
                         style={{
                           padding: "0 15px 15px 15px",
                           borderBottom: "1px solid #e2e8f0",
@@ -1232,10 +1523,10 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                         >
                           <span>Subtotal:</span>
                           <span style={{ fontWeight: "bold", color: "#1e293b" }}>
-                            R$ {Number(currentSaleData.grossSale || 0).toFixed(2)}
+                            R$ {Number(currentDocumentData.grossSale || 0).toFixed(2)}
                           </span>
                         </div>
-                        {Number(currentSaleData.discountTotal || 0) > 0 && (
+                        {Number(currentDocumentData.discountTotal || 0) > 0 && (
                           <div
                             style={{
                               display: "flex",
@@ -1248,12 +1539,13 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                             <span>Desconto Aplicado:</span>
                             <span>
                               - R${" "}
-                              {Number(currentSaleData.discountTotal || 0).toFixed(2)}
+                              {Number(currentDocumentData.discountTotal || 0).toFixed(2)}
                             </span>
                           </div>
                         )}
                       </div>
                       <div
+                        className="pdf-avoid-break"
                         style={{
                           backgroundColor:
                             docType === "orcamento" ? "#fffbeb" : "#f0fdf4",
@@ -1284,23 +1576,23 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                             color: docType === "orcamento" ? "#d97706" : "#15803d",
                           }}
                         >
-                          R$ {Number(currentSaleData.netSale || 0).toFixed(2)}
+                          R$ {Number(currentDocumentData.netSale || 0).toFixed(2)}
                         </span>
                       </div>
                     </td>
                   </tr>
                 </tbody>
               </table>
-            </div>
 
-            <div
-              style={{
-                position: "absolute",
-                bottom: "40px",
-                left: "50px",
-                right: "50px",
-              }}
-            >
+              </div>
+
+              <div
+                className="pdf-avoid-break"
+                style={{
+                  marginTop: "auto",
+                  paddingTop: "20px",
+                }}
+              >
               <table
                 style={{
                   width: "100%",
@@ -1509,6 +1801,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                   Orçamentos claros. Clientes seguros. Negócios fechados.
                 </p>
               </div>
+            </div>
             </div>
           </div>
         </div>
