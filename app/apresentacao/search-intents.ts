@@ -325,6 +325,441 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
       },
     ],
   },
+  {
+    slug: "calculadora-para-croche",
+    metadataTitle:
+      "Calculadora para croche | Como calcular preco de croche com mais seguranca",
+    metadataDescription:
+      "Use uma calculadora para croche para organizar materiais, tempo de producao e preco de venda sem depender de contas manuais.",
+    eyebrow: "Calculadora para croche",
+    heroTitle:
+      "Calculadora para croche para cobrar melhor sem passar valor no improviso.",
+    heroDescription:
+      "Quem trabalha com croche costuma lidar com fio, enchimento, aviamentos, tempo de producao e detalhes que mudam de uma peca para outra. A Calculadora do Produtor ajuda a transformar isso em um preco mais claro.",
+    lead:
+      "Se voce procura como calcular preco de croche, quanto cobrar por amigurumi ou como organizar materiais de croche, esta pagina foi feita para mostrar como o app simplifica essa rotina para quem produz por encomenda ou por pronta entrega.",
+    benefits: [
+      "Ajuda a cadastrar fios, enchimentos, olhos, etiquetas, embalagens e outros materiais usados no croche.",
+      "Permite montar a ficha tecnica da peca com consumo e tempo de producao de forma mais organizada.",
+      "Mostra um preco sugerido mais seguro para nao depender so da intuicao ou da comparacao com outros perfis.",
+    ],
+    steps: [
+      {
+        title: "1. Cadastre os materiais do croche",
+        description:
+          "Voce informa quanto pagou no fio, no enchimento e nos aviamentos para criar uma base mais real do custo da peca.",
+      },
+      {
+        title: "2. Monte a ficha da peca",
+        description:
+          "O app ajuda a reunir os materiais usados e o tempo medio de producao para que o calculo nao fique solto.",
+      },
+      {
+        title: "3. Veja o preco com mais seguranca",
+        description:
+          "Com a margem definida, voce chega a um valor mais coerente para apresentar ao cliente ou usar em pronta entrega.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Preco de amigurumi",
+        description:
+          "Ajuda a organizar pecas que usam mais tempo e variam muito de tamanho e detalhe.",
+      },
+      {
+        title: "Controle de materiais",
+        description:
+          "Mostra melhor o consumo de fios, enchimento e itens de acabamento.",
+      },
+      {
+        title: "Orcamento sob encomenda",
+        description:
+          "Facilita quando cada cliente pede cor, tamanho ou acabamento diferente.",
+      },
+      {
+        title: "Mais consistencia",
+        description:
+          "Evita recalcular tudo do zero sempre que voce repete um modelo parecido.",
+      },
+    ],
+    example: {
+      title: "Exemplo com uma peca de croche",
+      description:
+        "Imagine uma artesa que vende amigurumis e quer saber se o valor cobrado realmente compensa.",
+      bullets: [
+        "Ela cadastra o fio, o enchimento, os olhos, a etiqueta e a embalagem usados em cada peca.",
+        "Depois informa o tempo medio de producao para entender melhor o peso da mao de obra.",
+        "O sistema cruza essa base com a margem desejada e mostra um preco de venda mais seguro.",
+      ],
+      result:
+        "No fim, ela deixa de cobrar so comparando com outras paginas e passa a entender melhor o proprio valor.",
+    },
+    faqs: [
+      {
+        question: "A calculadora serve para amigurumi e outras pecas de croche?",
+        answer:
+          "Sim. Ela ajuda tanto em pecas simples quanto em produtos que exigem mais tempo e variam bastante de material e acabamento.",
+      },
+      {
+        question: "Posso usar a calculadora para croche no celular?",
+        answer:
+          "Sim. O app funciona no celular e no computador, o que ajuda muito quem produz e vende ao mesmo tempo.",
+      },
+      {
+        question: "Ela ajuda a calcular tempo de producao no croche?",
+        answer:
+          "Sim. O objetivo e justamente evitar que o preco fique baseado so no valor do fio e dos materiais diretos.",
+      },
+    ],
+  },
+  {
+    slug: "calculadora-para-lacos",
+    metadataTitle:
+      "Calculadora para lacos | Como calcular preco de lacos e kits personalizados",
+    metadataDescription:
+      "Aprenda a usar uma calculadora para lacos para organizar fita, acabamento, embalagem e tempo de producao em um preco mais claro.",
+    eyebrow: "Calculadora para lacos",
+    heroTitle:
+      "Calculadora para lacos para precificar pecas e kits com mais clareza.",
+    heroDescription:
+      "Quando o produto parece pequeno, muita gente acaba cobrando menos do que deveria. A Calculadora do Produtor ajuda quem trabalha com lacos a enxergar materiais, tempo e margem com mais seguranca.",
+    lead:
+      "Se voce vende lacos, kits infantis, presilhas ou acessorios personalizados, esta pagina mostra como o app ajuda a sair do preco no olho e montar uma base mais profissional para vender.",
+    benefits: [
+      "Ajuda a cadastrar fitas, mantas, presilhas, colas, etiquetas, embalagens e outros itens do dia a dia.",
+      "Facilita a precificacao de pecas unitarias e kits com quantidades diferentes.",
+      "Permite gerar orcamentos mais claros para pedidos personalizados e lembrancinhas.",
+    ],
+    steps: [
+      {
+        title: "1. Cadastre os materiais de cada laco",
+        description:
+          "Voce informa o valor das fitas, presilhas, colas e acabamentos para criar uma base organizada do custo.",
+      },
+      {
+        title: "2. Monte o produto ou o kit",
+        description:
+          "A calculadora ajuda a reunir os itens usados e a visualizar o custo por unidade ou por conjunto.",
+      },
+      {
+        title: "3. Defina a margem com mais seguranca",
+        description:
+          "Com a base pronta, fica mais facil chegar a um preco coerente e apresentar esse valor ao cliente.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Lacos unitarios",
+        description:
+          "Ideal para entender melhor o custo de cada peca antes de definir o preco final.",
+      },
+      {
+        title: "Kits e conjuntos",
+        description:
+          "Ajuda quando voce vende pares, trios, caixas ou kits personalizados.",
+      },
+      {
+        title: "Pedidos por tema",
+        description:
+          "Facilita a adaptacao quando cada pedido usa cor, acabamento ou composicao diferente.",
+      },
+      {
+        title: "Organizacao de estoque",
+        description:
+          "Melhora o controle de fitas, embalagens e outros materiais que acabam rapido.",
+      },
+    ],
+    example: {
+      title: "Exemplo com um kit de lacos",
+      description:
+        "Imagine uma produtora que faz kits infantis e sempre tem dificuldade para saber quanto cobrar.",
+      bullets: [
+        "Ela cadastra fitas, mantas, presilhas, cola, embalagem e todos os outros detalhes usados.",
+        "Depois monta o kit no app e entende melhor o custo total e o custo por item.",
+        "Com a margem aplicada, o sistema mostra um preco mais claro para vender ou fazer orcamento.",
+      ],
+      result:
+        "Assim, o valor deixa de ser so uma tentativa e passa a ter mais base para sustentar a venda.",
+    },
+    faqs: [
+      {
+        question: "Serve para quem vende laco unitario e tambem kits?",
+        answer:
+          "Sim. A calculadora ajuda tanto em pecas individuais quanto em conjuntos com mais de um item.",
+      },
+      {
+        question: "Posso usar para laco personalizado?",
+        answer:
+          "Pode sim. Esse tipo de pedido varia bastante, e justamente por isso ter uma base organizada faz diferenca.",
+      },
+      {
+        question: "A calculadora ajuda a montar orcamento para cliente?",
+        answer:
+          "Sim. Alem de precificar, ela tambem ajuda a transformar esse valor em uma proposta mais clara.",
+      },
+    ],
+  },
+  {
+    slug: "calculadora-para-biscuit",
+    metadataTitle:
+      "Calculadora para biscuit | Como calcular preco de pecas de biscuit",
+    metadataDescription:
+      "Use uma calculadora para biscuit para organizar massa, tinta, acabamento, tempo e preco de venda com mais controle.",
+    eyebrow: "Calculadora para biscuit",
+    heroTitle:
+      "Calculadora para biscuit para organizar pecas personalizadas e cobrar melhor.",
+    heroDescription:
+      "No biscuit, pequenos detalhes fazem diferenca no custo. Massa, tinta, base, acabamento, embalagem e tempo de producao precisam entrar na conta para o preco nao ficar abaixo do ideal.",
+    lead:
+      "Se voce procura como calcular preco de biscuit, como precificar topo de bolo ou lembrancinhas personalizadas, esta pagina ajuda a entender como o app pode simplificar esse processo.",
+    benefits: [
+      "Ajuda a cadastrar massa, tinta, cola, base, verniz, embalagem e outros materiais usados nas pecas.",
+      "Permite montar fichas tecnicas para topos de bolo, lembrancinhas e enfeites personalizados.",
+      "Mostra um preco mais claro para encomendas que mudam de tamanho, tema e nivel de detalhe.",
+    ],
+    steps: [
+      {
+        title: "1. Organize o custo dos materiais",
+        description:
+          "Voce informa o valor dos insumos usados no biscuit para entender melhor o que cada peca consome.",
+      },
+      {
+        title: "2. Monte a base da encomenda",
+        description:
+          "Com os materiais e o tempo reunidos, a ficha tecnica deixa de depender so da memoria.",
+      },
+      {
+        title: "3. Veja o preco sugerido",
+        description:
+          "O sistema mostra um valor mais coerente para encomendas personalizadas, ajudando voce a responder com mais seguranca.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Topo de bolo",
+        description:
+          "Ajuda em pecas mais detalhadas, que costumam exigir mais tempo e acabamento.",
+      },
+      {
+        title: "Lembrancinhas",
+        description:
+          "Facilita o calculo de encomendas com varias unidades do mesmo modelo.",
+      },
+      {
+        title: "Pecas personalizadas",
+        description:
+          "Melhora a base para adaptar o valor quando o tema muda ou o pedido cresce.",
+      },
+      {
+        title: "Mais controle",
+        description:
+          "Permite repetir o processo com mais consistencia sempre que um produto parecido voltar.",
+      },
+    ],
+    example: {
+      title: "Exemplo com uma encomenda de biscuit",
+      description:
+        "Imagine uma artesa que faz topo de bolo e sente dificuldade para explicar o valor ao cliente.",
+      bullets: [
+        "Ela cadastra massa, tintas, bases, verniz, cola e outros itens usados na peca.",
+        "Depois registra o tempo de producao e o nivel de detalhe da encomenda.",
+        "O app organiza esses custos e ajuda a chegar a um preco mais claro para apresentar.",
+      ],
+      result:
+        "Com isso, ela ganha mais seguranca para cobrar e mais clareza para defender o valor do proprio trabalho.",
+    },
+    faqs: [
+      {
+        question: "A calculadora serve para topo de bolo e lembrancinhas de biscuit?",
+        answer:
+          "Sim. Ela ajuda tanto em pecas unitarias mais detalhadas quanto em lotes maiores de lembrancinhas.",
+      },
+      {
+        question: "Como o app ajuda em encomendas personalizadas?",
+        answer:
+          "Ele organiza a base de material, tempo e margem para que voce adapte o preco sem recomecar a conta do zero.",
+      },
+      {
+        question: "Posso usar pelo celular durante a producao?",
+        answer:
+          "Sim. O app funciona no celular e facilita consultar materiais, custos e produtos mesmo fora do computador.",
+      },
+    ],
+  },
+  {
+    slug: "calculadora-para-papelaria-personalizada",
+    metadataTitle:
+      "Calculadora para papelaria personalizada | Como precificar com mais clareza",
+    metadataDescription:
+      "Use uma calculadora para papelaria personalizada para organizar papel, impressao, acabamento e preco de venda em um so lugar.",
+    eyebrow: "Papelaria personalizada",
+    heroTitle:
+      "Calculadora para papelaria personalizada para precificar sem se perder nos detalhes.",
+    heroDescription:
+      "Quem trabalha com papelaria personalizada lida com muitos pequenos custos: papel, impressao, lamina, cola, fita, embalagem e acabamento. A Calculadora do Produtor ajuda a organizar tudo isso em uma base mais clara.",
+    lead:
+      "Se voce vende convites, caixinhas, topos, adesivos, lembrancinhas impressas ou kits personalizados, esta pagina mostra como o app ajuda a calcular melhor o preco e apresentar orcamentos com mais seguranca.",
+    benefits: [
+      "Ajuda a cadastrar papel, impressao, corte, fita, cola, lamina e outros materiais recorrentes.",
+      "Permite montar fichas tecnicas para produtos unitarios e kits de festa.",
+      "Melhora a precificacao de pedidos que mudam por tema, quantidade e acabamento.",
+    ],
+    steps: [
+      {
+        title: "1. Cadastre os insumos mais usados",
+        description:
+          "Voce informa os custos de papeis, impressao, materiais de acabamento e embalagens para ter uma base mais fiel.",
+      },
+      {
+        title: "2. Monte o produto ou kit",
+        description:
+          "O app ajuda a reunir os componentes de cada item, facilitando repetir a conta em pedidos parecidos.",
+      },
+      {
+        title: "3. Gere o preco e o orcamento",
+        description:
+          "Com a margem definida, voce chega a um valor mais organizado para passar ao cliente com mais confianca.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Caixinhas e lembrancinhas",
+        description:
+          "Ideal para quem monta itens unitarios e kits completos para festas.",
+      },
+      {
+        title: "Convites e papelaria fina",
+        description:
+          "Ajuda quando o acabamento muda e cada detalhe impacta no custo final.",
+      },
+      {
+        title: "Pedidos por tema",
+        description:
+          "Facilita adaptar produtos que usam a mesma base, mas mudam cor, arte e quantidade.",
+      },
+      {
+        title: "Mais previsibilidade",
+        description:
+          "Evita esquecer custos pequenos que, no acumulado, pesam bastante na margem.",
+      },
+    ],
+    example: {
+      title: "Exemplo com papelaria personalizada",
+      description:
+        "Imagine uma produtora que monta kits de festa e quer precificar sem se perder em pequenos gastos.",
+      bullets: [
+        "Ela cadastra papel, impressao, fita, cola, tags, embalagem e outros itens usados no kit.",
+        "Depois monta os produtos no app e entende o custo por item e o total do pedido.",
+        "Com a margem aplicada, o sistema mostra um preco mais claro para orcar e vender.",
+      ],
+      result:
+        "Assim, ela passa a cobrar com mais base e evita deixar detalhes importantes fora do valor final.",
+    },
+    faqs: [
+      {
+        question: "A calculadora serve para kits de festa e produtos unitarios?",
+        answer:
+          "Sim. Ela ajuda tanto em itens individuais quanto em kits maiores de papelaria personalizada.",
+      },
+      {
+        question: "Posso usar para convites e produtos com acabamento especial?",
+        answer:
+          "Pode sim. Justamente porque esse tipo de produto tem muitos detalhes, organizar a base ajuda bastante.",
+      },
+      {
+        question: "O app ajuda a montar orcamento para cliente?",
+        answer:
+          "Sim. Alem de precificar, ele tambem ajuda a transformar o valor em uma apresentacao mais clara.",
+      },
+    ],
+  },
+  {
+    slug: "calculadora-para-confeitaria-artesanal",
+    metadataTitle:
+      "Calculadora para confeitaria artesanal | Como calcular preco de doces e encomendas",
+    metadataDescription:
+      "Use uma calculadora para confeitaria artesanal para organizar ingredientes, embalagens, tempo e preco de venda com mais controle.",
+    eyebrow: "Confeitaria artesanal",
+    heroTitle:
+      "Calculadora para confeitaria artesanal para organizar ingredientes, custos e preco de venda.",
+    heroDescription:
+      "Na confeitaria artesanal, muitos custos passam despercebidos: ingredientes, recheios, coberturas, embalagens, energia, perdas e tempo. A Calculadora do Produtor ajuda a enxergar melhor essa conta.",
+    lead:
+      "Se voce procura como calcular preco de doces artesanais, bolo no pote, brigadeiros ou encomendas de confeitaria, esta pagina mostra como o app ajuda a montar uma base mais segura para vender.",
+    benefits: [
+      "Ajuda a cadastrar ingredientes solidos, liquidos, embalagens e outros insumos da producao.",
+      "Permite organizar receita, rendimento e custo por unidade de forma mais clara.",
+      "Melhora a precificacao de encomendas, kits, caixas e vendas unitarias.",
+    ],
+    steps: [
+      {
+        title: "1. Cadastre ingredientes e embalagens",
+        description:
+          "Voce informa o valor pago, a unidade comprada e o consumo de cada item para enxergar melhor o custo da receita.",
+      },
+      {
+        title: "2. Monte a base do produto",
+        description:
+          "Com rendimento, ingredientes e tempo organizados, fica mais facil entender o custo por unidade.",
+      },
+      {
+        title: "3. Veja o preco sugerido",
+        description:
+          "A calculadora ajuda a aplicar margem e chegar a um valor mais seguro para encomendas e pronta entrega.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Bolo no pote e doces unitarios",
+        description:
+          "Ajuda a entender custo, rendimento e preco por unidade de forma mais organizada.",
+      },
+      {
+        title: "Kits e caixas",
+        description:
+          "Facilita pedidos com varias unidades e embalagens diferentes.",
+      },
+      {
+        title: "Encomendas artesanais",
+        description:
+          "Melhora a base para responder pedidos personalizados com mais seguranca.",
+      },
+      {
+        title: "Controle de ingredientes",
+        description:
+          "Permite usar solidos, liquidos e outros insumos com mais clareza no calculo.",
+      },
+    ],
+    example: {
+      title: "Exemplo com confeitaria artesanal",
+      description:
+        "Imagine uma produtora que vende bolo no pote e quer entender se o valor atual realmente da lucro.",
+      bullets: [
+        "Ela cadastra leite condensado, creme de leite, chocolate, embalagens e outros ingredientes usados.",
+        "Depois organiza o rendimento da receita e o tempo de producao.",
+        "O app mostra o custo por unidade e ajuda a aplicar a margem desejada antes de vender.",
+      ],
+      result:
+        "Com isso, ela deixa de cobrar so pela referencia do mercado e passa a entender melhor o proprio custo.",
+    },
+    faqs: [
+      {
+        question: "A calculadora serve para bolo no pote, brigadeiro e outras receitas artesanais?",
+        answer:
+          "Sim. Ela ajuda a organizar ingredientes, rendimento, embalagens e preco de venda para varios tipos de produtos da confeitaria artesanal.",
+      },
+      {
+        question: "Posso cadastrar liquidos e ingredientes por unidade?",
+        answer:
+          "Sim. O app ja trabalha com diferentes tipos de materiais, o que ajuda bastante em producoes culinarias.",
+      },
+      {
+        question: "Ela ajuda em encomendas personalizadas?",
+        answer:
+          "Sim. Principalmente quando o pedido muda por tamanho, recheio, quantidade ou embalagem, ter uma base organizada facilita muito.",
+      },
+    ],
+  },
 ];
 
 export function getSearchIntentPage(
