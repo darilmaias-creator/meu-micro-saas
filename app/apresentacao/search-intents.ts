@@ -3,6 +3,23 @@ export type SearchIntentFaq = {
   answer: string;
 };
 
+export type SearchIntentStep = {
+  title: string;
+  description: string;
+};
+
+export type SearchIntentUseCase = {
+  title: string;
+  description: string;
+};
+
+export type SearchIntentExample = {
+  title: string;
+  description: string;
+  bullets: string[];
+  result: string;
+};
+
 export type SearchIntentPageContent = {
   slug: string;
   metadataTitle: string;
@@ -12,6 +29,9 @@ export type SearchIntentPageContent = {
   heroDescription: string;
   lead: string;
   benefits: string[];
+  steps?: SearchIntentStep[];
+  useCases?: SearchIntentUseCase[];
+  example?: SearchIntentExample;
   faqs: SearchIntentFaq[];
 };
 
@@ -23,16 +43,68 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     metadataDescription:
       "Calculadora para artesao com estoque, ficha tecnica, precificacao e orcamentos para quem produz personalizados, MDF, costura, papelaria e artesanato.",
     eyebrow: "Calculadora para artesao",
-    heroTitle: "Uma calculadora para artesao que ajuda a precificar com mais seguranca.",
+    heroTitle:
+      "Calculadora para artesao para organizar custos, estoque e orcamentos sem complicacao.",
     heroDescription:
-      "A Calculadora do Produtor foi criada para quem precisa organizar materiais, calcular preco de venda, montar ficha tecnica e criar orcamentos sem depender de planilhas confusas.",
+      "A Calculadora do Produtor ajuda quem trabalha com artesanato a sair do preco no olho. Em vez de anotar tudo em varios lugares, voce concentra materiais, ficha tecnica, preco de venda e orcamentos em um so sistema.",
     lead:
-      "Se voce pesquisa por calculadora para artesao, calculadora de artesanato ou sistema para precificar artesanato, esta pagina existe para mostrar exatamente como o app ajuda no dia a dia de quem produz.",
+      "Se voce chegou ate aqui procurando uma calculadora para artesao, provavelmente quer parar de adivinhar valores e ganhar mais seguranca para vender. Esta pagina foi montada para mostrar, de forma simples, como o app ajuda no dia a dia de quem produz e quer cobrar melhor.",
     benefits: [
-      "Cadastre materiais, custo pago, medidas, estoque atual e estoque minimo.",
-      "Monte fichas tecnicas para produtos personalizados, caixas, MDF, costura, laser e papelaria criativa.",
-      "Calcule preco de venda com margem de lucro e gere orcamentos mais claros para o cliente.",
+      "Cadastre materiais, custo pago, medidas, estoque atual e estoque minimo sem depender de varias planilhas.",
+      "Monte fichas tecnicas para produtos personalizados, caixas, MDF, costura, papelaria, laco, biscuit e outros nichos artesanais.",
+      "Calcule preco de venda com margem de lucro, acompanhe custos da operacao e gere orcamentos mais claros para o cliente.",
     ],
+    steps: [
+      {
+        title: "1. Cadastre seus materiais do jeito que voce compra",
+        description:
+          "Voce informa quanto pagou, quanto veio no pacote e qual unidade usa no dia a dia. O sistema guarda isso para voce nao recalcular tudo toda vez.",
+      },
+      {
+        title: "2. Monte a ficha tecnica do produto",
+        description:
+          "Escolha os materiais usados, informe as quantidades e adicione tempo de producao quando fizer sentido. Assim voce enxerga o custo real da peca.",
+      },
+      {
+        title: "3. Veja o preco sugerido e transforme em orcamento",
+        description:
+          "Com os custos organizados, voce consegue definir a margem com mais seguranca e apresentar o valor ao cliente com mais profissionalismo.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Precificacao mais segura",
+        description:
+          "Ajuda a entender melhor o valor da sua peca antes de falar o preco para o cliente.",
+      },
+      {
+        title: "Controle de materiais",
+        description:
+          "Mostra o que voce tem em estoque, o que esta acabando e o valor parado em insumos.",
+      },
+      {
+        title: "Orcamentos mais claros",
+        description:
+          "Permite organizar itens, quantidade, desconto e total final em uma apresentacao melhor.",
+      },
+      {
+        title: "Mais consistencia na rotina",
+        description:
+          "Quando um produto se repete, voce reutiliza a base ja montada e ganha tempo.",
+      },
+    ],
+    example: {
+      title: "Exemplo simples de uso no dia a dia",
+      description:
+        "Imagine uma artesa que faz caixas personalizadas e sempre fica em duvida na hora de cobrar.",
+      bullets: [
+        "Ela cadastra papel, laco, cola, embalagem e outros materiais usados na peca.",
+        "Depois monta a ficha tecnica com a quantidade de cada item e o tempo de producao.",
+        "O app mostra o custo, ajuda a aplicar a margem desejada e gera o valor final com mais clareza.",
+      ],
+      result:
+        "No fim, ela deixa de passar valor no improviso e comeca a vender com mais confianca.",
+    },
     faqs: [
       {
         question: "A Calculadora do Produtor serve para qualquer tipo de artesanato?",
@@ -48,6 +120,11 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
         question: "A calculadora ajuda a nao vender no prejuizo?",
         answer:
           "Essa e a ideia principal. O sistema ajuda a enxergar custo, margem e preco sugerido para voce tomar decisoes com mais seguranca.",
+      },
+      {
+        question: "Preciso entender muito de conta para usar a calculadora?",
+        answer:
+          "Nao. A proposta e justamente simplificar. O app organiza as informacoes de um jeito mais visual para que voce entenda o custo e o preco final sem depender de calculos complicados.",
       },
     ],
   },
