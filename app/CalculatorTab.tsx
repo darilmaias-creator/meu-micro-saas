@@ -77,6 +77,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
             usedMeasure = measure * q;
             cost = measureForCost * ins.costPerUnit * q; 
             if (type === 'weight') display = `${q}x de ${measure}g`;
+            else if (type === 'volume') display = `${q}x de ${measure}ml`;
             else if (type === 'length') display = `${q}x de ${measure}${config.unit}`;
             else display = `${q}x de ${measure}un`;
         }
@@ -246,6 +247,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                             } else {
                                 let labelGasto = 'Quantidade Gasta'; let suffixGasto = '';
                                 if (selIns.type === 'weight') { labelGasto = 'Peso Gasto (em gramas)'; suffixGasto = 'g'; }
+                                if (selIns.type === 'volume') { labelGasto = 'Volume Gasto (em ml)'; suffixGasto = 'ml'; }
                                 if (selIns.type === 'length') { labelGasto = 'Comprimento Gasto'; suffixGasto = config.unit; }
                                 return (
                                     <div className="grid grid-cols-2 gap-3 animate-fadeIn mb-3"><InputGroup label="Qtd. Vezes" value={tempQty} onChange={setTempQty} placeholder="1" className="mb-0" /><InputGroup label={labelGasto} value={tempMeasure} onChange={setTempMeasure} suffix={suffixGasto} placeholder="0" className="mb-0" /></div>
