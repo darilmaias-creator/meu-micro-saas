@@ -148,6 +148,10 @@ const footerSections = [
     title: "Segurança",
     links: [
       {
+        href: "/politicas/privacidade",
+        label: "Politica de privacidade",
+      },
+      {
         href: "/politicas/cancelamento-e-reembolso",
         label: "Política Premium",
       },
