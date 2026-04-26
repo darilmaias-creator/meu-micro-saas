@@ -760,6 +760,441 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
       },
     ],
   },
+  {
+    slug: "como-fazer-orcamento-para-cliente-no-artesanato",
+    metadataTitle:
+      "Como fazer orçamento para cliente no artesanato | Guia simples e profissional",
+    metadataDescription:
+      "Aprenda como fazer orçamento para cliente no artesanato com itens, quantidade, prazo, pagamento e valor final de forma mais profissional.",
+    eyebrow: "Orçamento para cliente",
+    heroTitle:
+      "Como fazer orçamento para cliente no artesanato sem parecer improvisado.",
+    heroDescription:
+      "Muita gente calcula o preço, mas trava na hora de apresentar o valor ao cliente. Um orçamento claro transmite mais confiança e ajuda o comprador a entender melhor o que está sendo cobrado.",
+    lead:
+      "Se você procura como fazer orçamento para cliente no artesanato, provavelmente quer apresentar o valor de um jeito mais profissional, sem mandar só um número solto no WhatsApp. Esta página mostra uma base simples para organizar isso melhor.",
+    benefits: [
+      "Ajuda a entender quais informações deixam o orçamento mais claro para o cliente.",
+      "Mostra como organizar itens, quantidade, desconto, prazo e valor final.",
+      "Conecta o cálculo do preço com uma apresentação mais segura para vender.",
+    ],
+    steps: [
+      {
+        title: "1. Organize o que está sendo vendido",
+        description:
+          "Antes de passar o valor, deixe claro quais produtos ou itens fazem parte do pedido e em que quantidade.",
+      },
+      {
+        title: "2. Defina prazo e condições",
+        description:
+          "Prazo, forma de entrega, pagamento e validade do orçamento ajudam o cliente a entender melhor a proposta.",
+      },
+      {
+        title: "3. Apresente o total com clareza",
+        description:
+          "Quando o valor final aparece bem explicado, a conversa fica mais profissional e com menos espaço para dúvida.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Pedidos personalizados",
+        description:
+          "Ideal para quem trabalha com encomendas que mudam de tema, tamanho ou quantidade.",
+      },
+      {
+        title: "Kits e conjuntos",
+        description:
+          "Ajuda a apresentar pedidos com mais de um item sem deixar a proposta confusa.",
+      },
+      {
+        title: "Mais profissionalismo",
+        description:
+          "Faz o cliente sentir que existe um processo mais organizado por trás do valor.",
+      },
+      {
+        title: "Menos retrabalho",
+        description:
+          "Evita precisar explicar a mesma proposta várias vezes porque faltou informação na primeira mensagem.",
+      },
+    ],
+    example: {
+      title: "Exemplo de orçamento no dia a dia",
+      description:
+        "Imagine uma artesã que faz lembrancinhas e precisa responder um pedido de 35 unidades.",
+      bullets: [
+        "Ela organiza o item, a quantidade, o valor unitário e o total final do pedido.",
+        "Depois informa prazo, forma de pagamento e observações importantes da produção.",
+        "Com isso, o cliente entende melhor a proposta e a artesã transmite mais segurança ao cobrar.",
+      ],
+      result:
+        "Em vez de mandar só um preço no improviso, ela apresenta uma proposta mais clara e profissional.",
+    },
+    faqs: [
+      {
+        question: "O que não pode faltar em um orçamento para artesanato?",
+        answer:
+          "O ideal é mostrar o produto, a quantidade, o valor final, o prazo, a forma de pagamento e observações importantes para o cliente entender a proposta.",
+      },
+      {
+        question: "Preciso mandar orçamento em PDF?",
+        answer:
+          "Não é obrigatório, mas ajuda bastante a transmitir organização e facilitar a leitura do cliente.",
+      },
+      {
+        question: "Um orçamento mais organizado ajuda a vender melhor?",
+        answer:
+          "Ajuda porque passa mais confiança e reduz dúvidas na hora da decisão.",
+      },
+    ],
+  },
+  {
+    slug: "como-separar-custos-fixos-e-variaveis",
+    metadataTitle:
+      "Como separar custos fixos e variáveis | Entenda o que entra no seu preço",
+    metadataDescription:
+      "Veja como separar custos fixos e variáveis no artesanato para entender melhor o preço de venda e evitar prejuízo.",
+    eyebrow: "Custos fixos e variáveis",
+    heroTitle:
+      "Como separar custos fixos e variáveis para não deixar gastos escondidos fora do preço.",
+    heroDescription:
+      "Muitos produtores somam só o material e esquecem despesas do negócio. Entender a diferença entre custo fixo e variável ajuda a enxergar melhor o que está pesando no preço.",
+    lead:
+      "Se você procura como separar custos fixos e variáveis, esta página foi feita para simplificar esse assunto. A ideia aqui não é complicar a rotina, e sim ajudar você a identificar o que muda de produto para produto e o que existe todo mês no negócio.",
+    benefits: [
+      "Ajuda a entender quais gastos fazem parte da operação do negócio e não podem ser ignorados.",
+      "Mostra como separar o que é custo do produto e o que é custo da estrutura do trabalho.",
+      "Cria uma base melhor para definir preço com mais consciência.",
+    ],
+    steps: [
+      {
+        title: "1. Separe o que existe todo mês",
+        description:
+          "Custos como internet, energia, aluguel e outras despesas recorrentes entram como parte da operação do negócio.",
+      },
+      {
+        title: "2. Separe o que muda conforme a produção",
+        description:
+          "Material, embalagem, frete e outros gastos que variam com o pedido ajudam a formar o custo de cada produto.",
+      },
+      {
+        title: "3. Use essa leitura no cálculo",
+        description:
+          "Quando você enxerga essas duas partes com clareza, fica mais fácil montar um preço mais completo.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Preço mais realista",
+        description:
+          "Ajuda a entender por que o valor do material sozinho não conta toda a história.",
+      },
+      {
+        title: "Mais consciência do negócio",
+        description:
+          "Mostra melhor quanto custa manter a produção funcionando todos os meses.",
+      },
+      {
+        title: "Menos risco de prejuízo",
+        description:
+          "Reduz a chance de esquecer gastos importantes na hora de cobrar.",
+      },
+      {
+        title: "Base melhor para crescer",
+        description:
+          "Organizar custos deixa a operação mais madura e pronta para escalar com segurança.",
+      },
+    ],
+    example: {
+      title: "Exemplo fácil para visualizar",
+      description:
+        "Imagine um pequeno ateliê que gasta com materiais e também com internet, energia e embalagem.",
+      bullets: [
+        "O material usado em uma peça entra como custo variável, porque muda conforme o pedido.",
+        "A internet e a energia continuam existindo mesmo quando a produção está menor, então ajudam a compor os custos fixos.",
+        "Quando os dois lados aparecem na conta, o produtor entende melhor o preço necessário para manter o negócio saudável.",
+      ],
+      result:
+        "O valor final deixa de considerar só o produto e passa a refletir melhor o custo do negócio funcionando.",
+    },
+    faqs: [
+      {
+        question: "Material entra como custo fixo ou variável?",
+        answer:
+          "Na maioria dos casos, material entra como custo variável, porque muda de acordo com o produto e a quantidade produzida.",
+      },
+      {
+        question: "Internet e energia entram no preço?",
+        answer:
+          "Sim. Elas fazem parte da operação do negócio e precisam ser consideradas para o preço não ficar abaixo do ideal.",
+      },
+      {
+        question: "Preciso entender contabilidade para separar esses custos?",
+        answer:
+          "Não. O importante é começar com uma lógica simples: o que varia com o pedido e o que continua existindo todo mês.",
+      },
+    ],
+  },
+  {
+    slug: "como-calcular-mao-de-obra-no-artesanato",
+    metadataTitle:
+      "Como calcular mão de obra no artesanato | Entenda o valor do seu tempo",
+    metadataDescription:
+      "Aprenda como calcular mão de obra no artesanato para incluir o valor do seu tempo no preço de venda com mais segurança.",
+    eyebrow: "Mão de obra no artesanato",
+    heroTitle:
+      "Como calcular mão de obra no artesanato e parar de trabalhar sem considerar o próprio tempo.",
+    heroDescription:
+      "Uma das maiores falhas na precificação é esquecer o valor do tempo investido. A mão de obra precisa entrar no cálculo para que o preço não fique baseado só no custo do material.",
+    lead:
+      "Se você pesquisa como calcular mão de obra no artesanato, provavelmente já percebeu que só somar material não está resolvendo. Esta página mostra uma forma simples de enxergar melhor o peso do seu trabalho no valor final da peça.",
+    benefits: [
+      "Ajuda a entender que tempo também é custo e precisa aparecer no preço.",
+      "Mostra por que peças parecidas podem ter valores diferentes dependendo da produção.",
+      "Cria uma base mais justa para cobrar por encomendas e produtos detalhados.",
+    ],
+    steps: [
+      {
+        title: "1. Observe quanto tempo a peça leva",
+        description:
+          "O primeiro passo é perceber quanto tempo médio você investe para produzir aquele item ou encomenda.",
+      },
+      {
+        title: "2. Entenda que esse tempo tem valor",
+        description:
+          "Seu trabalho não é um detalhe. Ele é parte da construção do produto e precisa entrar no cálculo.",
+      },
+      {
+        title: "3. Junte isso à base do produto",
+        description:
+          "Quando a mão de obra entra junto com materiais e custos do negócio, o preço final fica mais coerente.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Peças demoradas",
+        description:
+          "Ajuda muito em produtos com acabamento mais detalhado ou personalizados.",
+      },
+      {
+        title: "Encomendas sob medida",
+        description:
+          "Permite diferenciar pedidos simples de pedidos que exigem mais horas de trabalho.",
+      },
+      {
+        title: "Mais segurança para cobrar",
+        description:
+          "Quando você enxerga o tempo como parte da conta, fica mais fácil sustentar o valor.",
+      },
+      {
+        title: "Menos desvalorização",
+        description:
+          "Reduz a chance de trabalhar muito e receber como se tivesse vendido algo rápido e simples.",
+      },
+    ],
+    example: {
+      title: "Exemplo com uma peça mais detalhada",
+      description:
+        "Imagine uma artesã que faz uma peça simples em pouco tempo e outra bem mais detalhada no mesmo material.",
+      bullets: [
+        "Se ela olhar só para o material, as duas podem parecer ter o mesmo custo.",
+        "Quando o tempo entra na conta, fica claro que a peça mais trabalhosa precisa ter outro valor.",
+        "O app ajuda a colocar esse raciocínio dentro de uma base mais organizada de cálculo.",
+      ],
+      result:
+        "Assim, o preço final passa a refletir não só o que foi usado, mas também o trabalho investido.",
+    },
+    faqs: [
+      {
+        question: "Preciso incluir mão de obra mesmo quando vendo pouco?",
+        answer:
+          "Sim. Mesmo em pequena escala, o seu tempo continua tendo valor e precisa ser considerado para o preço fazer sentido.",
+      },
+      {
+        question: "Mão de obra é a mesma coisa que lucro?",
+        answer:
+          "Não. A mão de obra representa o valor do seu trabalho na produção. O lucro é outra camada do preço, ligada ao retorno do negócio.",
+      },
+      {
+        question: "A Calculadora do Produtor ajuda a visualizar isso?",
+        answer:
+          "Sim. O app foi feito justamente para reunir materiais, tempo e outros custos em um cálculo mais claro.",
+      },
+    ],
+  },
+  {
+    slug: "como-nao-vender-no-prejuizo",
+    metadataTitle:
+      "Como não vender no prejuízo | Dicas para precificar com mais segurança",
+    metadataDescription:
+      "Veja como não vender no prejuízo no artesanato entendendo melhor materiais, tempo, custos do negócio e margem de lucro.",
+    eyebrow: "Não vender no prejuízo",
+    heroTitle:
+      "Como não vender no prejuízo quando o preço ainda parece baixo demais.",
+    heroDescription:
+      "Muita gente vende, recebe e mesmo assim sente que o dinheiro não sobra. Isso costuma acontecer quando parte importante do custo fica escondida e o preço não acompanha a realidade da produção.",
+    lead:
+      "Se você está procurando como não vender no prejuízo, esta página foi feita para ajudar a identificar os pontos mais comuns que deixam o preço abaixo do ideal. O objetivo não é complicar, e sim trazer clareza.",
+    benefits: [
+      "Ajuda a perceber por que vender bastante não significa necessariamente lucrar.",
+      "Mostra quais partes do custo mais costumam ficar fora da conta.",
+      "Conecta precificação, margem e organização do negócio de um jeito mais prático.",
+    ],
+    steps: [
+      {
+        title: "1. Reveja o que está entrando na conta",
+        description:
+          "Quando o preço considera só material, o risco de prejuízo aumenta. É preciso olhar para o processo todo.",
+      },
+      {
+        title: "2. Observe o peso do tempo e da operação",
+        description:
+          "Seu trabalho e os custos do negócio fazem parte da construção do valor e precisam aparecer no cálculo.",
+      },
+      {
+        title: "3. Ajuste a margem com consciência",
+        description:
+          "Com a base mais organizada, fica mais fácil sair do preço apertado e cobrar com mais segurança.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Preço apertado",
+        description:
+          "Ideal para quem sente que vende, mas o dinheiro não rende como deveria.",
+      },
+      {
+        title: "Muita comparação com concorrente",
+        description:
+          "Ajuda a sair da lógica de copiar preço sem entender a própria realidade.",
+      },
+      {
+        title: "Mais clareza na margem",
+        description:
+          "Mostra que margem não é detalhe e influencia diretamente no resultado do negócio.",
+      },
+      {
+        title: "Decisões melhores",
+        description:
+          "Quando o custo fica mais visível, as decisões de venda ficam menos emocionais e mais conscientes.",
+      },
+    ],
+    example: {
+      title: "Exemplo de prejuízo escondido",
+      description:
+        "Imagine um produtor que calcula só o material e acha que o restante vai se encaixar sozinho.",
+      bullets: [
+        "No começo, o valor parece competitivo e até atrai cliente.",
+        "Mas o tempo de produção, as despesas do negócio e os ajustes do pedido ficam fora da conta.",
+        "No fim, entra dinheiro, mas sobra menos do que deveria e a sensação é de muito esforço para pouco retorno.",
+      ],
+      result:
+        "Quando a conta fica mais completa, o produtor entende melhor como sair dessa rotina de venda com prejuízo escondido.",
+    },
+    faqs: [
+      {
+        question: "Como saber se estou vendendo no prejuízo?",
+        answer:
+          "Se o preço parece baixo demais, se o dinheiro não sobra ou se você sente que trabalha muito e recebe pouco, vale revisar a base do cálculo com mais atenção.",
+      },
+      {
+        question: "Comparar meu preço com o de outros perfis resolve?",
+        answer:
+          "Nem sempre. Cada negócio tem um custo, um ritmo de produção e uma estrutura diferente. Copiar preço sem contexto pode trazer problema.",
+      },
+      {
+        question: "A calculadora ajuda a evitar isso?",
+        answer:
+          "Sim. O app ajuda a organizar materiais, tempo, custos da operação e margem para que o preço faça mais sentido.",
+      },
+    ],
+  },
+  {
+    slug: "como-montar-ficha-tecnica-do-produto",
+    metadataTitle:
+      "Como montar ficha técnica do produto | Organize materiais e produção",
+    metadataDescription:
+      "Aprenda como montar ficha técnica do produto para organizar materiais, quantidades, tempo e base de precificação no artesanato.",
+    eyebrow: "Ficha técnica do produto",
+    heroTitle:
+      "Como montar ficha técnica do produto para parar de depender só da memória.",
+    heroDescription:
+      "A ficha técnica ajuda a repetir produtos com mais consistência, organizar materiais e entender melhor a base do custo. Sem isso, muita coisa fica solta e mais sujeita a erro.",
+    lead:
+      "Se você procura como montar ficha técnica do produto, esta página foi feita para mostrar por que ela é tão importante para o artesanato, para a produção personalizada e para a formação do preço.",
+    benefits: [
+      "Ajuda a registrar os materiais usados em cada produto de forma mais organizada.",
+      "Facilita repetir peças, kits e encomendas sem depender só da memória.",
+      "Cria uma base mais segura para precificação, orçamento e controle de estoque.",
+    ],
+    steps: [
+      {
+        title: "1. Liste o que entra na produção",
+        description:
+          "O primeiro passo é registrar os materiais usados na peça, no kit ou na encomenda.",
+      },
+      {
+        title: "2. Defina quantidades e tempo",
+        description:
+          "Quando a ficha mostra consumo e tempo médio, ela ajuda a transformar a produção em uma rotina mais previsível.",
+      },
+      {
+        title: "3. Use a ficha como base do preço",
+        description:
+          "Com a estrutura organizada, o produto deixa de ser só uma ideia solta e passa a ter uma base melhor para cálculo e venda.",
+      },
+    ],
+    useCases: [
+      {
+        title: "Produtos repetidos",
+        description:
+          "Ideal para quem vende peças parecidas e quer ganhar tempo na rotina.",
+      },
+      {
+        title: "Encomendas personalizadas",
+        description:
+          "Ajuda a adaptar a base sem recomeçar tudo do zero a cada pedido.",
+      },
+      {
+        title: "Mais organização",
+        description:
+          "Reduz o risco de esquecer materiais ou etapas importantes da produção.",
+      },
+      {
+        title: "Melhor precificação",
+        description:
+          "Uma ficha técnica bem montada deixa o preço muito mais coerente e defendível.",
+      },
+    ],
+    example: {
+      title: "Exemplo prático de ficha técnica",
+      description:
+        "Imagine uma produtora que vende caixas personalizadas e repete o mesmo modelo com pequenas adaptações.",
+      bullets: [
+        "Ela registra papel, laço, cola, embalagem e os outros itens usados em cada caixa.",
+        "Depois informa a quantidade média e o tempo necessário para produzir o modelo.",
+        "Quando o pedido volta, ela reutiliza essa base e ajusta só o que mudou.",
+      ],
+      result:
+        "Assim, a produção fica mais organizada e o preço deixa de depender de conta feita do zero toda vez.",
+    },
+    faqs: [
+      {
+        question: "Ficha técnica serve só para fábrica grande?",
+        answer:
+          "Não. Mesmo em produção artesanal pequena, ela ajuda muito a organizar materiais, tempo e repetição de produtos.",
+      },
+      {
+        question: "A ficha técnica ajuda na precificação?",
+        answer:
+          "Sim. Ela é uma das melhores bases para entender o que entra no custo do produto e formar o preço com mais segurança.",
+      },
+      {
+        question: "A Calculadora do Produtor permite montar essa ficha?",
+        answer:
+          "Sim. O app foi pensado justamente para reunir materiais, consumo e base do produto em um mesmo lugar.",
+      },
+    ],
+  },
 ];
 
 
