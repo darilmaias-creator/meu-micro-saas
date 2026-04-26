@@ -42,3 +42,6 @@ next-env.d.ts
 
 # local auth data
 /data/users.json
+
+# Sentry Config File
+.env.sentry-build-plugin

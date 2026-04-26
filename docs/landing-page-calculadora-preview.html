@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calculadora do Produtor - Preview da Página</title>
+    <style>
+      :root {
+        --amber: #d97706;
+        --amber-dark: #9a4f00;
+        --cream: #fff7df;
+        --paper: #fffdf7;
+        --ink: #0f172a;
+        --muted: #667085;
+        --line: rgba(15, 23, 42, 0.12);
+        --green: #059669;
+        --blue: #1d4ed8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top left, rgba(255, 214, 102, 0.6), transparent 34rem),
+          linear-gradient(180deg, #fff9e8 0%, #f8fafc 42%, #ffffff 100%);
+        color: var(--ink);
+        font-family:
+          "Trebuchet MS",
+          "Gill Sans",
+          "Segoe UI",
+          sans-serif;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .shell {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 26px 0;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+      }
+
+      .brand img {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 16px 36px rgba(154, 79, 0, 0.18);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        color: #475467;
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 22px;
+        font-weight: 900;
+        letter-spacing: 0.01em;
+        background: var(--ink);
+        color: #fff;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.2);
+      }
+
+      .button.secondary {
+        background: #fff;
+        color: var(--amber-dark);
+        border: 1px solid rgba(154, 79, 0, 0.18);
+        box-shadow: none;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
+        gap: 46px;
+        align-items: center;
+        padding: 34px 0 76px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        padding: 9px 14px;
+        border-radius: 999px;
+        background: rgba(217, 119, 6, 0.12);
+        color: #7c3d00;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 24px 0 18px;
+        max-width: 740px;
+        font-size: clamp(2.8rem, 7vw, 6.2rem);
+        line-height: 0.9;
+        letter-spacing: -0.08em;
+      }
+
+      .lead {
+        max-width: 680px;
+        color: var(--muted);
+        font-size: clamp(1.1rem, 2vw, 1.45rem);
+        line-height: 1.55;
+      }
+
+      .hero-actions {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 32px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 38px;
+      }
+
+      .stat {
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.72);
+        padding: 18px;
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 1.8rem;
+        letter-spacing: -0.05em;
+      }
+
+      .stat span {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .device {
+        position: relative;
+        border-radius: 38px;
+        padding: 18px;
+        background:
+          linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(255, 246, 219, 0.72));
+        border: 1px solid rgba(154, 79, 0, 0.18);
+        box-shadow: 0 36px 90px rgba(154, 79, 0, 0.24);
+      }
+
+      .device::before {
+        content: "";
+        position: absolute;
+        inset: -16px;
+        z-index: -1;
+        border-radius: 46px;
+        background: linear-gradient(135deg, rgba(217, 119, 6, 0.28), rgba(29, 78, 216, 0.16));
+        filter: blur(10px);
+      }
+
+      .mock-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 18px;
+        border-radius: 26px;
+        background: var(--amber);
+        color: #fff;
+      }
+
+      .mock-header img {
+        width: 62px;
+        height: 62px;
+        border-radius: 18px;
+        background: #fff;
+      }
+
+      .mock-header strong {
+        display: block;
+        font-size: 1.1rem;
+      }
+
+      .mock-header span {
+        font-size: 0.75rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .mock-grid {
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        gap: 14px;
+        margin-top: 16px;
+      }
+
+      .mock-panel {
+        min-height: 250px;
+        border-radius: 28px;
+        padding: 20px;
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+
+      .field {
+        height: 44px;
+        border-radius: 12px;
+        background: #f1f5f9;
+        margin-top: 12px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1.3fr 0.7fr 0.7fr;
+        gap: 10px;
+        padding: 12px 0;
+        border-bottom: 1px solid #eef2f7;
+        color: #334155;
+        font-size: 0.92rem;
+        font-weight: 800;
+      }
+
+      section {
+        padding: 72px 0;
+      }
+
+      .section-title {
+        max-width: 760px;
+        margin-bottom: 30px;
+      }
+
+      .section-title h2 {
+        margin: 0 0 12px;
+        font-size: clamp(2rem, 4vw, 3.8rem);
+        line-height: 1;
+        letter-spacing: -0.06em;
+      }
+
+      .section-title p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 1.12rem;
+        line-height: 1.6;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+      }
+
+      .feature {
+        min-height: 230px;
+        border-radius: 30px;
+        padding: 24px;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        box-shadow: 0 20px 54px rgba(15, 23, 42, 0.06);
+      }
+
+      .feature .icon {
+        width: 48px;
+        height: 48px;
+        display: grid;
+        place-items: center;
+        border-radius: 16px;
+        background: rgba(217, 119, 6, 0.14);
+        color: var(--amber-dark);
+        font-weight: 900;
+        margin-bottom: 20px;
+      }
+
+      .feature h3 {
+        margin: 0 0 10px;
+        font-size: 1.3rem;
+      }
+
+      .feature p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .workflow {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        counter-reset: step;
+      }
+
+      .step {
+        position: relative;
+        border-radius: 32px;
+        padding: 26px;
+        background: #0f172a;
+        color: #fff;
+        overflow: hidden;
+      }
+
+      .step::before {
+        counter-increment: step;
+        content: "0" counter(step);
+        display: block;
+        color: rgba(255, 255, 255, 0.22);
+        font-size: 4.8rem;
+        font-weight: 900;
+        letter-spacing: -0.08em;
+        line-height: 0.9;
+        margin-bottom: 24px;
+      }
+
+      .step p {
+        color: rgba(255, 255, 255, 0.72);
+        line-height: 1.55;
+      }
+
+      .plans {
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 20px;
+      }
+
+      .plan {
+        border-radius: 34px;
+        padding: 28px;
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+
+      .plan.premium {
+        background: linear-gradient(145deg, #101827, #25304b);
+        color: #fff;
+        box-shadow: 0 30px 80px rgba(15, 23, 42, 0.24);
+      }
+
+      .plan ul {
+        padding: 0;
+        margin: 22px 0 0;
+        list-style: none;
+        display: grid;
+        gap: 12px;
+      }
+
+      .plan li::before {
+        content: "✓";
+        margin-right: 10px;
+        color: var(--green);
+        font-weight: 900;
+      }
+
+      .plan.premium li::before {
+        color: #fbbf24;
+      }
+
+      .cta {
+        position: relative;
+        overflow: hidden;
+        border-radius: 42px;
+        padding: 44px;
+        background:
+          radial-gradient(circle at top right, rgba(255, 255, 255, 0.28), transparent 18rem),
+          linear-gradient(135deg, #d97706, #92400e);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .cta h2 {
+        margin: 0 0 10px;
+        font-size: clamp(2rem, 4vw, 4rem);
+        letter-spacing: -0.06em;
+        line-height: 1;
+      }
+
+      .cta p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.78);
+        max-width: 560px;
+        line-height: 1.6;
+      }
+
+      footer {
+        padding: 36px 0 54px;
+        color: #64748b;
+        text-align: center;
+      }
+
+      @media (max-width: 920px) {
+        .nav-links {
+          display: none;
+        }
+
+        .hero,
+        .plans {
+          grid-template-columns: 1fr;
+        }
+
+        .features,
+        .workflow {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 640px) {
+        .stats,
+        .features,
+        .workflow,
+        .mock-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .cta {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="shell nav">
+      <a class="brand" href="#">
+        <img src="https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png" alt="Logo Calculadora do Produtor" />
+        <span>Calculadora do Produtor</span>
+      </a>
+      <nav class="nav-links" aria-label="Navegação principal">
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#planos">Planos</a>
+      </nav>
+      <a class="button secondary" href="#">Entrar no app</a>
+    </header>
+
+    <main>
+      <section class="shell hero">
+        <div>
+          <span class="eyebrow">Estoque, preço e vendas no mesmo lugar</span>
+          <h1>Calcule com clareza. Venda com segurança.</h1>
+          <p class="lead">
+            A Calculadora do Produtor ajuda pequenos produtores a organizar materiais,
+            montar fichas técnicas, calcular preço de venda, criar orçamentos e acompanhar
+            o negócio sem depender de planilhas confusas.
+          </p>
+          <div class="hero-actions">
+            <a class="button" href="#">Começar agora</a>
+            <a class="button secondary" href="#funcionalidades">Ver funcionalidades</a>
+          </div>
+          <div class="stats" aria-label="Resumo de benefícios">
+            <div class="stat"><strong>1</strong><span>sistema para estoque, preço e vendas</span></div>
+            <div class="stat"><strong>0</strong><span>planilhas soltas para controlar</span></div>
+            <div class="stat"><strong>24h</strong><span>acesso pelo celular ou computador</span></div>
+          </div>
+        </div>
+
+        <div class="device" aria-label="Prévia visual do app">
+          <div class="mock-header">
+            <div style="display: flex; align-items: center; gap: 14px">
+              <img src="https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png" alt="" />
+              <div>
+                <strong>Calculadora do Produtor</strong>
+                <span>Negócio organizado</span>
+              </div>
+            </div>
+            <strong>R$</strong>
+          </div>
+          <div class="mock-grid">
+            <div class="mock-panel">
+              <strong>Novo insumo</strong>
+              <div class="field"></div>
+              <div class="field"></div>
+              <div class="field"></div>
+              <div class="field"></div>
+            </div>
+            <div class="mock-panel">
+              <strong>Controle de estoque</strong>
+              <div class="row"><span>MDF 3mm</span><span>Área</span><span>OK</span></div>
+              <div class="row"><span>Barbante</span><span>Peso</span><span>OK</span></div>
+              <div class="row"><span>Fita cetim</span><span>Compr.</span><span>Comprar</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="funcionalidades" class="shell">
+        <div class="section-title">
+          <h2>Funcionalidades para quem produz, vende e precisa decidir rápido.</h2>
+          <p>
+            A página pode explicar o sistema em blocos simples, mostrando o valor real
+            para quem trabalha com materiais, produção artesanal, laser, personalizados
+            ou pequenos lotes.
+          </p>
+        </div>
+        <div class="features">
+          <article class="feature">
+            <div class="icon">01</div>
+            <h3>Estoque completo</h3>
+            <p>Cadastre insumos, controle quantidade, custo unitário, valor parado e alerta de estoque mínimo.</p>
+          </article>
+          <article class="feature">
+            <div class="icon">02</div>
+            <h3>Ficha técnica</h3>
+            <p>Monte produtos usando materiais do estoque, tempo de máquina, mão de obra e custos extras.</p>
+          </article>
+          <article class="feature">
+            <div class="icon">03</div>
+            <h3>Preço de venda</h3>
+            <p>Veja custo, margem, lucro, preço sugerido e ajuste manual sem perder a visão do resultado.</p>
+          </article>
+          <article class="feature">
+            <div class="icon">04</div>
+            <h3>Orçamentos e vendas</h3>
+            <p>Crie propostas, registre vendas e acompanhe o histórico do que foi negociado com cada cliente.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="como-funciona" class="shell">
+        <div class="section-title">
+          <h2>Um fluxo simples para transformar material em preço justo.</h2>
+          <p>
+            A proposta da landing page é mostrar que o usuário não precisa entender de fórmula:
+            ele informa dados reais e o sistema organiza o cálculo.
+          </p>
+        </div>
+        <div class="workflow">
+          <article class="step">
+            <h3>Cadastre seus materiais</h3>
+            <p>Informe preço pago, medida, estoque atual e mínimo para saber quanto cada material custa de verdade.</p>
+          </article>
+          <article class="step">
+            <h3>Monte a ficha do produto</h3>
+            <p>Escolha os materiais, informe quantidade usada e inclua tempo, energia, acabamento e custos extras.</p>
+          </article>
+          <article class="step">
+            <h3>Venda com margem clara</h3>
+            <p>Receba sugestão de preço, lucro, margem e registro para orçamento ou venda final.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="planos" class="shell">
+        <div class="section-title">
+          <h2>Comece simples e libere mais controle quando o negócio crescer.</h2>
+          <p>Podemos apresentar o grátis como entrada e o Premium como evolução natural para operação profissional.</p>
+        </div>
+        <div class="plans">
+          <article class="plan">
+            <h3>Plano grátis</h3>
+            <p>Ideal para testar o sistema e organizar os primeiros materiais e produtos.</p>
+            <ul>
+              <li>Controle inicial de insumos</li>
+              <li>Cálculo de preço de venda</li>
+              <li>Acesso pelo celular e computador</li>
+            </ul>
+          </article>
+          <article class="plan premium">
+            <h3>Plano Premium</h3>
+            <p>Para quem quer manter a operação completa e vender com mais segurança.</p>
+            <ul>
+              <li>Itens ilimitados conforme as regras do plano</li>
+              <li>Orçamentos, vendas e histórico</li>
+              <li>Backup, organização e recursos avançados</li>
+              <li>Ferramentas extras para comunicação e marketing</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="shell">
+        <div class="cta">
+          <div>
+            <h2>Menos chute. Mais controle.</h2>
+            <p>
+              Uma página assim ajuda o visitante a entender rapidamente por que o sistema existe,
+              como ele funciona e qual problema resolve antes de entrar no app.
+            </p>
+          </div>
+          <a class="button secondary" href="#">Testar a calculadora</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="shell">
+      Preview visual separado do site real. Podemos transformar este rascunho em uma rota oficial depois.
+    </footer>
+  </body>
+</html>
