@@ -143,6 +143,7 @@ export async function POST(request: Request) {
       // The Stripe account/API version used in this project expects
       // `embedded_page` for the in-app Checkout flow.
       ui_mode: EMBEDDED_CHECKOUT_UI_MODE,
+      allow_promotion_codes: true,
       customer: stripeCustomerId,
       client_reference_id: user.id,
       line_items: [

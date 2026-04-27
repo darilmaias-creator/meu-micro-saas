@@ -132,6 +132,10 @@ export default function EmbeddedCheckoutClient() {
             </Link>
             .
           </p>
+          <p className="mt-2 text-xs text-slate-500">
+            Se voce tiver um cupom, o campo para aplicar o codigo aparece no
+            proprio checkout da Stripe.
+          </p>
           <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
             <div className="flex items-start gap-2">
               <BadgeInfo size={16} className="mt-0.5 shrink-0" />

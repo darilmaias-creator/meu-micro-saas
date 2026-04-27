@@ -145,6 +145,7 @@ describe("checkout route", () => {
     });
     expect(stripeClient.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
+        allow_promotion_codes: true,
         customer: "cus_123",
         line_items: [{ price: "price_founder", quantity: 1 }],
       }),
