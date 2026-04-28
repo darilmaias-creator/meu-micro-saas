@@ -176,6 +176,64 @@ function totalQuoteQuantity(items: QuoteLineItem[]) {
   return items.reduce((total, item) => total + Number(item.quantity || 0), 0);
 }
 
+type SaveFilePickerWindow = Window & {
+  showSaveFilePicker?: (options: {
+    id?: string;
+    suggestedName?: string;
+    types?: Array<{
+      description?: string;
+      accept: Record<string, string[]>;
+    }>;
+  }) => Promise<{
+    createWritable: () => Promise<{
+      write: (data: Blob) => Promise<void>;
+      close: () => Promise<void>;
+    }>;
+  }>;
+};
+
+function fallbackBlobDownload(blob: Blob, fileName: string) {
+  const blobUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.setTimeout(() => {
+    window.URL.revokeObjectURL(blobUrl);
+  }, 0);
+}
+
+async function savePdfWithPickerOrDownload(blob: Blob, fileName: string) {
+  const pickerWindow = window as SaveFilePickerWindow;
+
+  if (typeof pickerWindow.showSaveFilePicker === "function") {
+    try {
+      const fileHandle = await pickerWindow.showSaveFilePicker({
+        id: "orcamentos-calcula-artesao",
+        suggestedName: fileName,
+        types: [
+          {
+            description: "Documento PDF",
+            accept: { "application/pdf": [".pdf"] },
+          },
+        ],
+      });
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch (error) {
+      if ((error as { name?: string })?.name === "AbortError") {
+        return;
+      }
+    }
+  }
+
+  fallbackBlobDownload(blob, fileName);
+}
+
 export default function SalesTab({ appData, isPremium }: SalesTabProps) {
   const {
     savedProducts,
@@ -681,10 +739,11 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               /\s+/g,
               "_",
             );
+      const fileName = `${docPrefix}_${fileLabel}_${saleDate}.pdf`;
 
       const options = {
         margin: 0,
-        filename: `${docPrefix}_${fileLabel}_${saleDate}.pdf`,
+        filename: fileName,
         image: { type: "jpeg" as const, quality: 1 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
@@ -697,8 +756,9 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
       html2pdf()
         .set(options)
         .from(element)
-        .save()
-        .then(() => {
+        .outputPdf("blob")
+        .then((pdfBlob: Blob) => savePdfWithPickerOrDownload(pdfBlob, fileName))
+        .finally(() => {
           container.setAttribute("style", originalStyle);
           window.scrollTo(0, originalScrollY);
         });
