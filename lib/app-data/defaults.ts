@@ -4,7 +4,7 @@ export const DEFAULT_STORE_NAME = "Calculadora do Produtor";
 export const DEFAULT_STORE_SUBTITLE =
   "Orçamentos claros. Clientes seguros. Negócios fechados.";
 export const DEFAULT_STORE_LOGO =
-  "https://i.postimg.cc/52qj8Q2P/logo.png";
+  "/android-chrome-512x512.png?v=20260502-favicon-refresh";
 export const DEFAULT_QUOTE_VALIDITY_DAYS = "15";
 export const DEFAULT_QUOTE_LEAD_TIME_TEXT =
   "O prazo pode variar conforme quantidade e personalização.";
@@ -25,6 +25,7 @@ export const DEFAULT_OPERATION_COST_MARKUP = "0";
 export const LEGACY_STORE_NAME = "ATELIÊ";
 export const LEGACY_STORE_SUBTITLE = "Artesanato e Produtos";
 export const LEGACY_STORE_LOGOS = [
+  "https://i.postimg.cc/52qj8Q2P/logo.png",
   "https://i.postimg.cc/hj2J824X/logo.png",
   "https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png",
 ];

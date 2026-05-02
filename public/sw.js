@@ -1,5 +1,5 @@
-const CACHE_NAME = "calculadora-do-produtor-pwa-v4-logo";
-const ICON_VERSION = "20260421-logo";
+const CACHE_NAME = "calculadora-do-produtor-pwa-v5-icon-refresh";
+const ICON_VERSION = "20260502-favicon-refresh";
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
   `/icon?v=${ICON_VERSION}`,
@@ -7,6 +7,12 @@ const STATIC_ASSETS = [
   `/pwa-icon-512.png?v=${ICON_VERSION}`,
   `/pwa-maskable-512.png?v=${ICON_VERSION}`,
   `/pwa-monochrome-512.png?v=${ICON_VERSION}`,
+  `/android-chrome-512x512.png?v=${ICON_VERSION}`,
+  `/android-chrome-192x192.png?v=${ICON_VERSION}`,
+  `/icone-180x180.png?v=${ICON_VERSION}`,
+  `/apple-touch-icon.png?v=${ICON_VERSION}`,
+  `/favicon-32x32.png?v=${ICON_VERSION}`,
+  `/favicon-16x16.png?v=${ICON_VERSION}`,
 ];
 
 self.addEventListener("install", (event) => {
@@ -62,7 +68,13 @@ self.addEventListener("fetch", (event) => {
     url.pathname === "/apple-icon" ||
     url.pathname === "/pwa-icon-512.png" ||
     url.pathname === "/pwa-maskable-512.png" ||
-    url.pathname === "/pwa-monochrome-512.png";
+    url.pathname === "/pwa-monochrome-512.png" ||
+    url.pathname === "/android-chrome-512x512.png" ||
+    url.pathname === "/android-chrome-192x192.png" ||
+    url.pathname === "/icone-180x180.png" ||
+    url.pathname === "/apple-touch-icon.png" ||
+    url.pathname === "/favicon-32x32.png" ||
+    url.pathname === "/favicon-16x16.png";
 
   if (!isPwaAsset) {
     return;
