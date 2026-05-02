@@ -9,10 +9,10 @@ import {
   PWA_THEME_COLOR,
 } from "@/lib/pwa/config";
 
-const APP_ICON_URL = `/pwa-icon-512.png?v=${PWA_ICON_VERSION}`;
-const APP_MASKABLE_ICON_URL = `/pwa-maskable-512.png?v=${PWA_ICON_VERSION}`;
-const APP_MONOCHROME_ICON_URL = `/pwa-monochrome-512.png?v=${PWA_ICON_VERSION}`;
-const APPLE_ICON_URL = `/apple-icon?v=${PWA_ICON_VERSION}`;
+const APP_ICON_URL = `/android-chrome-512x512.png?v=${PWA_ICON_VERSION}`;
+const APP_ICON_192_URL = `/android-chrome-192x192.png?v=${PWA_ICON_VERSION}`;
+const APPLE_ICON_URL = `/icone-180x180.png?v=${PWA_ICON_VERSION}`;
+const APPLE_ICON_LEGACY_URL = `/apple-touch-icon.png?v=${PWA_ICON_VERSION}`;
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -67,25 +67,30 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     icons: [
       {
+        src: APP_ICON_192_URL,
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
         src: APP_ICON_URL,
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: APP_MASKABLE_ICON_URL,
+        src: APP_ICON_URL,
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
       },
       {
-        src: APP_MONOCHROME_ICON_URL,
-        sizes: "512x512",
+        src: APPLE_ICON_URL,
+        sizes: "180x180",
         type: "image/png",
-        purpose: "monochrome",
       },
       {
-        src: APPLE_ICON_URL,
+        src: APPLE_ICON_LEGACY_URL,
         sizes: "180x180",
         type: "image/png",
       },

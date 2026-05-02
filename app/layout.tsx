@@ -9,9 +9,13 @@ import {
   PWA_THEME_COLOR,
 } from "@/lib/pwa/config";
 
-const APP_ICON_URL = `/icon?v=${PWA_ICON_VERSION}`;
-const APPLE_ICON_URL = `/apple-icon?v=${PWA_ICON_VERSION}`;
-const APP_MASKABLE_ICON_URL = `/pwa-maskable-512.png?v=${PWA_ICON_VERSION}`;
+const FAVICON_16_URL = `/favicon-16x16.png?v=${PWA_ICON_VERSION}`;
+const FAVICON_32_URL = `/favicon-32x32.png?v=${PWA_ICON_VERSION}`;
+const FAVICON_JPG_URL = `/favicon.jpg?v=${PWA_ICON_VERSION}`;
+const APPLE_TOUCH_ICON_URL = `/icone-180x180.png?v=${PWA_ICON_VERSION}`;
+const APPLE_TOUCH_ICON_LEGACY_URL = `/apple-touch-icon.png?v=${PWA_ICON_VERSION}`;
+const ANDROID_192_ICON_URL = `/android-chrome-192x192.png?v=${PWA_ICON_VERSION}`;
+const ANDROID_512_ICON_URL = `/android-chrome-512x512.png?v=${PWA_ICON_VERSION}`;
 const SITE_URL = "https://calculaartesao.com.br";
 
 export const metadata: Metadata = {
@@ -29,24 +33,50 @@ export const metadata: Metadata = {
   icons: {
     shortcut: [
       {
-        url: APP_ICON_URL,
+        url: FAVICON_32_URL,
+        sizes: "32x32",
+        type: "image/png",
+      },
+      {
+        url: FAVICON_16_URL,
+        sizes: "16x16",
         type: "image/png",
       },
     ],
     icon: [
       {
-        url: APP_ICON_URL,
+        url: FAVICON_32_URL,
+        sizes: "32x32",
         type: "image/png",
       },
       {
-        url: APP_MASKABLE_ICON_URL,
+        url: FAVICON_16_URL,
+        sizes: "16x16",
+        type: "image/png",
+      },
+      {
+        url: FAVICON_JPG_URL,
+        type: "image/jpeg",
+      },
+      {
+        url: ANDROID_192_ICON_URL,
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: ANDROID_512_ICON_URL,
         sizes: "512x512",
         type: "image/png",
       },
     ],
     apple: [
       {
-        url: APPLE_ICON_URL,
+        url: APPLE_TOUCH_ICON_URL,
+        sizes: "180x180",
+        type: "image/png",
+      },
+      {
+        url: APPLE_TOUCH_ICON_LEGACY_URL,
         sizes: "180x180",
         type: "image/png",
       },
