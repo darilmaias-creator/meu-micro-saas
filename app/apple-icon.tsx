@@ -1,4 +1,4 @@
-import { createPwaIconResponse } from "@/lib/pwa/icon-image";
+import { createStaticPngIconResponse } from "@/lib/pwa/static-icon-response";
 
 export const size = {
   width: 180,
@@ -7,6 +7,6 @@ export const size = {
 
 export const contentType = "image/png";
 
-export default function AppleIcon() {
-  return createPwaIconResponse({ size, variant: "default" });
+export default async function AppleIcon() {
+  return createStaticPngIconResponse("icone-180x180.png");
 }
