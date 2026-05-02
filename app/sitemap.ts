@@ -32,6 +32,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.4,
     },
+    {
+      url: `${SITE_URL}/central-de-conteudos`,
+      lastModified,
+      changeFrequency: "daily",
+      priority: 0.85,
+    },
     ...SEARCH_INTENT_PAGES.map((page) => ({
       url: `${SITE_URL}/${page.slug}`,
       lastModified,

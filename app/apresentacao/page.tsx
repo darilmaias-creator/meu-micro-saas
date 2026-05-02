@@ -134,6 +134,7 @@ const footerSections = [
       { href: "#funcionalidades", label: "Funcionalidades" },
       { href: "#como-funciona", label: "Como funciona" },
       { href: "#planos", label: "Planos" },
+      { href: "/central-de-conteudos", label: "Central de conteudos" },
       { href: "/entrar", label: "Entrar no app" },
     ],
   },
