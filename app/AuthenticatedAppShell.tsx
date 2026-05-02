@@ -93,18 +93,17 @@ export default function AuthenticatedAppShell({
             <div className="flex items-center gap-3">
               <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm md:h-20 md:w-28">
                 <img
-                  src={appData.config.userLogo || DEFAULT_STORE_LOGO}
+                  src={DEFAULT_STORE_LOGO}
                   alt="Logo da Calcula Artesão"
                   className="h-full w-full object-contain"
                 />
               </div>
               <div>
                 <h1 className="text-xl font-bold leading-tight drop-shadow-sm">
-                  {appData.config.storeName || "Calcula Artesão"}
+                  Calcula Artesão
                 </h1>
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-200">
-                  {appData.config.storeSubtitle ||
-                    "Orçamentos claros. Clientes seguros. Negócios fechados."}
+                  Orçamentos claros. Clientes seguros. Negócios fechados.
                 </span>
               </div>
             </div>

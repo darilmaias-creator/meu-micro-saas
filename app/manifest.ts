@@ -57,13 +57,6 @@ export default function manifest(): MetadataRoute.Manifest {
         form_factor: "wide",
         label: "Tela de ficha tecnica e precificacao de produtos",
       },
-      {
-        src: "/screenshots/vendas.png",
-        sizes: "733x286",
-        type: "image/png",
-        form_factor: "wide",
-        label: "Tela de vendas, orcamentos e propostas",
-      },
     ],
     icons: [
       {

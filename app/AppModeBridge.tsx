@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Calculator } from "lucide-react";
-
-import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
+const APP_ENTRY_LOGO_URL = "https://i.postimg.cc/W1ZM8nRZ/arte-principal.png";
 
 const DISPLAY_MODE_QUERIES = [
   "(display-mode: standalone)",
@@ -100,7 +99,7 @@ export default function AppModeBridge() {
       <div className="w-full max-w-xs rounded-[32px] border border-white/80 bg-white/90 px-6 py-7 text-center shadow-[0_30px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl">
         <div className="mx-auto mb-5 flex h-24 w-40 items-center justify-center rounded-[24px] bg-amber-50 p-2 shadow-inner">
           <img
-            src={DEFAULT_STORE_LOGO}
+            src={APP_ENTRY_LOGO_URL}
             alt="Logo da Calcula Artesão"
             className="h-full w-full rounded-2xl object-contain"
           />
