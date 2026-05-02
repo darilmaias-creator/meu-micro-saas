@@ -287,7 +287,7 @@ export default function MainApp() {
           <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-amber-100 shadow-inner">
             <Calculator size={48} className="text-amber-600" />
           </div>
-          <h1 className="mb-3 text-3xl font-black text-slate-800">Calculadora do Produtor</h1>
+          <h1 className="mb-3 text-3xl font-black text-slate-800">Calcula Artesão</h1>
           <p className="mb-6 text-sm text-slate-500">
             {authMode === "forgotPassword"
               ? "Informe o e-mail da conta para receber o link de recuperacao."
@@ -511,7 +511,7 @@ export default function MainApp() {
               href="/"
               className="mb-3 block text-xs font-bold text-amber-700 transition-colors hover:text-amber-800"
             >
-              Conhecer a Calculadora do Produtor
+              Conhecer a Calcula Artesão
             </Link>
             <Link
               href="/politicas/cancelamento-e-reembolso"

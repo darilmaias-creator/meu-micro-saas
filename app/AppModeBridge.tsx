@@ -98,11 +98,11 @@ export default function AppModeBridge() {
   return (
     <div className="pointer-events-none fixed inset-0 z-[120] flex items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(253,230,138,0.95),_rgba(255,255,255,0.98)_52%,_rgba(248,250,252,1)_100%)] px-6">
       <div className="w-full max-w-xs rounded-[32px] border border-white/80 bg-white/90 px-6 py-7 text-center shadow-[0_30px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl">
-        <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-[28px] bg-amber-50 shadow-inner">
+        <div className="mx-auto mb-5 flex h-24 w-40 items-center justify-center rounded-[24px] bg-amber-50 p-2 shadow-inner">
           <img
             src={DEFAULT_STORE_LOGO}
-            alt="Logo da Calculadora do Produtor"
-            className="h-20 w-20 object-contain"
+            alt="Logo da Calcula Artesão"
+            className="h-full w-full rounded-2xl object-contain"
           />
         </div>
         <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-amber-800">
@@ -110,7 +110,7 @@ export default function AppModeBridge() {
           Abrindo app
         </div>
         <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-900">
-          Calculadora do Produtor
+          Calcula Artesão
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-500">
           Estoque, ficha tecnica e vendas em um unico lugar.

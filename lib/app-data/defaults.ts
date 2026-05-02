@@ -1,10 +1,10 @@
 export type GenericRecord = Record<string, unknown>;
 
-export const DEFAULT_STORE_NAME = "Calculadora do Produtor";
+export const DEFAULT_STORE_NAME = "Calcula Artesão";
 export const DEFAULT_STORE_SUBTITLE =
   "Orçamentos claros. Clientes seguros. Negócios fechados.";
 export const DEFAULT_STORE_LOGO =
-  "/android-chrome-512x512.png?v=20260502-favicon-refresh";
+  "https://i.postimg.cc/W1ZM8nRZ/arte-principal.png";
 export const DEFAULT_QUOTE_VALIDITY_DAYS = "15";
 export const DEFAULT_QUOTE_LEAD_TIME_TEXT =
   "O prazo pode variar conforme quantidade e personalização.";
@@ -22,9 +22,11 @@ export const DEFAULT_BUSINESS_WHATSAPP = "";
 export const DEFAULT_MONTHLY_PRODUCTION_TARGET = "";
 export const DEFAULT_PRODUCTIVE_HOURS_PER_MONTH = "";
 export const DEFAULT_OPERATION_COST_MARKUP = "0";
-export const LEGACY_STORE_NAME = "ATELIÊ";
+export const LEGACY_STORE_NAMES = ["ATELIÊ", "Calculadora do Produtor"];
 export const LEGACY_STORE_SUBTITLE = "Artesanato e Produtos";
 export const LEGACY_STORE_LOGOS = [
+  "/android-chrome-512x512.png?v=20260502-favicon-refresh",
+  "/android-chrome-512x512.png",
   "https://i.postimg.cc/52qj8Q2P/logo.png",
   "https://i.postimg.cc/hj2J824X/logo.png",
   "https://i.postimg.cc/ZqQzNQRW/calculadoradoprodutor.png",
@@ -188,7 +190,10 @@ export function createDefaultQuoteDocumentConfig(): QuoteDocumentConfig {
 }
 
 export function normalizeBrandingValue(storageKey: string, storedValue: string) {
-  if (storageKey.endsWith("calc_storeName") && storedValue === LEGACY_STORE_NAME) {
+  if (
+    storageKey.endsWith("calc_storeName") &&
+    LEGACY_STORE_NAMES.includes(storedValue)
+  ) {
     return DEFAULT_STORE_NAME;
   }
 
