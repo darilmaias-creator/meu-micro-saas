@@ -514,15 +514,15 @@ export default async function PresentationPage() {
         <Reveal>
           <div className="mb-10 max-w-3xl">
             <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-700">
-              Buscas relacionadas
+              Dicas da calculadora
             </p>
             <h2 className="mt-3 text-4xl font-extrabold leading-none tracking-[-0.05em] text-slate-950 sm:text-5xl">
-              Paginas feitas para quem pesquisa de formas diferentes.
+              Aprenda a usar a calculadora no seu ateliê.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Nem todo mundo procura do mesmo jeito. Algumas pessoas buscam
-              calculadora para artesao, outras pesquisam sobre precificacao de
-              artesanato, controle de estoque ou orcamento para encomendas.
+              Aqui você encontra páginas práticas para aplicar no dia a dia:
+              precificação, controle de estoque, orçamento e organização da
+              produção artesanal.
             </p>
           </div>
         </Reveal>

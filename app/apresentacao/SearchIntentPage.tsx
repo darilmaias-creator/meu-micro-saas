@@ -269,7 +269,7 @@ export function SearchIntentPage({
       <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-18">
         <SectionTitle
           eyebrow="Perguntas frequentes"
-          title="Dúvidas comuns de quem pesquisa esse assunto no Google."
+          title="Dúvidas comuns de quem quer usar a calculadora no dia a dia."
           description="Quanto mais clara a resposta, mais facil fica entender se a Calculadora do Produtor encaixa na rotina do seu negocio."
         />
 
@@ -288,9 +288,9 @@ export function SearchIntentPage({
 
       <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-18">
         <SectionTitle
-          eyebrow="Paginas relacionadas"
-          title="Outras formas de encontrar a calculadora."
-          description="O mesmo problema costuma aparecer em pesquisas diferentes. Por isso, organizamos paginas especificas para cada necessidade principal."
+          eyebrow="Mais conteudos"
+          title="Outras paginas uteis da Calculadora do Produtor."
+          description="Escolha o tema que faz mais sentido para seu momento e continue organizando melhor a sua rotina de producao."
         />
 
         <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
