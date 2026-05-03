@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     title: content.metadataTitle,
     description: content.metadataDescription,
     url: "/como-separar-custos-fixos-e-variaveis",
-    siteName: "Calculadora do Produtor",
+    siteName: "Calcula Artesão",
     locale: "pt_BR",
     type: "website",
   },

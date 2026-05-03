@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: content.metadataTitle,
     description: content.metadataDescription,
     url: "/calculadora-para-biscuit",
-    siteName: "Calculadora do Produtor",
+    siteName: "Calcula Artesão",
     locale: "pt_BR",
     type: "website",
   },

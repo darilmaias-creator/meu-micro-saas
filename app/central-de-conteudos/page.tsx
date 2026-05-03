@@ -22,18 +22,18 @@ import {
 import { CopyDailyPostButton } from "./CopyDailyPostButton";
 
 export const metadata: Metadata = {
-  title: "Central de conteúdos | Calculadora do Produtor",
+  title: "Central de conteúdos | Calcula Artesão",
   description:
-    "Acesse a central de conteúdos da Calculadora do Produtor com páginas SEO, guias práticos e post automático diário para divulgação.",
+    "Acesse a central de conteúdos da Calcula Artesão com páginas SEO, guias práticos e post automático diário para divulgação.",
   alternates: {
     canonical: "/central-de-conteudos",
   },
   openGraph: {
-    title: "Central de conteúdos da Calculadora do Produtor",
+    title: "Central de conteúdos da Calcula Artesão",
     description:
       "Páginas por tema, nicho e guias práticos, com post automático diário para divulgação.",
     url: "/central-de-conteudos",
-    siteName: "Calculadora do Produtor",
+    siteName: "Calcula Artesão",
     locale: "pt_BR",
     type: "website",
   },
@@ -112,12 +112,12 @@ export default async function CentralDeConteudosPage() {
           <Link href="/" className="inline-flex items-center gap-3">
             <img
               src={DEFAULT_STORE_LOGO}
-              alt="Logo da Calculadora do Produtor"
+              alt="Logo da Calcula Artesão"
               className="h-14 w-14 rounded-2xl bg-white object-contain shadow-[0_12px_32px_rgba(15,23,42,0.12)]"
             />
             <div>
               <p className="text-lg font-black tracking-[-0.03em]">
-                Calculadora do Produtor
+                Calcula Artesão
               </p>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                 Central de conteúdos

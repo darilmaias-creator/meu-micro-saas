@@ -10,9 +10,9 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Politica de privacidade | Calculadora do Produtor",
+  title: "Politica de privacidade | Calcula Artesão",
   description:
-    "Entenda, em linguagem simples, como a Calculadora do Produtor trata dados de conta, autenticacao, cobranca, backup e comunicacoes do app.",
+    "Entenda, em linguagem simples, como a Calcula Artesão trata dados de conta, autenticacao, cobranca, backup e comunicacoes do app.",
 };
 
 const LAST_UPDATED_LABEL = "26/04/2026";
@@ -46,7 +46,7 @@ export default function PrivacyPolicyPage() {
             </h1>
             <p className="mt-4 text-sm text-slate-600">
               Esta pagina explica, em linguagem simples, quais dados podem ser
-              usados para operar a Calculadora do Produtor, por que esses dados
+              usados para operar a Calcula Artesão, por que esses dados
               existem no sistema e como eles se relacionam com autenticacao,
               cobranca, backup, e-mails e recursos opcionais do app.
             </p>
@@ -125,7 +125,7 @@ export default function PrivacyPolicyPage() {
               </div>
               <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
                 <p>
-                  A Calculadora do Produtor pode usar servicos de terceiros para
+                  A Calcula Artesão pode usar servicos de terceiros para
                   operar partes especificas do sistema, como autenticacao,
                   armazenamento, cobranca e envio de e-mails.
                 </p>

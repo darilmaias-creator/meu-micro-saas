@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: content.metadataTitle,
     description: content.metadataDescription,
     url: "/como-nao-vender-no-prejuizo",
-    siteName: "Calculadora do Produtor",
+    siteName: "Calcula Artesão",
     locale: "pt_BR",
     type: "website",
   },

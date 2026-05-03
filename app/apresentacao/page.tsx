@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   title:
     "Calculadora para artesão | Precificação, estoque e orçamentos",
   description:
-    "Calcula Artesão e Calculadora do Produtor: sistema para artesão e pequeno produtor calcular preço de venda, controlar estoque, montar ficha técnica e criar orçamentos.",
+    "Calcula Artesão: sistema para artesão e pequeno produtor calcular preço de venda, controlar estoque, montar ficha técnica e criar orçamentos.",
   keywords: [
     "calcula artesão",
     "calculadora para artesão",
@@ -39,7 +39,6 @@ export const metadata: Metadata = {
     "controle de estoque para artesão",
     "como calcular artesanato",
     "aplicativo para artesão",
-    "calculadora do produtor",
     "sistema para artesão",
   ],
   alternates: {
@@ -50,7 +49,7 @@ export const metadata: Metadata = {
     description:
       "Organize materiais, calcule preço de venda, monte fichas técnicas e crie orçamentos para artesanato e pequenos produtos.",
     url: "/",
-    siteName: "Calculadora do Produtor",
+    siteName: "Calcula Artesão",
     locale: "pt_BR",
     type: "website",
   },
@@ -169,7 +168,7 @@ const faqItems = [
   {
     question: "Como precificar artesanato de um jeito mais seguro?",
     answer:
-      "O caminho mais confiável e reunir custo de material, tempo, despesas extras e margem de lucro. A Calculadora do Produtor organiza esse processo em um único lugar.",
+      "O caminho mais confiável e reunir custo de material, tempo, despesas extras e margem de lucro. A Calcula Artesão organiza esse processo em um único lugar.",
   },
   {
     question: "A calculadora serve para orçamento de artesanato?",
@@ -187,7 +186,7 @@ const homeStructuredData = [
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Calculadora do Produtor",
+    name: "Calcula Artesão",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, Android, Windows",
     url: "https://calculaartesao.com.br",
@@ -247,12 +246,12 @@ export default async function PresentationPage() {
           <Link href="/" className="flex items-center gap-3 text-slate-950">
             <img
               src={DEFAULT_STORE_LOGO}
-              alt="Logo da Calculadora do Produtor"
+              alt="Logo da Calcula Artesão"
               className="h-14 w-14 rounded-2xl bg-white shadow-[0_16px_36px_rgba(154,79,0,0.18)]"
             />
             <div>
               <span className="block text-base font-extrabold tracking-[-0.03em]">
-                Calculadora do Produtor
+                Calcula Artesão
               </span>
               <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
                 Preco, estoque e orcamentos
@@ -294,7 +293,7 @@ export default async function PresentationPage() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
-              A Calculadora do Produtor ajuda pequenos produtores a organizar
+              A Calcula Artesão ajuda pequenos produtores a organizar
               materiais, montar fichas tecnicas, calcular preco de venda, criar
               orcamentos e acompanhar o negocio sem depender de planilhas confusas.
             </p>
@@ -369,7 +368,7 @@ export default async function PresentationPage() {
                   />
                   <div>
                     <strong className="block text-lg font-extrabold">
-                      Calculadora do Produtor
+                      Calcula Artesão
                     </strong>
                     <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-amber-200">
                       Negocio organizado
@@ -491,7 +490,7 @@ export default async function PresentationPage() {
               </h2>
               <p className="mt-4 leading-8 text-slate-600">
                 Se voce trabalha com artesanato, produtos personalizados ou
-                producao sob encomenda, a Calculadora do Produtor ajuda a somar
+                producao sob encomenda, a Calcula Artesão ajuda a somar
                 materiais, tempo, custos, margem de lucro, estoque e orcamento em
                 uma rotina simples de usar.
               </p>
@@ -626,7 +625,7 @@ export default async function PresentationPage() {
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
               Essas respostas ajudam o visitante e tambem reforcam para o Google
-              quais problemas a Calculadora do Produtor resolve na pratica.
+              quais problemas a Calcula Artesão resolve na pratica.
             </p>
           </div>
         </Reveal>
@@ -736,12 +735,12 @@ export default async function PresentationPage() {
             <div className="flex items-center gap-3">
               <img
                 src={DEFAULT_STORE_LOGO}
-                alt="Logo da Calculadora do Produtor"
+                alt="Logo da Calcula Artesão"
                 className="h-14 w-14 rounded-2xl bg-white shadow-[0_16px_36px_rgba(154,79,0,0.12)]"
               />
               <div>
                 <p className="text-lg font-extrabold tracking-[-0.03em] text-slate-950">
-                  Calculadora do Produtor
+                  Calcula Artesão
                 </p>
                 <p className="text-sm leading-7 text-slate-600">
                   Precificacao, estoque, ficha tecnica, orcamentos e vendas em um unico lugar para artesaos e pequenos produtores.
@@ -772,7 +771,7 @@ export default async function PresentationPage() {
         </div>
         <div className="border-t border-slate-200/80">
           <div className="mx-auto flex w-[min(1180px,calc(100%-32px))] flex-col gap-3 py-5 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
-            <span>© 2026 Calculadora do Produtor. Todos os direitos reservados.</span>
+            <span>© 2026 Calcula Artesão. Todos os direitos reservados.</span>
             <span>Feita para quem precisa precificar, vender e organizar com mais seguranca.</span>
           </div>
         </div>

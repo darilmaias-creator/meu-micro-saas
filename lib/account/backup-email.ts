@@ -16,7 +16,7 @@ function createEmailBody(payload: AccountBackupPayload) {
     text: [
       `Ola, ${payload.account.name}!`,
       "",
-      "Segue em anexo o backup JSON da sua conta na Calculadora do Produtor.",
+      "Segue em anexo o backup JSON da sua conta na Calcula Artesão.",
       "",
       `Plano: ${payload.account.plan}`,
       `Exportado em: ${payload.exportedAt}`,
@@ -29,7 +29,7 @@ function createEmailBody(payload: AccountBackupPayload) {
       <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
         <h2 style="margin-bottom: 8px;">Backup da sua conta</h2>
         <p>Ola, <strong>${payload.account.name}</strong>.</p>
-        <p>Segue em anexo o backup JSON da sua conta na Calculadora do Produtor.</p>
+        <p>Segue em anexo o backup JSON da sua conta na Calcula Artesão.</p>
         <ul>
           <li><strong>Plano:</strong> ${payload.account.plan}</li>
           <li><strong>Exportado em:</strong> ${payload.exportedAt}</li>

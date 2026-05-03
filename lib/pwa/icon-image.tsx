@@ -76,7 +76,7 @@ function renderPwaIcon(variant: PwaIconVariant) {
         ) : (
             <img
               src={DEFAULT_STORE_LOGO}
-              alt="Logo da Calculadora do Produtor"
+              alt="Logo da Calcula Artesão"
               width={logoSize}
               height={logoSize}
               style={{

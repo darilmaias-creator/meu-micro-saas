@@ -32,7 +32,7 @@ function StructuredData({ content }: { content: SearchIntentPageContent }) {
     url: pageUrl,
     isPartOf: {
       "@type": "WebSite",
-      name: "Calculadora do Produtor",
+      name: "Calcula Artesão",
       url: SITE_URL,
     },
     about: [
@@ -134,10 +134,10 @@ export function SearchIntentPage({
         <Link href="/" className="flex items-center gap-3 font-black tracking-[-0.03em]">
           <img
             src={DEFAULT_STORE_LOGO}
-            alt="Logo da Calculadora do Produtor"
+            alt="Logo da Calcula Artesão"
             className="h-14 w-14 rounded-2xl bg-white shadow-[0_16px_36px_rgba(154,79,0,0.18)]"
           />
-          <span>Calculadora do Produtor</span>
+          <span>Calcula Artesão</span>
         </Link>
 
         <div className="flex items-center gap-3">
@@ -270,7 +270,7 @@ export function SearchIntentPage({
         <SectionTitle
           eyebrow="Perguntas frequentes"
           title="Dúvidas comuns de quem quer usar a calculadora no dia a dia."
-          description="Quanto mais clara a resposta, mais facil fica entender se a Calculadora do Produtor encaixa na rotina do seu negocio."
+          description="Quanto mais clara a resposta, mais facil fica entender se a Calcula Artesão encaixa na rotina do seu negocio."
         />
 
         <div className="mt-8 grid gap-5 lg:grid-cols-3">
@@ -289,7 +289,7 @@ export function SearchIntentPage({
       <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-18">
         <SectionTitle
           eyebrow="Mais conteudos"
-          title="Outras paginas uteis da Calculadora do Produtor."
+          title="Outras paginas uteis da Calcula Artesão."
           description="Escolha o tema que faz mais sentido para seu momento e continue organizando melhor a sua rotina de producao."
         />
 
@@ -319,7 +319,7 @@ export function SearchIntentPage({
               Quer sair do preco no olho?
             </h2>
             <p className="mt-4 max-w-2xl leading-8 text-white/80">
-              Use a Calculadora do Produtor para organizar materiais, precificar
+              Use a Calcula Artesão para organizar materiais, precificar
               com mais clareza e montar orcamentos com uma apresentacao melhor.
             </p>
           </div>

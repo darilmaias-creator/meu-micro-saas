@@ -13,7 +13,7 @@ function createPasswordResetEmailBody(input: {
   const expirationLabel = getPasswordResetExpirationLabel(input.expiresAt);
 
   return {
-    subject: "Redefina sua senha - Calculadora do Produtor",
+    subject: "Redefina sua senha - Calcula Artesão",
     text: [
       `Ola, ${input.name}!`,
       "",
@@ -30,7 +30,7 @@ function createPasswordResetEmailBody(input: {
       <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
         <h2 style="margin-bottom: 8px;">Recuperacao de senha</h2>
         <p>Ola, <strong>${input.name}</strong>.</p>
-        <p>Recebemos um pedido para redefinir a senha da sua conta na Calculadora do Produtor.</p>
+        <p>Recebemos um pedido para redefinir a senha da sua conta na Calcula Artesão.</p>
         <p>
           <a
             href="${input.resetUrl}"

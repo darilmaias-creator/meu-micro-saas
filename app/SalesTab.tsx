@@ -1228,7 +1228,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                                   letterSpacing: "1px",
                                 }}
                               >
-                                {config.storeName || "Calculadora do Produtor"}
+                                {config.storeName || "Calcula Artesão"}
                               </h2>
                               <p
                                 style={{
@@ -1831,7 +1831,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                             margin: "0 0 2px 0",
                           }}
                         >
-                          {config.storeName || "Calculadora do Produtor"}
+                          {config.storeName || "Calcula Artesão"}
                         </p>
                         <p
                           style={{
@@ -1857,7 +1857,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                     margin: 0,
                   }}
                 >
-                  Obrigado pela preferência! Gerado pela Calculadora do Produtor.
+                  Obrigado pela preferência! Gerado pela Calcula Artesão.
                   Orçamentos claros. Clientes seguros. Negócios fechados.
                 </p>
               </div>

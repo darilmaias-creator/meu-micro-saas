@@ -46,7 +46,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     heroTitle:
       "Calculadora para artesão para organizar custos, estoque e orçamentos sem complicação.",
     heroDescription:
-      "A Calculadora do Produtor ajuda quem trabalha com artesanato a sair do preço no olho. Em vez de anotar tudo em vários lugares, você concentra materiais, ficha técnica, preço de venda e orçamentos em um só sistema.",
+      "A Calcula Artesão ajuda quem trabalha com artesanato a sair do preço no olho. Em vez de anotar tudo em vários lugares, você concentra materiais, ficha técnica, preço de venda e orçamentos em um só sistema.",
     lead:
       "Se você chegou até aqui procurando uma calculadora para artesão, provavelmente quer parar de adivinhar valores e ganhar mais segurança para vender. Esta página foi montada para mostrar, de forma simples, como o app ajuda no dia a dia de quem produz e quer cobrar melhor.",
     benefits: [
@@ -107,7 +107,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     },
     faqs: [
       {
-        question: "A Calculadora do Produtor serve para qualquer tipo de artesanato?",
+        question: "A Calcula Artesão serve para qualquer tipo de artesanato?",
         answer:
           "Ela foi pensada para pequenos produtores e artesãos que trabalham com custo de material, tempo de produção, estoque e orçamento. Funciona bem para várias rotinas, como personalizados, MDF, costura, papelaria e lembrancinhas.",
       },
@@ -133,11 +133,11 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     metadataTitle:
       "Precificação de artesanato | Como calcular preço de venda",
     metadataDescription:
-      "Veja como fazer a precificação de artesanato com materiais, tempo, custos extras, margem e estoque usando a Calculadora do Produtor.",
+      "Veja como fazer a precificação de artesanato com materiais, tempo, custos extras, margem e estoque usando a Calcula Artesão.",
     eyebrow: "Precificação de artesanato",
     heroTitle: "Precificação de artesanato com menos chute e mais controle.",
     heroDescription:
-      "Precificar artesanato do jeito certo exige olhar para material, tempo, desperdício, custos extras e margem. A Calculadora do Produtor organiza esse processo em um fluxo mais simples.",
+      "Precificar artesanato do jeito certo exige olhar para material, tempo, desperdício, custos extras e margem. A Calcula Artesão organiza esse processo em um fluxo mais simples.",
     lead:
       "Quem pesquisa por precificação de artesanato, como calcular preço de venda ou como precificar artesanato precisa de uma base clara. O app ajuda justamente nisso: transformar informações soltas em preço mais seguro.",
     benefits: [
@@ -172,7 +172,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     eyebrow: "Orçamento para artesanato",
     heroTitle: "Um orçamento para artesanato mais claro, profissional e fácil de aprovar.",
     heroDescription:
-      "Não basta calcular preço: também é preciso apresentar o valor de forma organizada. A Calculadora do Produtor ajuda a gerar orçamentos com mais clareza para o cliente entender o pedido.",
+      "Não basta calcular preço: também é preciso apresentar o valor de forma organizada. A Calcula Artesão ajuda a gerar orçamentos com mais clareza para o cliente entender o pedido.",
     lead:
       "Quem procura modelo de orçamento para artesanato ou como fazer orçamento para cliente normalmente quer passar mais confiança. O app permite sair do improviso e mostrar valor com mais profissionalismo.",
     benefits: [
@@ -203,11 +203,11 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     metadataTitle:
       "Controle de estoque para artesão | Materiais, custo e reposição",
     metadataDescription:
-      "Controle de estoque para artesão com materiais, medidas, custo real, valor parado e alerta de reposição na Calculadora do Produtor.",
+      "Controle de estoque para artesão com materiais, medidas, custo real, valor parado e alerta de reposição na Calcula Artesão.",
     eyebrow: "Controle de estoque para artesão",
     heroTitle: "Controle de estoque para artesão sem perder de vista custo, medida e reposição.",
     heroDescription:
-      "Quando o estoque fica solto, a precificação também fica. A Calculadora do Produtor ajuda a acompanhar materiais, quantidades e custo real para produzir com mais previsibilidade.",
+      "Quando o estoque fica solto, a precificação também fica. A Calcula Artesão ajuda a acompanhar materiais, quantidades e custo real para produzir com mais previsibilidade.",
     lead:
       "Quem pesquisa por controle de estoque para artesão ou como organizar materiais de artesanato precisa de mais do que uma lista: precisa enxergar impacto no preço, no orçamento e na reposição.",
     benefits: [
@@ -243,7 +243,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     heroTitle:
       "Como calcular preço de venda no artesanato de um jeito simples e mais seguro.",
     heroDescription:
-      "Muita gente soma o valor do material e acha que isso basta. Mas para cobrar melhor, você precisa olhar também para tempo, custos da operação e margem. A Calculadora do Produtor ajuda a organizar isso sem complicar sua rotina.",
+      "Muita gente soma o valor do material e acha que isso basta. Mas para cobrar melhor, você precisa olhar também para tempo, custos da operação e margem. A Calcula Artesão ajuda a organizar isso sem complicar sua rotina.",
     lead:
       "Se você procura como calcular preço de venda no artesanato, provavelmente quer parar de cobrar no improviso e entender melhor o valor real da sua peça. Esta página mostra esse caminho de forma simples, com exemplos que fazem sentido para quem está começando ou quer mais clareza.",
     benefits: [
@@ -314,7 +314,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
           "Sim. Mesmo no início, entender a margem ajuda você a saber se o valor cobrado está cobrindo o custo e deixando retorno para o negócio continuar.",
       },
       {
-        question: "A Calculadora do Produtor faz esse cálculo automaticamente?",
+        question: "A Calcula Artesão faz esse cálculo automaticamente?",
         answer:
           "Sim. O objetivo do app é justamente organizar os dados e mostrar um preço mais seguro sem que você precise refazer a conta toda vez manualmente.",
       },
@@ -335,7 +335,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     heroTitle:
       "Calculadora para crochê para cobrar melhor sem passar valor no improviso.",
     heroDescription:
-      "Quem trabalha com crochê costuma lidar com fio, enchimento, aviamentos, tempo de produção e detalhes que mudam de uma peça para outra. A Calculadora do Produtor ajuda a transformar isso em um preço mais claro.",
+      "Quem trabalha com crochê costuma lidar com fio, enchimento, aviamentos, tempo de produção e detalhes que mudam de uma peça para outra. A Calcula Artesão ajuda a transformar isso em um preço mais claro.",
     lead:
       "Se você procura como calcular preço de crochê, quanto cobrar por amigurumi ou como organizar materiais de crochê, esta página foi feita para mostrar como o app simplifica essa rotina para quem produz por encomenda ou por pronta entrega.",
     benefits: [
@@ -422,7 +422,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     heroTitle:
       "Calculadora para laços para precificar peças e kits com mais clareza.",
     heroDescription:
-      "Quando o produto parece pequeno, muita gente acaba cobrando menos do que deveria. A Calculadora do Produtor ajuda quem trabalha com laços a enxergar materiais, tempo e margem com mais segurança.",
+      "Quando o produto parece pequeno, muita gente acaba cobrando menos do que deveria. A Calcula Artesão ajuda quem trabalha com laços a enxergar materiais, tempo e margem com mais segurança.",
     lead:
       "Se você vende laços, kits infantis, presilhas ou acessórios personalizados, esta página mostra como o app ajuda a sair do preço no olho e montar uma base mais profissional para vender.",
     benefits: [
@@ -596,7 +596,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     heroTitle:
       "Calculadora para papelaria personalizada para precificar sem se perder nos detalhes.",
     heroDescription:
-      "Quem trabalha com papelaria personalizada lida com muitos pequenos custos: papel, impressão, lâmina, cola, fita, embalagem e acabamento. A Calculadora do Produtor ajuda a organizar tudo isso em uma base mais clara.",
+      "Quem trabalha com papelaria personalizada lida com muitos pequenos custos: papel, impressão, lâmina, cola, fita, embalagem e acabamento. A Calcula Artesão ajuda a organizar tudo isso em uma base mais clara.",
     lead:
       "Se você vende convites, caixinhas, topos, adesivos, lembrancinhas impressas ou kits personalizados, esta página mostra como o app ajuda a calcular melhor o preço e apresentar orçamentos com mais segurança.",
     benefits: [
@@ -683,7 +683,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
     heroTitle:
       "Calculadora para confeitaria artesanal para organizar ingredientes, custos e preço de venda.",
     heroDescription:
-      "Na confeitaria artesanal, muitos custos passam despercebidos: ingredientes, recheios, coberturas, embalagens, energia, perdas e tempo. A Calculadora do Produtor ajuda a enxergar melhor essa conta.",
+      "Na confeitaria artesanal, muitos custos passam despercebidos: ingredientes, recheios, coberturas, embalagens, energia, perdas e tempo. A Calcula Artesão ajuda a enxergar melhor essa conta.",
     lead:
       "Se você procura como calcular preço de doces artesanais, bolo no pote, brigadeiros ou encomendas de confeitaria, esta página mostra como o app ajuda a montar uma base mais segura para vender.",
     benefits: [
@@ -1015,7 +1015,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
           "Não. A mão de obra representa o valor do seu trabalho na produção. O lucro é outra camada do preço, ligada ao retorno do negócio.",
       },
       {
-        question: "A Calculadora do Produtor ajuda a visualizar isso?",
+        question: "A Calcula Artesão ajuda a visualizar isso?",
         answer:
           "Sim. O app foi feito justamente para reunir materiais, tempo e outros custos em um cálculo mais claro.",
       },
@@ -1189,7 +1189,7 @@ export const SEARCH_INTENT_PAGES: SearchIntentPageContent[] = [
           "Sim. Ela é uma das melhores bases para entender o que entra no custo do produto e formar o preço com mais segurança.",
       },
       {
-        question: "A Calculadora do Produtor permite montar essa ficha?",
+        question: "A Calcula Artesão permite montar essa ficha?",
         answer:
           "Sim. O app foi pensado justamente para reunir materiais, consumo e base do produto em um mesmo lugar.",
       },

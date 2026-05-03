@@ -88,7 +88,7 @@ const HASHTAGS_POOL = [
   "#precificacao",
   "#pequenonegocio",
   "#empreendedorismocriativo",
-  "#calculadoradoprodutor",
+  "#calculaartesao",
   "#controledeestoque",
   "#orcamento",
   "#lucro",

@@ -10,9 +10,9 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Termos de uso | Calculadora do Produtor",
+  title: "Termos de uso | Calcula Artesão",
   description:
-    "Leia os termos de uso públicos da Calculadora do Produtor, incluindo acesso à conta, uso do sistema, plano Premium e regras gerais da plataforma.",
+    "Leia os termos de uso públicos da Calcula Artesão, incluindo acesso à conta, uso do sistema, plano Premium e regras gerais da plataforma.",
 };
 
 const LAST_UPDATED_LABEL = "26/04/2026";
@@ -46,7 +46,7 @@ export default function TermsOfUsePage() {
             </h1>
             <p className="mt-4 text-sm text-slate-600">
               Esta pagina apresenta, em linguagem simples, as regras gerais de
-              uso da Calculadora do Produtor, incluindo acesso ao sistema,
+              uso da Calcula Artesão, incluindo acesso ao sistema,
               recursos da conta, plano Premium e condutas esperadas durante o
               uso da plataforma.
             </p>
@@ -67,7 +67,7 @@ export default function TermsOfUsePage() {
               </div>
               <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
                 <p>
-                  Ao usar a Calculadora do Produtor, o usuario concorda com
+                  Ao usar a Calcula Artesão, o usuario concorda com
                   estas regras publicas de uso. O objetivo do sistema e ajudar
                   pequenos produtores a organizar materiais, calcular preco,
                   controlar estoque, montar fichas tecnicas, criar orcamentos e
@@ -103,7 +103,7 @@ export default function TermsOfUsePage() {
                 <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-slate-700">
                   <p className="font-bold text-sky-900">Importante</p>
                   <p className="mt-2">
-                    A Calculadora do Produtor e uma ferramenta de apoio a
+                    A Calcula Artesão e uma ferramenta de apoio a
                     organizacao e decisao. O usuario continua responsavel por
                     validar os dados do proprio negocio antes de aplicar esses
                     resultados em operacoes reais.

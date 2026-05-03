@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     title: content.metadataTitle,
     description: content.metadataDescription,
     url: "/como-calcular-mao-de-obra-no-artesanato",
-    siteName: "Calculadora do Produtor",
+    siteName: "Calcula Artesão",
     locale: "pt_BR",
     type: "website",
   },

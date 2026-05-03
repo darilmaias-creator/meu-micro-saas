@@ -692,7 +692,7 @@ export default function ProfileModal({
 
       await navigator.share({
         title: "Backup da conta",
-        text: "Backup da conta da Calculadora do Produtor.",
+        text: "Backup da conta da Calcula Artesão.",
         files: [backupFile],
       });
 
@@ -1207,7 +1207,7 @@ export default function ProfileModal({
                   Depoimento para o site
                 </div>
                 <h3 className="mt-3 text-base font-black text-slate-800">
-                  Compartilhe sua experiencia com a Calculadora do Produtor
+                  Compartilhe sua experiencia com a Calcula Artesão
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   O depoimento e escrito dentro do app e pode aparecer

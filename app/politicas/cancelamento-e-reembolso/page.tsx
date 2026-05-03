@@ -3,9 +3,9 @@ import Link from "next/link";
 import { ArrowLeft, BadgeInfo, Crown, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Politica de cancelamento e reembolso | Calculadora do Produtor",
+  title: "Politica de cancelamento e reembolso | Calcula Artesão",
   description:
-    "Regras publicas de cancelamento, reembolso e renovacao da assinatura Premium da Calculadora do Produtor.",
+    "Regras publicas de cancelamento, reembolso e renovacao da assinatura Premium da Calcula Artesão.",
 };
 
 const LAST_UPDATED_LABEL = "12/04/2026";
@@ -39,7 +39,7 @@ export default function BillingPolicyPage() {
             </h1>
             <p className="mt-4 text-sm text-slate-600">
               Esta pagina explica, em linguagem simples, como funciona a
-              assinatura Premium da Calculadora do Produtor, quando o
+              assinatura Premium da Calcula Artesão, quando o
               cancelamento pode ser pedido e em quais casos o reembolso integral
               esta disponivel.
             </p>

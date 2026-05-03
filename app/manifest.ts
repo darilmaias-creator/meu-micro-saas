@@ -41,7 +41,7 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "380x824",
         type: "image/png",
         form_factor: "narrow",
-        label: "Tela de login da Calculadora do Produtor",
+        label: "Tela de login da Calcula Artesão",
       },
       {
         src: "/screenshots/estoque.png",
@@ -56,6 +56,13 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
         form_factor: "wide",
         label: "Tela de ficha tecnica e precificacao de produtos",
+      },
+      {
+        src: "/screenshots/vendas.png",
+        sizes: "733x286",
+        type: "image/png",
+        form_factor: "wide",
+        label: "Tela de orcamentos e vendas",
       },
     ],
     icons: [
