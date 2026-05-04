@@ -31,6 +31,14 @@ export default function CalculatorTab({ appData, isPremium }: any) {
     const [aiContent, setAiContent] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState('');
+    const freeProductUsage = savedProducts.length;
+    const freeProductRemaining = Math.max(FREE_TIER_PRODUCT_LIMIT - freeProductUsage, 0);
+    const freeProductProgress = Math.min(
+        100,
+        (freeProductUsage / FREE_TIER_PRODUCT_LIMIT) * 100
+    );
+    const isProductLimitReached = !isPremium && freeProductUsage >= FREE_TIER_PRODUCT_LIMIT;
+    const isProductLimitNear = !isPremium && !isProductLimitReached && freeProductRemaining <= 2;
 
     const toggleUnitGlobal = () => {
         const isToMM = config.unit === 'cm';
@@ -361,11 +369,72 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                     </div>
                 </div>
                 
-                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl p-1 shadow-lg"><div className="bg-white rounded-lg p-5"><div className="flex items-center gap-2 mb-4 text-indigo-700"><Sparkles size={20} className="animate-pulse" /><h2 className="font-bold text-lg">Catálogo & Marketing</h2></div><div className="space-y-3"><input type="text" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="Nome do Produto Final" className="w-full p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all" /><div className="flex gap-2"><button onClick={saveProduct} className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg flex items-center justify-center gap-2 text-sm shadow-lg"><Save size={16} /> Salvar no Catálogo</button><button onClick={generateMarketingCopy} disabled={isGenerating || !productName} className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold rounded-lg flex items-center justify-center gap-2 text-sm shadow-lg">{isGenerating ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <><Sparkles size={16} /> Criar Post</>}</button></div>{error && <p className="text-red-500 text-xs mt-2">{error}</p>}{aiContent && (<div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100 relative group"><button onClick={() => navigator.clipboard.writeText(aiContent)} className="absolute top-2 right-2 text-indigo-400 hover:text-indigo-700 p-1.5 hover:bg-indigo-100 rounded-md" title="Copiar"><Copy size={16} /></button><div className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">{aiContent}</div></div>)}</div></div></div>
+                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl p-1 shadow-lg">
+                    <div className="bg-white rounded-lg p-5">
+                        <div className="flex items-center gap-2 mb-4 text-indigo-700">
+                            <Sparkles size={20} className="animate-pulse" />
+                            <h2 className="font-bold text-lg">Catálogo & Marketing</h2>
+                        </div>
+
+                        {!isPremium && (
+                            <div className={`mb-4 rounded-lg border px-3 py-3 ${
+                                isProductLimitReached
+                                    ? 'border-red-200 bg-red-50'
+                                    : isProductLimitNear
+                                        ? 'border-amber-300 bg-amber-50'
+                                        : 'border-slate-200 bg-slate-50'
+                            }`}>
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Plano grátis • limite de produtos</p>
+                                    <span className="text-xs font-black text-slate-700">{freeProductUsage}/{FREE_TIER_PRODUCT_LIMIT}</span>
+                                </div>
+                                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+                                    <div
+                                        className={`h-full rounded-full ${
+                                            isProductLimitReached ? 'bg-red-500' : isProductLimitNear ? 'bg-amber-500' : 'bg-slate-700'
+                                        }`}
+                                        style={{ width: `${freeProductProgress}%` }}
+                                    />
+                                </div>
+                                <p className={`mt-2 text-xs font-semibold ${
+                                    isProductLimitReached
+                                        ? 'text-red-600'
+                                        : isProductLimitNear
+                                            ? 'text-amber-700'
+                                            : 'text-slate-600'
+                                }`}>
+                                    {isProductLimitReached
+                                        ? 'Limite atingido. Para salvar novos produtos, assine o Premium.'
+                                        : `Faltam ${freeProductRemaining} ${freeProductRemaining === 1 ? 'produto' : 'produtos'} para atingir o limite.`}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="space-y-3">
+                            <input type="text" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="Nome do Produto Final" className="w-full p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={saveProduct}
+                                    disabled={isProductLimitReached}
+                                    className={`flex-1 py-2.5 text-white font-bold rounded-lg flex items-center justify-center gap-2 text-sm shadow-lg transition-colors ${
+                                        isProductLimitReached
+                                            ? 'bg-slate-300 cursor-not-allowed'
+                                            : 'bg-slate-800 hover:bg-slate-900'
+                                    }`}
+                                >
+                                    <Save size={16} /> Salvar no Catálogo
+                                </button>
+                                <button onClick={generateMarketingCopy} disabled={isGenerating || !productName} className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold rounded-lg flex items-center justify-center gap-2 text-sm shadow-lg">{isGenerating ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <><Sparkles size={16} /> Criar Post</>}</button>
+                            </div>
+                            {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
+                            {aiContent && (<div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100 relative group"><button onClick={() => navigator.clipboard.writeText(aiContent)} className="absolute top-2 right-2 text-indigo-400 hover:text-indigo-700 p-1.5 hover:bg-indigo-100 rounded-md" title="Copiar"><Copy size={16} /></button><div className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">{aiContent}</div></div>)}
+                        </div>
+                    </div>
+                </div>
             </div></div>
 
             {/* HISTÓRICO DE PRODUTOS */}
-            <div className="col-span-1 md:col-span-12 mt-8 animate-fadeIn"><div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"><div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center flex-wrap gap-4"><h3 className="font-bold text-lg text-slate-700 flex items-center gap-2"><Save size={20} className="text-slate-500"/> Catálogo de Produtos Salvos {!isPremium && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">Grátis: {savedProducts.length}/{FREE_TIER_PRODUCT_LIMIT}</span>}</h3>{savedProducts.length > 0 && (<button onClick={exportProductsToCSV} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"><Download size={16} /> Baixar Planilha</button>)}</div>
+            <div className="col-span-1 md:col-span-12 mt-8 animate-fadeIn"><div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"><div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center flex-wrap gap-4"><h3 className="font-bold text-lg text-slate-700 flex items-center gap-2"><Save size={20} className="text-slate-500"/> Catálogo de Produtos Salvos {!isPremium && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">{freeProductUsage}/{FREE_TIER_PRODUCT_LIMIT} usados</span>}</h3>{savedProducts.length > 0 && (<button onClick={exportProductsToCSV} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"><Download size={16} /> Baixar Planilha</button>)}</div>
             {savedProducts.length === 0 ? (
                 <div className="p-8 text-center text-slate-400"><p>Nenhum produto salvo no seu catálogo ainda.</p><p className="text-sm mt-1">Calcule um produto e clique em &quot;Salvar no Catálogo&quot; para visualizá-lo aqui.</p></div>
             ) : (

@@ -44,6 +44,14 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
     const [insMinStock, setInsMinStock] = useState('');
     const [editingInsumoId, setEditingInsumoId] = useState<number | null>(null);
     const inventoryItems = insumos as InventoryRecord[];
+    const freeInsumoUsage = inventoryItems.length;
+    const freeInsumoRemaining = Math.max(FREE_TIER_INSUMO_LIMIT - freeInsumoUsage, 0);
+    const freeInsumoProgress = Math.min(
+        100,
+        (freeInsumoUsage / FREE_TIER_INSUMO_LIMIT) * 100
+    );
+    const isInsumoLimitReached = !isPremium && freeInsumoUsage >= FREE_TIER_INSUMO_LIMIT;
+    const isInsumoLimitNear = !isPremium && !isInsumoLimitReached && freeInsumoRemaining <= 2;
 
     const resetForm = () => {
         setEditingInsumoId(null);
@@ -166,6 +174,39 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                         </button>
                     </div>
                 )}
+                {!isPremium && (
+                    <div className={`mb-4 rounded-lg border px-3 py-3 ${
+                        isInsumoLimitReached
+                            ? 'border-red-200 bg-red-50'
+                            : isInsumoLimitNear
+                                ? 'border-amber-300 bg-amber-50'
+                                : 'border-slate-200 bg-slate-50'
+                    }`}>
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Plano grátis • limite de insumos</p>
+                            <span className="text-xs font-black text-slate-700">{freeInsumoUsage}/{FREE_TIER_INSUMO_LIMIT}</span>
+                        </div>
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+                            <div
+                                className={`h-full rounded-full ${
+                                    isInsumoLimitReached ? 'bg-red-500' : isInsumoLimitNear ? 'bg-amber-500' : 'bg-slate-700'
+                                }`}
+                                style={{ width: `${freeInsumoProgress}%` }}
+                            />
+                        </div>
+                        <p className={`mt-2 text-xs font-semibold ${
+                            isInsumoLimitReached
+                                ? 'text-red-600'
+                                : isInsumoLimitNear
+                                    ? 'text-amber-700'
+                                    : 'text-slate-600'
+                        }`}>
+                            {isInsumoLimitReached
+                                ? 'Limite atingido. Para adicionar mais insumos, assine o Premium.'
+                                : `Faltam ${freeInsumoRemaining} ${freeInsumoRemaining === 1 ? 'insumo' : 'insumos'} para atingir o limite.`}
+                        </p>
+                    </div>
+                )}
                 <div className="mb-4">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Tipo de Medida</label>
                     <select value={insType} onChange={e=>setInsType(e.target.value as InsumoType)} className="w-full p-2.5 border border-slate-300 rounded-lg outline-none text-sm font-bold bg-white text-slate-700">
@@ -185,7 +226,15 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                 
                 <div className="border-t border-slate-100 pt-4"><InputGroup label={insType === 'weight' ? "Estoque Atual (Qtd de Pacotes/Sacos)" : insType === 'volume' ? "Estoque Atual (Qtd de Frascos/Caixas)" : "Estoque Atual (Qtd Pacotes/Unidades)"} value={insStock} onChange={setInsStock} tooltip={insType === 'weight' ? "Quantos pacotes ou sacos inteiros você tem na prateleira agora?" : insType === 'volume' ? "Quantos frascos, caixas ou garrafas inteiras você tem disponíveis?" : "Quantas unidades físicas você tem aí na prateleira?"} /><InputGroup label="Alerta de Estoque Mínimo" value={insMinStock} onChange={setInsMinStock} /></div>
                 <div className="flex flex-col gap-2">
-                    <button onClick={handleSaveInsumo} className={`w-full py-3 text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors bg-amber-600 hover:bg-amber-700`}><Save size={18} /> {editingInsumoId ? 'Atualizar no Estoque' : 'Salvar no Estoque'}</button>
+                    <button
+                        onClick={handleSaveInsumo}
+                        disabled={isInsumoLimitReached && editingInsumoId === null}
+                        className={`w-full py-3 text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors ${
+                            isInsumoLimitReached && editingInsumoId === null
+                                ? 'bg-slate-300 cursor-not-allowed'
+                                : 'bg-amber-600 hover:bg-amber-700'
+                        }`}
+                    ><Save size={18} /> {editingInsumoId ? 'Atualizar no Estoque' : 'Salvar no Estoque'}</button>
                     {editingInsumoId && (
                         <button onClick={resetForm} className="w-full py-2.5 text-slate-700 font-bold rounded-lg flex justify-center items-center gap-2 transition-colors bg-slate-100 hover:bg-slate-200">
                             <X size={16} /> Limpar edição
@@ -194,7 +243,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                 </div>
             </Card>
             <Card className="md:col-span-2">
-                    <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-700"><Box size={20} /> Controle de Estoque Completo {!isPremium && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">Grátis: {inventoryItems.length}/{FREE_TIER_INSUMO_LIMIT}</span>}</h2>
+                    <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-700"><Box size={20} /> Controle de Estoque Completo {!isPremium && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">{freeInsumoUsage}/{FREE_TIER_INSUMO_LIMIT} usados</span>}</h2>
                 <div className="overflow-x-auto"><table className="w-full text-left text-sm text-slate-600 whitespace-nowrap"><thead className="bg-slate-50 uppercase text-xs font-bold text-slate-500"><tr><th className="p-3">Insumo</th><th className="p-3">Tipo</th><th className="p-3 text-right">Custo Unid.</th><th className="p-3 text-center">Estoque</th><th className="p-3 text-right text-green-600">Valor Parado</th><th className="p-3 text-center">Status</th><th className="p-3 text-center">Ação</th></tr></thead><tbody className="divide-y divide-slate-100">
                     {inventoryItems.map((i) => {
                         const isLow = i.stock <= i.minStock; const unitCost = i.costPerItem || i.price; const totalValueInStock = Number(i.stock) * unitCost;
