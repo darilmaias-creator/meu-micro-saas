@@ -896,7 +896,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               </div>
             </div>
 
-            {quoteLineItems.length > 0 && (
+            {quoteLineItems.length > 0 ? (
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <h3 className="text-xs font-bold text-slate-500 uppercase">
@@ -935,6 +935,19 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                     </div>
                   ))}
                 </div>
+              </div>
+            ) : (
+              <div className="bg-white p-4 rounded-xl border border-dashed border-amber-300 shadow-sm">
+                <h3 className="text-xs font-bold text-slate-500 uppercase mb-2">
+                  Itens deste orçamento
+                </h3>
+                <p className="text-sm font-semibold text-amber-900">
+                  Nenhum produto adicionado ainda.
+                </p>
+                <p className="text-xs text-amber-800 mt-1">
+                  Próximo passo: selecione um produto e clique em{" "}
+                  <strong>Adicionar produto</strong>.
+                </p>
               </div>
             )}
 
@@ -1077,14 +1090,14 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
         )}
       </Card>
 
-      {quoteItems.length > 0 && (
-        <Card className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock size={20} className="text-slate-500" />
-            <h3 className="font-bold text-lg text-slate-700">
-              Orçamentos Pendentes
-            </h3>
-          </div>
+      <Card className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock size={20} className="text-slate-500" />
+          <h3 className="font-bold text-lg text-slate-700">
+            Orçamentos Pendentes
+          </h3>
+        </div>
+        {quoteItems.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600 whitespace-nowrap">
               <thead className="bg-slate-50 uppercase text-xs font-bold text-slate-500 border-b border-slate-200">
@@ -1132,8 +1145,17 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               </tbody>
             </table>
           </div>
-        </Card>
-      )}
+        ) : (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
+            <p className="text-sm font-semibold text-slate-700">
+              Você ainda não tem orçamentos pendentes.
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Preencha os dados acima e clique em <strong>Salvar Pendente</strong> para registrar o primeiro orçamento.
+            </p>
+          </div>
+        )}
+      </Card>
 
       {currentDocumentData && (
         <div

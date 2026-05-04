@@ -257,8 +257,14 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                         <button onClick={handleAddIngredient} disabled={!tempInsumoId} className="w-full py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 text-white font-bold rounded-lg transition-colors flex justify-center gap-2"><Plus size={18} /> Inserir Material na Ficha</button>
                     </div>
 
-                    {recipeItems.length > 0 && (
+                    {recipeItems.length > 0 ? (
                         <div className="space-y-2 mb-4"><h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide">Materiais na Ficha</h3>{recipeItems.map((item, idx) => (<div key={idx} className="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-lg shadow-sm"><div><p className="font-bold text-sm text-slate-700">{item.name}</p><p className="text-xs text-slate-500">{item.display} {item.autoWaste > 0 && <span className="text-amber-500 ml-1">(+{item.autoWaste.toFixed(1)}% sobra incl.)</span>}</p></div><div className="flex items-center gap-3"><span className="font-bold text-slate-800">R$ {item.cost.toFixed(2)}</span><button onClick={() => removeRecipeItem(idx)} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button></div></div>))}</div>
+                    ) : (
+                        <div className="mb-4 rounded-xl border border-dashed border-amber-300 bg-amber-50 p-4">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Materiais na Ficha</h3>
+                            <p className="text-sm font-semibold text-amber-900">Você ainda não adicionou nenhum material.</p>
+                            <p className="text-xs text-amber-800 mt-1">Próximo passo: selecione um material acima e clique em <strong>Inserir Material na Ficha</strong>.</p>
+                        </div>
                     )}
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-4 border-t border-slate-100">
