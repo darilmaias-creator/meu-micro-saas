@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -33,6 +33,9 @@ type AuthenticatedAppShellProps = {
   initialTab: ActiveTab;
   session: Session;
 };
+
+const getSetupOnboardingStorageKey = (userId: string) =>
+  `calcula-artesao:setup-onboarding-completed:${userId}`;
 
 const TAB_ITEMS = [
   {
@@ -73,16 +76,6 @@ export default function AuthenticatedAppShell({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const appData = useAppData(session.user.id);
 
-  if (!appData.isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p className="text-xl font-bold text-amber-600 animate-pulse">
-          Sincronizando banco de dados...
-        </p>
-      </div>
-    );
-  }
-
   const activeTab = initialTab;
   const isPremium = session.user.isPremium;
   const displayHeaderAvatar = isPremium ? session.user?.image : null;
@@ -116,7 +109,39 @@ export default function AuthenticatedAppShell({
   const setupProgressPercent = Math.round(
     (completedSetupSteps / setupSteps.length) * 100,
   );
-  const shouldShowSetupOnboarding = completedSetupSteps < setupSteps.length;
+  const setupOnboardingStorageKey = getSetupOnboardingStorageKey(
+    session.user.id,
+  );
+  const hasCompletedSetupOnce =
+    typeof window !== "undefined" &&
+    window.localStorage.getItem(setupOnboardingStorageKey) === "1";
+
+  useEffect(() => {
+    if (completedSetupSteps < setupSteps.length || hasCompletedSetupOnce) {
+      return;
+    }
+
+    window.localStorage.setItem(setupOnboardingStorageKey, "1");
+  }, [
+    completedSetupSteps,
+    hasCompletedSetupOnce,
+    setupOnboardingStorageKey,
+    setupSteps.length,
+  ]);
+
+  const shouldShowSetupOnboarding =
+    !hasCompletedSetupOnce &&
+    completedSetupSteps < setupSteps.length;
+
+  if (!appData.isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <p className="text-xl font-bold text-amber-600 animate-pulse">
+          Sincronizando banco de dados...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-transparent pb-24 font-sans text-slate-800 md:pb-12">
