@@ -223,7 +223,10 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                     </div>
                 </Card>
 
-                <Card className="border-t-4 border-amber-500">
+                <Card
+                    data-onboarding="calculator-recipe-form"
+                    className="border-t-4 border-amber-500"
+                >
                     <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
                         <div className="flex items-center gap-2 text-amber-600"><Package size={20} /><h2 className="font-bold text-lg text-slate-800">2. Materiais & Tempos</h2></div>
                         <div className="flex bg-slate-100 p-1 rounded border"><button onClick={() => config.unit !== 'cm' && toggleUnitGlobal()} className={`px-3 py-1 rounded text-xs font-bold ${config.unit === 'cm' ? 'bg-white shadow text-amber-600' : 'text-slate-400'}`}>CM</button><button onClick={() => config.unit !== 'mm' && toggleUnitGlobal()} className={`px-3 py-1 rounded text-xs font-bold ${config.unit === 'mm' ? 'bg-white shadow text-amber-600' : 'text-slate-400'}`}>MM</button></div>

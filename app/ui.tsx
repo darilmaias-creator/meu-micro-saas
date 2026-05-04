@@ -2,8 +2,16 @@
 import React, { useEffect, useState } from 'react';
 import { Info } from 'lucide-react';
 
-export const Card = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
-    <div className={`bg-white rounded-xl shadow-lg p-6 border border-slate-200 ${className}`}>
+type CardProps = React.HTMLAttributes<HTMLDivElement> & {
+    children: React.ReactNode;
+    className?: string;
+};
+
+export const Card = ({ children, className = "", ...props }: CardProps) => (
+    <div
+        {...props}
+        className={`bg-white rounded-xl shadow-lg p-6 border border-slate-200 ${className}`}
+    >
         {children}
     </div>
 );

@@ -767,7 +767,10 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
 
   return (
     <div className="animate-fadeIn max-w-3xl mx-auto w-full">
-      <Card className="border-t-4 border-t-amber-500 mb-8">
+      <Card
+        data-onboarding="sales-quote-workflow"
+        className="border-t-4 border-t-amber-500 mb-8"
+      >
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-amber-100 p-3 rounded-full text-amber-600">
             <ShoppingBag size={28} />

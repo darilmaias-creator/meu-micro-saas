@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
-  ArrowRight,
   BarChart2,
   Calculator,
-  CheckCircle2,
   Crown,
   DollarSign,
   LogOut,
@@ -24,6 +22,7 @@ import InventoryTab from "./InventoryTab";
 import OperationCostsTab from "./OperationCostsTab";
 import ProfileModal from "./ProfileModal";
 import SalesTab from "./SalesTab";
+import OnboardingGuide from "./onboarding/OnboardingGuide";
 import { useAppData } from "./hooks/useAppData";
 import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
 import type { ActiveTab } from "../lib/app-tabs";
@@ -33,9 +32,6 @@ type AuthenticatedAppShellProps = {
   initialTab: ActiveTab;
   session: Session;
 };
-
-const getSetupOnboardingStorageKey = (userId: string) =>
-  `calcula-artesao:setup-onboarding-completed:${userId}`;
 
 const TAB_ITEMS = [
   {
@@ -79,59 +75,6 @@ export default function AuthenticatedAppShell({
   const activeTab = initialTab;
   const isPremium = session.user.isPremium;
   const displayHeaderAvatar = isPremium ? session.user?.image : null;
-  const setupSteps = [
-    {
-      id: "insumo",
-      label: "Cadastre seu primeiro insumo",
-      description:
-        "Comece em Meus Materiais. Adicione nome, preço e estoque para o app calcular corretamente.",
-      href: getPathForActiveTab("inventory"),
-      isDone: appData.insumos.length > 0,
-    },
-    {
-      id: "ficha-tecnica",
-      label: "Monte sua primeira ficha técnica",
-      description:
-        "Na aba Calcular Preço, salve um produto para transformar custo em preço sugerido.",
-      href: getPathForActiveTab("calculator"),
-      isDone: appData.savedProducts.length > 0,
-    },
-    {
-      id: "orcamento",
-      label: "Gere seu primeiro orçamento",
-      description:
-        "Em Orçamentos e Vendas, gere o primeiro orçamento para já validar o fluxo de venda.",
-      href: getPathForActiveTab("sales"),
-      isDone: appData.quotes.length > 0 || appData.sales.length > 0,
-    },
-  ];
-  const completedSetupSteps = setupSteps.filter((step) => step.isDone).length;
-  const setupProgressPercent = Math.round(
-    (completedSetupSteps / setupSteps.length) * 100,
-  );
-  const setupOnboardingStorageKey = getSetupOnboardingStorageKey(
-    session.user.id,
-  );
-  const hasCompletedSetupOnce =
-    typeof window !== "undefined" &&
-    window.localStorage.getItem(setupOnboardingStorageKey) === "1";
-
-  useEffect(() => {
-    if (completedSetupSteps < setupSteps.length || hasCompletedSetupOnce) {
-      return;
-    }
-
-    window.localStorage.setItem(setupOnboardingStorageKey, "1");
-  }, [
-    completedSetupSteps,
-    hasCompletedSetupOnce,
-    setupOnboardingStorageKey,
-    setupSteps.length,
-  ]);
-
-  const shouldShowSetupOnboarding =
-    !hasCompletedSetupOnce &&
-    completedSetupSteps < setupSteps.length;
 
   if (!appData.isLoaded) {
     return (
@@ -240,83 +183,6 @@ export default function AuthenticatedAppShell({
       </div>
 
       <main className="mx-auto max-w-6xl px-4 py-5 md:py-6">
-        {shouldShowSetupOnboarding && (
-          <section className="mb-6 rounded-[28px] border border-amber-200/70 bg-white px-4 py-4 shadow-sm md:px-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
-                Setup inicial guiado
-              </p>
-              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
-                {completedSetupSteps}/{setupSteps.length} concluídos
-              </span>
-            </div>
-
-            <h2 className="mt-2 text-xl font-black text-slate-900 md:text-2xl">
-              Complete seu setup em 3 passos
-            </h2>
-            <p className="mt-1 text-sm text-slate-600 md:text-base">
-              Assim você passa da configuração para o primeiro orçamento sem se
-              perder.
-            </p>
-
-            <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-              <div
-                className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                style={{ width: `${setupProgressPercent}%` }}
-              />
-            </div>
-
-            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-              {setupSteps.map((step, index) => (
-                <article
-                  key={step.id}
-                  className={`rounded-2xl border p-3.5 ${
-                    step.isDone
-                      ? "border-emerald-200 bg-emerald-50/60"
-                      : "border-slate-200 bg-slate-50/70"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div
-                      className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-black ${
-                        step.isDone
-                          ? "bg-emerald-600 text-white"
-                          : "bg-amber-100 text-amber-800"
-                      }`}
-                    >
-                      {step.isDone ? <CheckCircle2 size={14} /> : index + 1}
-                    </div>
-                    {step.isDone && (
-                      <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">
-                        Concluído
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="mt-3 text-sm font-black text-slate-900 md:text-base">
-                    {step.label}
-                  </h3>
-                  <p className="mt-1.5 text-xs leading-relaxed text-slate-600 md:text-sm">
-                    {step.description}
-                  </p>
-                  {step.isDone ? (
-                    <p className="mt-3 text-xs font-bold text-emerald-700">
-                      Etapa finalizada.
-                    </p>
-                  ) : (
-                    <Link
-                      href={step.href}
-                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1.5 text-xs font-bold text-amber-700 shadow-sm ring-1 ring-amber-200 transition-colors hover:bg-amber-50"
-                    >
-                      Ir para esta etapa
-                      <ArrowRight size={14} />
-                    </Link>
-                  )}
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-
         {activeTab === "inventory" && (
           <InventoryTab
             insumos={appData.insumos}
@@ -341,6 +207,8 @@ export default function AuthenticatedAppShell({
 
         {activeTab === "dashboard" && <DashboardTab appData={appData} />}
       </main>
+
+      <OnboardingGuide userId={session.user.id} activeTab={activeTab} />
 
       <ProfileModal
         isOpen={isProfileOpen}

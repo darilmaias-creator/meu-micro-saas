@@ -156,7 +156,10 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn w-full">
-            <Card className={`md:col-span-1 border-t-4 border-amber-500`}>
+            <Card
+                data-onboarding="inventory-insumo-form"
+                className={`md:col-span-1 border-t-4 border-amber-500`}
+            >
                 <div className="mb-4 flex items-center justify-between gap-3">
                     <h2 className={`font-bold text-lg flex items-center gap-2 text-amber-600`}><Package size={20} /> {editingInsumoId ? 'Editar Insumo' : 'Novo Insumo'}</h2>
                     {(insType === 'area' || insType === 'length') && (
