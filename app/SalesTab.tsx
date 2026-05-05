@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  CheckCircle2,
   Clock,
   FileText,
   Save,
+  Share2,
   ShoppingBag,
   Trash2,
   Upload,
@@ -116,6 +118,20 @@ type CurrentDocumentData = {
   totalCost: number;
   totalTithe: number;
   totalProfit: number;
+};
+
+type CompletedSaleFeedback = {
+  id: number;
+  date: string;
+  clientName: string;
+  productLabel: string;
+  totalItems: number;
+  totalQuantity: number;
+  totalValue: number;
+  totalProfit: number;
+  totalTithe: number;
+  lowStockWarnings: string[];
+  formFingerprint: string;
 };
 
 type SalesTabProps = {
@@ -267,6 +283,9 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
   );
   const [docType, setDocType] = useState<"orcamento" | "recibo">("orcamento");
   const [quoteLineItems, setQuoteLineItems] = useState<QuoteLineItem[]>([]);
+  const [completedSaleFeedback, setCompletedSaleFeedback] =
+    useState<CompletedSaleFeedback | null>(null);
+  const [isSaleLocked, setIsSaleLocked] = useState(false);
 
   const resolvedQuoteConfig = useMemo(
     () => resolveQuoteDocumentConfig(config, isPremium),
@@ -338,6 +357,8 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     setQuoteNumber(Math.floor(Math.random() * 90000) + 10000);
     setActiveQuoteId(null);
     setDocType("orcamento");
+    setIsSaleLocked(false);
+    setCompletedSaleFeedback(null);
   }
 
   let currentSaleData: CurrentSaleData | null = null;
@@ -449,6 +470,46 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
           };
         })()
       : null;
+
+  const saleFormFingerprint = useMemo(
+    () =>
+      JSON.stringify({
+        saleProductId,
+        saleQuantity: Number(saleQuantity) || 0,
+        saleDate,
+        saleDiscountFixed,
+        saleDiscountPercent,
+        clientName,
+        clientPhone,
+        items: effectiveQuoteItems.map((item) => ({
+          productId: String(item.productId),
+          quantity: Number(item.quantity || 0),
+          unitPrice: Number(item.unitPrice || 0),
+          grossSale: Number(item.grossSale || 0),
+        })),
+      }),
+    [
+      clientName,
+      clientPhone,
+      effectiveQuoteItems,
+      saleDate,
+      saleDiscountFixed,
+      saleDiscountPercent,
+      saleProductId,
+      saleQuantity,
+    ],
+  );
+
+  useEffect(() => {
+    if (!isSaleLocked || !completedSaleFeedback) {
+      return;
+    }
+
+    if (saleFormFingerprint !== completedSaleFeedback.formFingerprint) {
+      setIsSaleLocked(false);
+      setCompletedSaleFeedback(null);
+    }
+  }, [completedSaleFeedback, isSaleLocked, saleFormFingerprint]);
 
   function addCurrentProductToQuote() {
     if (!previewQuoteItem) {
@@ -689,17 +750,22 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
       setQuotes(quoteItems.filter((quote) => quote.id !== activeQuoteId));
     }
 
-    alert("Venda Registrada! Estoque deduzido.");
-
-    if (isPremium && premiumLowStockWarnings.length > 0) {
-      alert(
-        `💎 ALERTA PREMIUM DE ESTOQUE:\n\nOs seguintes materiais chegaram no limite mínimo e estão acabando:\n${premiumLowStockWarnings
-          .map((item) => `- ${item}`)
-          .join("\n")}\n\nConsidere reabastecer o quanto antes!`,
-      );
-    }
-
-    resetSalesForm();
+    setActiveQuoteId(null);
+    setDocType("recibo");
+    setIsSaleLocked(true);
+    setCompletedSaleFeedback({
+      id: Date.now(),
+      date: saleDate || new Date().toISOString().split("T")[0],
+      clientName: clientName.trim(),
+      productLabel: summarizeQuoteProducts(currentDocumentData.items),
+      totalItems: currentDocumentData.items.length,
+      totalQuantity: totalQuoteQuantity(currentDocumentData.items),
+      totalValue: currentDocumentData.netSale,
+      totalProfit: currentDocumentData.totalProfit,
+      totalTithe: currentDocumentData.totalTithe,
+      lowStockWarnings: isPremium ? premiumLowStockWarnings : [],
+      formFingerprint: saleFormFingerprint,
+    });
   }
 
   async function generateQuotePDF() {
@@ -765,6 +831,55 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     }, 800);
   }
 
+  async function shareCompletedSaleSummary() {
+    if (!completedSaleFeedback) {
+      return;
+    }
+
+    const summaryText = [
+      `Venda concluída no Calcula Artesão`,
+      `Data: ${formatDocumentDate(completedSaleFeedback.date)}`,
+      completedSaleFeedback.clientName
+        ? `Cliente: ${completedSaleFeedback.clientName}`
+        : null,
+      `Itens: ${completedSaleFeedback.productLabel}`,
+      `Quantidade total: ${formatQuoteQuantity(completedSaleFeedback.totalQuantity)}`,
+      `Valor final: R$ ${Number(completedSaleFeedback.totalValue || 0).toFixed(2)}`,
+      `Dízimo: R$ ${Number(completedSaleFeedback.totalTithe || 0).toFixed(2)}`,
+      `Lucro estimado: R$ ${Number(completedSaleFeedback.totalProfit || 0).toFixed(2)}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Resumo da venda",
+          text: summaryText,
+        });
+        return;
+      } catch {
+        // Continue with fallback options below.
+      }
+    }
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(summaryText);
+        alert("Resumo da venda copiado. Agora é só colar no WhatsApp.");
+        return;
+      } catch {
+        // Continue with fallback options below.
+      }
+    }
+
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(summaryText)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
+
   return (
     <div className="animate-fadeIn max-w-3xl mx-auto w-full">
       <Card
@@ -784,6 +899,86 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
             </p>
           </div>
         </div>
+
+        {completedSaleFeedback && (
+          <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-emerald-700">
+                  <CheckCircle2 size={16} />
+                  Venda concluída
+                </p>
+                <p className="mt-1 text-sm text-emerald-900">
+                  Estoque atualizado com sucesso. Aproveite para compartilhar ou
+                  baixar o recibo agora.
+                </p>
+                <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-emerald-900 sm:grid-cols-2">
+                  <p>
+                    <span className="font-bold">Valor final:</span> R${" "}
+                    {Number(completedSaleFeedback.totalValue || 0).toFixed(2)}
+                  </p>
+                  <p>
+                    <span className="font-bold">Lucro estimado:</span> R${" "}
+                    {Number(completedSaleFeedback.totalProfit || 0).toFixed(2)}
+                  </p>
+                  <p>
+                    <span className="font-bold">Cliente:</span>{" "}
+                    {completedSaleFeedback.clientName || "Não informado"}
+                  </p>
+                  <p>
+                    <span className="font-bold">Data:</span>{" "}
+                    {formatDocumentDate(completedSaleFeedback.date)}
+                  </p>
+                  <p className="sm:col-span-2">
+                    <span className="font-bold">Produtos:</span>{" "}
+                    {completedSaleFeedback.productLabel}
+                  </p>
+                </div>
+
+                {completedSaleFeedback.lowStockWarnings.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    <p className="font-bold mb-1">
+                      Alerta Premium: estoque no limite mínimo
+                    </p>
+                    <p>
+                      {completedSaleFeedback.lowStockWarnings.join(", ")}.
+                      Considere reabastecer em breve.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex shrink-0 flex-col gap-2 sm:min-w-[210px]">
+                {isPremium ? (
+                  <button
+                    onClick={() => void generateQuotePDF()}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
+                  >
+                    <FileText size={16} />
+                    Baixar recibo PDF
+                  </button>
+                ) : (
+                  <div className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-900">
+                    PDF em recibo disponível no plano Premium.
+                  </div>
+                )}
+                <button
+                  onClick={() => void shareCompletedSaleSummary()}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white px-3 py-2 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-100"
+                >
+                  <Share2 size={16} />
+                  Compartilhar resumo
+                </button>
+                <button
+                  onClick={resetSalesForm}
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  Iniciar nova venda
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {savedProductItems.length === 0 ? (
           <div className="p-6 bg-slate-50 rounded-lg text-center text-slate-500 border border-slate-200">
@@ -1072,11 +1267,13 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                 </button>
                 <button
                   onClick={registerSale}
-                  disabled={!currentDocumentData}
+                  disabled={!currentDocumentData || isSaleLocked}
                   className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold rounded-xl shadow transition-all flex justify-center items-center gap-2 text-sm"
                 >
                   <ShoppingBag size={18} />
-                  Concluir Venda (Baixa Estoque)
+                  {isSaleLocked
+                    ? "Venda já concluída"
+                    : "Concluir Venda (Baixa Estoque)"}
                 </button>
               </div>
 
