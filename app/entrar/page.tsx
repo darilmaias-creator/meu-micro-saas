@@ -6,6 +6,7 @@ import { Calculator } from "lucide-react";
 import { getProviders, signIn, useSession } from "next-auth/react";
 
 import AuthenticatedAppShell from "../AuthenticatedAppShell";
+import { ONBOARDING_GLOBAL_COMPLETED_KEY } from "../onboarding/storage";
 import type { ActiveTab } from "@/lib/app-tabs";
 import { getPathForActiveTab, resolveActiveTabFromParam } from "@/lib/app-tabs";
 
@@ -85,11 +86,20 @@ function mapAuthStatusMessage(searchParams: URLSearchParams): AuthFeedback {
   return null;
 }
 
-function resolvePostLoginPath(searchParams: URLSearchParams) {
+function resolvePostLoginPath(
+  searchParams: URLSearchParams,
+  defaultTab: ActiveTab,
+) {
   const nextPath = searchParams.get("next");
 
   if (!nextPath || !nextPath.startsWith("/") || nextPath.startsWith("//")) {
-    return getPathForActiveTab(resolveActiveTabFromParam(searchParams.get("tab")));
+    const tabFromQuery = searchParams.get("tab");
+
+    if (tabFromQuery) {
+      return getPathForActiveTab(resolveActiveTabFromParam(tabFromQuery));
+    }
+
+    return getPathForActiveTab(defaultTab);
   }
 
   return nextPath;
@@ -103,7 +113,7 @@ export default function MainApp() {
   const [password, setPassword] = useState("");
   const [authFeedback, setAuthFeedback] = useState<AuthFeedback>(null);
   const [initialAuthenticatedTab, setInitialAuthenticatedTab] =
-    useState<ActiveTab>("calculator");
+    useState<ActiveTab>("inventory");
   const [postLoginPath, setPostLoginPath] = useState("/");
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
   const [isGoogleEnabled, setIsGoogleEnabled] = useState(false);
@@ -111,10 +121,19 @@ export default function MainApp() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
+    const hasCompletedOnboarding =
+      window.localStorage.getItem(ONBOARDING_GLOBAL_COMPLETED_KEY) === "true";
+    const defaultTabAfterLogin: ActiveTab = hasCompletedOnboarding
+      ? "dashboard"
+      : "inventory";
 
     setAuthFeedback(mapAuthStatusMessage(searchParams));
-    setPostLoginPath(resolvePostLoginPath(searchParams));
-    setInitialAuthenticatedTab(resolveActiveTabFromParam(searchParams.get("tab")));
+    setPostLoginPath(resolvePostLoginPath(searchParams, defaultTabAfterLogin));
+    setInitialAuthenticatedTab(
+      searchParams.get("tab")
+        ? resolveActiveTabFromParam(searchParams.get("tab"))
+        : defaultTabAfterLogin,
+    );
 
     if (searchParams.get("auth") === "required") {
       setAuthMode("login");

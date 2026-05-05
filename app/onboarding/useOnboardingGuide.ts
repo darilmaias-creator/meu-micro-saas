@@ -6,6 +6,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ActiveTab } from "@/lib/app-tabs";
 
 import { ONBOARDING_STEPS, type OnboardingStep } from "./onboarding-steps";
+import {
+  getOnboardingCompletedKey,
+  getOnboardingProgressKey,
+  ONBOARDING_GLOBAL_COMPLETED_KEY,
+} from "./storage";
 
 type StoredOnboardingProgress = {
   status: "active" | "completed" | "skipped";
@@ -33,14 +38,7 @@ type UseOnboardingGuideResult = {
   goToCurrentStepTab: () => void;
 };
 
-const GLOBAL_COMPLETED_KEY = "onboarding_completed";
 const HIGHLIGHT_CLASSNAME = "onboarding-highlight-target";
-const STORAGE_PREFIX = "calcula-artesao";
-
-const getScopedCompletedKey = (userId: string) =>
-  `${STORAGE_PREFIX}:onboarding-completed:${userId}`;
-const getProgressKey = (userId: string) =>
-  `${STORAGE_PREFIX}:onboarding-progress:${userId}`;
 
 function clampStepIndex(stepIndex: number) {
   return Math.min(Math.max(0, stepIndex), ONBOARDING_STEPS.length - 1);
@@ -103,8 +101,8 @@ export function useOnboardingGuide({
   const [isTargetReady, setIsTargetReady] = useState(false);
   const highlightedElementRef = useRef<HTMLElement | null>(null);
 
-  const scopedCompletedKey = useMemo(() => getScopedCompletedKey(userId), [userId]);
-  const progressKey = useMemo(() => getProgressKey(userId), [userId]);
+  const scopedCompletedKey = useMemo(() => getOnboardingCompletedKey(userId), [userId]);
+  const progressKey = useMemo(() => getOnboardingProgressKey(userId), [userId]);
   const totalSteps = ONBOARDING_STEPS.length;
   const currentStep = ONBOARDING_STEPS[clampStepIndex(stepIndex)];
   const progressPercent = Math.round(((stepIndex + 1) / totalSteps) * 100);
@@ -132,7 +130,7 @@ export function useOnboardingGuide({
   const completeGuide = useCallback(
     (status: "completed" | "skipped") => {
       if (typeof window !== "undefined") {
-        window.localStorage.setItem(GLOBAL_COMPLETED_KEY, "true");
+        window.localStorage.setItem(ONBOARDING_GLOBAL_COMPLETED_KEY, "true");
         window.localStorage.setItem(scopedCompletedKey, "true");
         const finalProgress: StoredOnboardingProgress = {
           status,
@@ -200,7 +198,7 @@ export function useOnboardingGuide({
 
     const wasCompleted =
       window.localStorage.getItem(scopedCompletedKey) === "true" ||
-      window.localStorage.getItem(GLOBAL_COMPLETED_KEY) === "true";
+      window.localStorage.getItem(ONBOARDING_GLOBAL_COMPLETED_KEY) === "true";
 
     if (wasCompleted) {
       scheduleGuideState(0, false);
