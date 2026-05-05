@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock,
   FileText,
+  Package,
   Save,
   Share2,
   ShoppingBag,
@@ -19,6 +20,7 @@ import {
   type GenericRecord,
 } from "@/lib/app-data/defaults";
 import { Card, InputGroup } from "./ui";
+import EmptyState from "@/components/ui/empty-state";
 
 type RecordId = string | number;
 
@@ -981,13 +983,13 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
         )}
 
         {savedProductItems.length === 0 ? (
-          <div className="p-6 bg-slate-50 rounded-lg text-center text-slate-500 border border-slate-200">
-            <p className="mb-2">
-              Você precisa salvar produtos no seu catálogo antes de orçar ou
-              vender.
-            </p>
-            <p className="text-amber-600 font-bold">Vá para a aba de Ficha Técnica.</p>
-          </div>
+          <EmptyState
+            icon={Package}
+            title="Nenhum produto salvo"
+            description="Crie sua primeira ficha técnica para começar a gerar orçamento e registrar vendas."
+            ctaLabel="Criar ficha"
+            ctaHref="/calcular-preco"
+          />
         ) : (
           <div className="space-y-5">
             <div>
@@ -1135,17 +1137,17 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                 </div>
               </div>
             ) : (
-              <div className="bg-white p-4 rounded-xl border border-dashed border-amber-300 shadow-sm">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <h3 className="text-xs font-bold text-slate-500 uppercase mb-2">
                   Itens deste orçamento
                 </h3>
-                <p className="text-sm font-semibold text-amber-900">
-                  Nenhum produto adicionado ainda.
-                </p>
-                <p className="text-xs text-amber-800 mt-1">
-                  Próximo passo: selecione um produto e clique em{" "}
-                  <strong>Adicionar produto</strong>.
-                </p>
+                <EmptyState
+                  icon={ShoppingBag}
+                  title="Nenhum produto adicionado ainda"
+                  description="Selecione um produto no catálogo e clique em Adicionar produto para montar este orçamento."
+                  ctaLabel="Adicionar produto"
+                  onCtaClick={addCurrentProductToQuote}
+                />
               </div>
             )}
 
@@ -1346,14 +1348,15 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
             </table>
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
-            <p className="text-sm font-semibold text-slate-700">
-              Você ainda não tem orçamentos pendentes.
-            </p>
-            <p className="text-xs text-slate-500 mt-1">
-              Preencha os dados acima e clique em <strong>Salvar Pendente</strong> para registrar o primeiro orçamento.
-            </p>
-          </div>
+          <EmptyState
+            icon={Clock}
+            title="Nenhum orçamento pendente"
+            description="Monte um orçamento acima e salve como pendente para continuar depois ou concluir a venda."
+            ctaLabel="Criar orçamento"
+            onCtaClick={() =>
+              window.scrollTo({ top: 0, behavior: "smooth" })
+            }
+          />
         )}
       </Card>
 

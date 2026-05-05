@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Package, Box, AlertCircle, Trash2, Save, Upload, X } from 'lucide-react';
 import { Card, InputGroup } from './ui';
+import EmptyState from '@/components/ui/empty-state';
 import { FREE_TIER_INSUMO_LIMIT } from '@/lib/app-data/plan-limits';
 import type { GenericRecord } from '@/lib/app-data/defaults';
 
@@ -246,21 +247,106 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                 </div>
             </Card>
             <Card className="md:col-span-2">
-                    <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-700"><Box size={20} /> Controle de Estoque Completo {!isPremium && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">{freeInsumoUsage}/{FREE_TIER_INSUMO_LIMIT} usados</span>}</h2>
-                <div className="overflow-x-auto"><table className="w-full text-left text-sm text-slate-600 whitespace-nowrap"><thead className="bg-slate-50 uppercase text-xs font-bold text-slate-500"><tr><th className="p-3">Insumo</th><th className="p-3">Tipo</th><th className="p-3 text-right">Custo Unid.</th><th className="p-3 text-center">Estoque</th><th className="p-3 text-right text-green-600">Valor Parado</th><th className="p-3 text-center">Status</th><th className="p-3 text-center">Ação</th></tr></thead><tbody className="divide-y divide-slate-100">
-                    {inventoryItems.map((i) => {
-                        const isLow = i.stock <= i.minStock; const unitCost = i.costPerItem || i.price; const totalValueInStock = Number(i.stock) * unitCost;
-                        return (<tr key={i.id} className="hover:bg-slate-50"><td className="p-3 font-bold text-slate-800">{i.name}</td><td className="p-3 text-xs"><span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-medium">{i.type === 'area' ? 'Área' : i.type === 'length' ? 'Compr.' : i.type === 'weight' ? 'Peso' : i.type === 'volume' ? 'Líquido' : 'Unid.'}</span></td><td className="p-3 font-medium text-right">R$ {Number(unitCost || 0).toFixed(2)}</td><td className={`p-3 font-mono font-bold text-center ${isLow ? 'text-red-500' : 'text-slate-700'}`}>{Number(i.stock).toFixed(2)} un</td><td className="p-3 font-bold text-right text-green-600">R$ {Number(totalValueInStock || 0).toFixed(2)}</td><td className="p-3 text-center">{isLow ? (<span className="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold inline-flex items-center gap-1 uppercase"><AlertCircle size={12} /> Comprar</span>) : (<span className="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold uppercase">OK</span>)}</td><td className="p-3 text-center"><button onClick={() => loadInsumo(i)} className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg font-bold text-xs inline-flex items-center gap-1 mr-2" title="Carregar para editar"><Upload size={14} /> Carregar</button><button onClick={() => delInsumo(i.id)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50" title="Apagar Insumo"><Trash2 size={16} /></button></td></tr>)
-                    })}
-                    {inventoryItems.length === 0 && (
-                        <tr>
-                            <td colSpan={7} className="p-8 text-center">
-                                <p className="text-sm font-semibold text-slate-600">Você ainda não tem nenhum insumo salvo.</p>
-                                <p className="text-xs text-slate-500 mt-1">Próximo passo: preencha o bloco <strong>Novo Insumo</strong> e clique em <strong>Salvar no Estoque</strong>.</p>
-                            </td>
-                        </tr>
+                <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-700">
+                    <Box size={20} /> Controle de Estoque Completo
+                    {!isPremium && (
+                        <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">
+                            {freeInsumoUsage}/{FREE_TIER_INSUMO_LIMIT} usados
+                        </span>
                     )}
-                </tbody></table></div>
+                </h2>
+
+                {inventoryItems.length === 0 ? (
+                    <EmptyState
+                        icon={Box}
+                        title="Seu estoque está vazio"
+                        description="Cadastre seu primeiro insumo para começar a montar fichas técnicas e controlar custos reais."
+                        ctaLabel="Adicionar insumo"
+                        onCtaClick={() =>
+                            window.scrollTo({ top: 0, behavior: "smooth" })
+                        }
+                    />
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-slate-600 whitespace-nowrap">
+                            <thead className="bg-slate-50 uppercase text-xs font-bold text-slate-500">
+                                <tr>
+                                    <th className="p-3">Insumo</th>
+                                    <th className="p-3">Tipo</th>
+                                    <th className="p-3 text-right">Custo Unid.</th>
+                                    <th className="p-3 text-center">Estoque</th>
+                                    <th className="p-3 text-right text-green-600">Valor Parado</th>
+                                    <th className="p-3 text-center">Status</th>
+                                    <th className="p-3 text-center">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {inventoryItems.map((i) => {
+                                    const isLow = i.stock <= i.minStock;
+                                    const unitCost = i.costPerItem || i.price;
+                                    const totalValueInStock = Number(i.stock) * unitCost;
+
+                                    return (
+                                        <tr key={i.id} className="hover:bg-slate-50">
+                                            <td className="p-3 font-bold text-slate-800">{i.name}</td>
+                                            <td className="p-3 text-xs">
+                                                <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-medium">
+                                                    {i.type === "area"
+                                                        ? "Área"
+                                                        : i.type === "length"
+                                                            ? "Compr."
+                                                            : i.type === "weight"
+                                                                ? "Peso"
+                                                                : i.type === "volume"
+                                                                    ? "Líquido"
+                                                                    : "Unid."}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 font-medium text-right">
+                                                R$ {Number(unitCost || 0).toFixed(2)}
+                                            </td>
+                                            <td
+                                                className={`p-3 font-mono font-bold text-center ${isLow ? "text-red-500" : "text-slate-700"}`}
+                                            >
+                                                {Number(i.stock).toFixed(2)} un
+                                            </td>
+                                            <td className="p-3 font-bold text-right text-green-600">
+                                                R$ {Number(totalValueInStock || 0).toFixed(2)}
+                                            </td>
+                                            <td className="p-3 text-center">
+                                                {isLow ? (
+                                                    <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold inline-flex items-center gap-1 uppercase">
+                                                        <AlertCircle size={12} /> Comprar
+                                                    </span>
+                                                ) : (
+                                                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold uppercase">
+                                                        OK
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="p-3 text-center">
+                                                <button
+                                                    onClick={() => loadInsumo(i)}
+                                                    className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg font-bold text-xs inline-flex items-center gap-1 mr-2"
+                                                    title="Carregar para editar"
+                                                >
+                                                    <Upload size={14} /> Carregar
+                                                </button>
+                                                <button
+                                                    onClick={() => delInsumo(i.id)}
+                                                    className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50"
+                                                    title="Apagar Insumo"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </Card>
         </div>
     );

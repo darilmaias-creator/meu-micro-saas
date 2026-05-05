@@ -6,6 +6,7 @@ import { Crown, DollarSign, Info, Plus, Trash2 } from "lucide-react";
 
 import { Card, InputGroup } from "./ui";
 import { resolveOperationCostConfig } from "@/lib/app-data/operation-costs";
+import EmptyState from "@/components/ui/empty-state";
 
 export function OperationCostsSummary({
   isPremium,
@@ -476,15 +477,18 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
 
               <div className="mt-4 space-y-2">
                 {customOperationCosts.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-slate-300 p-4 text-center">
-                    <p className="text-sm font-semibold text-slate-600">
-                      Nenhum custo personalizado adicionado.
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Próximo passo: preencha nome e valor acima e clique em{" "}
-                      <strong>Adicionar custo</strong>.
-                    </p>
-                  </div>
+                  <EmptyState
+                    icon={DollarSign}
+                    title="Nenhum custo personalizado adicionado"
+                    description="Adicione custos extras para refinar seu cálculo operacional além dos campos básicos."
+                    ctaLabel="Adicionar custo"
+                    onCtaClick={() => {
+                      const target = document.querySelector<HTMLInputElement>(
+                        'input[placeholder="Ex: Contador, plataforma, manutencao"]',
+                      );
+                      target?.focus();
+                    }}
+                  />
                 ) : (
                   customOperationCosts.map((item: any) => (
                     <div

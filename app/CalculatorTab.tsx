@@ -4,6 +4,7 @@ import Link from 'next/link';
 import React, { useState } from 'react';
 import { Settings, Package, Plus, Trash2, DollarSign, RefreshCw, Heart, Sparkles, Save, Copy, Download, Upload } from 'lucide-react';
 import { Card, InputGroup, TimeInputGroup, Toggle, sanitizeDecimalInput, sanitizeIntegerInput } from './ui';
+import EmptyState from '@/components/ui/empty-state';
 import { FREE_TIER_PRODUCT_LIMIT } from '@/lib/app-data/plan-limits';
 import { calculateOperationCostBreakdown } from '@/lib/app-data/operation-costs';
 import { OperationCostsSummary } from './OperationCostsTab';
@@ -271,10 +272,20 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                     {recipeItems.length > 0 ? (
                         <div className="space-y-2 mb-4"><h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide">Materiais na Ficha</h3>{recipeItems.map((item, idx) => (<div key={idx} className="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-lg shadow-sm"><div><p className="font-bold text-sm text-slate-700">{item.name}</p><p className="text-xs text-slate-500">{item.display} {item.autoWaste > 0 && <span className="text-amber-500 ml-1">(+{item.autoWaste.toFixed(1)}% sobra incl.)</span>}</p></div><div className="flex items-center gap-3"><span className="font-bold text-slate-800">R$ {item.cost.toFixed(2)}</span><button onClick={() => removeRecipeItem(idx)} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button></div></div>))}</div>
                     ) : (
-                        <div className="mb-4 rounded-xl border border-dashed border-amber-300 bg-amber-50 p-4">
-                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Materiais na Ficha</h3>
-                            <p className="text-sm font-semibold text-amber-900">Você ainda não adicionou nenhum material.</p>
-                            <p className="text-xs text-amber-800 mt-1">Próximo passo: selecione um material acima e clique em <strong>Inserir Material na Ficha</strong>.</p>
+                        <div className="mb-4">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Materiais na Ficha</h3>
+                            <EmptyState
+                                icon={Package}
+                                title="Nenhum ingrediente na ficha"
+                                description="Selecione um material do estoque e clique em Inserir Material na Ficha para começar seu cálculo."
+                                ctaLabel="Adicionar ingrediente"
+                                onCtaClick={() => {
+                                    const target = document.querySelector('[data-onboarding="calculator-recipe-form"]');
+                                    if (target instanceof HTMLElement) {
+                                        target.scrollIntoView({ behavior: "smooth", block: "start" });
+                                    }
+                                }}
+                            />
                         </div>
                     )}
                     
@@ -439,7 +450,17 @@ export default function CalculatorTab({ appData, isPremium }: any) {
             {/* HISTÓRICO DE PRODUTOS */}
             <div className="col-span-1 md:col-span-12 mt-8 animate-fadeIn"><div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"><div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center flex-wrap gap-4"><h3 className="font-bold text-lg text-slate-700 flex items-center gap-2"><Save size={20} className="text-slate-500"/> Catálogo de Produtos Salvos {!isPremium && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">{freeProductUsage}/{FREE_TIER_PRODUCT_LIMIT} usados</span>}</h3>{savedProducts.length > 0 && (<button onClick={exportProductsToCSV} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"><Download size={16} /> Baixar Planilha</button>)}</div>
             {savedProducts.length === 0 ? (
-                <div className="p-8 text-center text-slate-400"><p>Nenhum produto salvo no seu catálogo ainda.</p><p className="text-sm mt-1">Calcule um produto e clique em &quot;Salvar no Catálogo&quot; para visualizá-lo aqui.</p></div>
+                <div className="p-6">
+                    <EmptyState
+                        icon={Save}
+                        title="Nenhum produto salvo"
+                        description="Crie sua primeira ficha técnica, calcule o preço e salve no catálogo para reutilizar depois."
+                        ctaLabel="Criar ficha"
+                        onCtaClick={() =>
+                            window.scrollTo({ top: 0, behavior: "smooth" })
+                        }
+                    />
+                </div>
             ) : (
                 <div className="overflow-x-auto"><table className="w-full text-left text-sm text-slate-600 whitespace-nowrap"><thead className="bg-slate-50 text-slate-700 uppercase font-bold text-xs"><tr><th className="px-6 py-3">Data</th><th className="px-6 py-3">Nome</th><th className="px-6 py-3 text-center">Rendimento</th><th className="px-6 py-3">Custo 1 Un.</th><th className="px-6 py-3">Preço Venda</th><th className="px-6 py-3">Lucro R$</th><th className="px-6 py-3 text-center">Ações</th></tr></thead><tbody className="divide-y divide-slate-100">
                     {savedProducts.filter((p: any)=>p).map((p: any) => (<tr key={p.id} className="hover:bg-slate-50 group"><td className="px-6 py-4">{p.date}</td><td className="px-6 py-4 font-bold text-slate-800">{p.name || 'Produto'}</td><td className="px-6 py-4 text-center font-medium bg-slate-50">{(p.yieldQty || 1)} un</td><td className="px-6 py-4 text-red-600 font-medium">R$ {Number(p.totalCost || 0).toFixed(2)}</td><td className="px-6 py-4 text-green-700 font-bold">R$ {Number(p.activePrice || 0).toFixed(2)}</td><td className="px-6 py-4 font-medium">R$ {Number(p.activeProfitValue || 0).toFixed(2)}</td><td className="px-6 py-4 text-center"><button onClick={() => loadProduct(p)} className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg font-bold text-xs inline-flex items-center gap-1 mr-2"><Upload size={14} /> Carregar</button><button onClick={() => deleteProduct(p.id)} className="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg font-bold text-xs inline-flex items-center gap-1"><Trash2 size={14} /> Excluir</button></td></tr>))}
