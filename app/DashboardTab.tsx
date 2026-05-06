@@ -2,6 +2,20 @@
 
 import React, { useState } from "react";
 import { BarChart2, Download, FileText, ShoppingBag, Trash2 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 import EmptyState from "@/components/ui/empty-state";
 import { type GenericRecord } from "@/lib/app-data/defaults";
@@ -24,6 +38,7 @@ type DashboardTotals = {
   cost: number;
   tithe: number;
   profit: number;
+  margin: number; // Margem de lucro média %
 };
 
 type DashboardTabProps = {
@@ -73,8 +88,28 @@ export default function DashboardTab({ appData }: DashboardTabProps) {
       accumulator.profit += Number(sale.totalProfit || 0);
       return accumulator;
     },
-    { revenue: 0, cost: 0, tithe: 0, profit: 0 },
+    { revenue: 0, cost: 0, tithe: 0, profit: 0, margin: 0 },
   );
+
+  // Calcular margem de lucro média
+  dashTotals.margin = dashTotals.revenue > 0 ? (dashTotals.profit / dashTotals.revenue) * 100 : 0;
+
+  // Dados para gráfico de vendas por mês
+  const salesByMonth = filteredSales.reduce((acc, sale) => {
+    if (!sale.date) return acc;
+    const month = new Date(sale.date).toLocaleDateString('pt-BR', { year: 'numeric', month: 'short' });
+    if (!acc[month]) acc[month] = 0;
+    acc[month] += Number(sale.totalSale || 0);
+    return acc;
+  }, {} as Record<string, number>);
+
+  const chartData = Object.entries(salesByMonth).map(([month, revenue]) => ({ month, revenue }));
+
+  // Dados para gráfico de distribuição custos vs lucro
+  const pieData = [
+    { name: 'Custos Produção', value: dashTotals.cost, color: '#ef4444' },
+    { name: 'Lucro Líquido', value: dashTotals.profit, color: '#f59e0b' },
+  ];
 
   function exportSalesToCSV() {
     let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
@@ -227,6 +262,48 @@ export default function DashboardTab({ appData }: DashboardTabProps) {
           </p>
         </Card>
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-l-4 border-l-blue-500 bg-blue-50/30">
+          <p className="text-xs text-blue-600 uppercase font-bold mb-1">
+            Margem de Lucro
+          </p>
+          <p className="text-2xl font-bold text-blue-700">
+            {Number(dashTotals.margin || 0).toFixed(1)}%
+          </p>
+        </Card>
+      </div>
+
+      <Card>
+        <h3 className="font-bold text-slate-700 text-lg mb-4">Gráficos Analíticos</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h4 className="text-sm font-bold mb-2">Vendas por Mês</h4>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip formatter={(value) => `R$ ${Number(value).toFixed(2)}`} />
+                <Bar dataKey="revenue" fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div>
+            <h4 className="text-sm font-bold mb-2">Distribuição Custos vs Lucro</h4>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value">
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `R$ ${Number(value).toFixed(2)}`} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </Card>
 
       <Card>
         <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
