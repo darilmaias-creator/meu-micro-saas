@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { isAdminEmail } from "@/lib/admin/access";
+import {
+  sendAnnouncementEmailToUsers,
+  type AnnouncementEmailDispatchSummary,
+  type AnnouncementEmailRecipient,
+} from "@/lib/announcements/email";
 import { authOptions } from "@/lib/auth/options";
 import {
   mapAnnouncementRow,
@@ -48,6 +53,58 @@ function getAnnouncementPayloadError(error: unknown) {
   }
 
   return "Erro desconhecido";
+}
+
+function buildAnnouncementPublishMessage(input: {
+  baseMessage: string;
+  emailDelivery: AnnouncementEmailDispatchSummary | null;
+}) {
+  if (!input.emailDelivery) {
+    return input.baseMessage;
+  }
+
+  if (!input.emailDelivery.enabled) {
+    return `${input.baseMessage} Aviso por e-mail desativado para esta publicacao.`;
+  }
+
+  if (input.emailDelivery.attempted === 0) {
+    return `${input.baseMessage} Nenhum e-mail encontrado para envio agora.`;
+  }
+
+  if (input.emailDelivery.failed > 0) {
+    return `${input.baseMessage} E-mail enviado para ${input.emailDelivery.sent}/${input.emailDelivery.attempted} usuarios (${input.emailDelivery.failed} falharam).`;
+  }
+
+  return `${input.baseMessage} E-mail enviado para ${input.emailDelivery.sent} usuarios.`;
+}
+
+function hasResendEnvConfigured() {
+  return Boolean(
+    process.env.RESEND_API_KEY?.trim() && process.env.RESEND_FROM_EMAIL?.trim(),
+  );
+}
+
+async function listAnnouncementEmailRecipients() {
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("auth_users")
+    .select("id, name, email");
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = (data as Array<{ id: string; name: string | null; email: string | null }> | null) ?? [];
+
+  return rows
+    .filter((row) => typeof row.email === "string" && row.email.trim().length > 0)
+    .map(
+      (row): AnnouncementEmailRecipient => ({
+        userId: row.id,
+        email: row.email!.trim(),
+        name: row.name,
+      }),
+    );
 }
 
 async function ensureAdminSession() {
@@ -193,6 +250,54 @@ export async function POST(request: Request) {
       throw error;
     }
 
+    const announcementRecord = mapAnnouncementRow(data as AnnouncementRow);
+    let emailDelivery: AnnouncementEmailDispatchSummary | null = null;
+
+    if (validation.data.sendEmailUsers) {
+      if (!hasResendEnvConfigured()) {
+        emailDelivery = {
+          enabled: false,
+          attempted: 0,
+          sent: 0,
+          failed: 0,
+          skipped: 0,
+          sampleErrors: [
+            "RESEND_API_KEY ou RESEND_FROM_EMAIL nao esta configurado.",
+          ],
+        };
+      } else {
+        try {
+          const recipients = await listAnnouncementEmailRecipients();
+          emailDelivery = await sendAnnouncementEmailToUsers({
+            announcement: announcementRecord,
+            recipients,
+          });
+        } catch (emailError) {
+          captureServerException({
+            scope: "announcements:manage:post:email",
+            error: emailError,
+            context: {
+              userId: adminSession.session.user.id,
+              announcementId: (data as AnnouncementRow).id,
+            },
+          });
+
+          emailDelivery = {
+            enabled: true,
+            attempted: 0,
+            sent: 0,
+            failed: 0,
+            skipped: 0,
+            sampleErrors: [
+              emailError instanceof Error
+                ? emailError.message
+                : "Falha inesperada no envio por e-mail.",
+            ],
+          };
+        }
+      }
+    }
+
     logServerEvent({
       scope: "announcements:manage:post",
       message: "announcement published",
@@ -200,13 +305,21 @@ export async function POST(request: Request) {
         userId: adminSession.session.user.id,
         deactivatedCount: (deactivatedRows ?? []).length,
         announcementId: (data as AnnouncementRow).id,
+        sendEmailUsers: validation.data.sendEmailUsers,
+        emailAttempted: emailDelivery?.attempted ?? 0,
+        emailSent: emailDelivery?.sent ?? 0,
+        emailFailed: emailDelivery?.failed ?? 0,
       },
     });
 
     return NextResponse.json({
       ok: true,
-      message: "Aviso publicado para todos os usuarios com sucesso.",
-      announcement: mapAnnouncementRow(data as AnnouncementRow),
+      message: buildAnnouncementPublishMessage({
+        baseMessage: "Aviso publicado para todos os usuarios com sucesso.",
+        emailDelivery,
+      }),
+      announcement: announcementRecord,
+      emailDelivery,
     });
   } catch (error) {
     captureServerException({

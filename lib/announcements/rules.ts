@@ -12,6 +12,7 @@ type AnnouncementPayload = {
   ctaLabel?: unknown;
   ctaUrl?: unknown;
   endsAt?: unknown;
+  sendEmailUsers?: unknown;
 };
 
 type ValidationResult =
@@ -24,6 +25,7 @@ type ValidationResult =
         ctaLabel: string | null;
         ctaUrl: string | null;
         endsAt: string | null;
+        sendEmailUsers: boolean;
       };
     }
   | {
@@ -81,6 +83,14 @@ function normalizeIsoDateString(value: unknown) {
   return parsedDate.toISOString();
 }
 
+function normalizeBoolean(value: unknown, defaultValue = false) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  return defaultValue;
+}
+
 function isValidAnnouncementCtaUrl(url: string) {
   if (url.startsWith("/")) {
     return true;
@@ -125,6 +135,7 @@ export function validateAnnouncementPayload(
   );
   const ctaUrl = normalizeOptionalText(payload.ctaUrl, ANNOUNCEMENT_CTA_URL_MAX_LENGTH);
   const endsAt = normalizeIsoDateString(payload.endsAt);
+  const sendEmailUsers = normalizeBoolean(payload.sendEmailUsers, false);
 
   if ((ctaLabel && !ctaUrl) || (!ctaLabel && ctaUrl)) {
     return {
@@ -150,6 +161,7 @@ export function validateAnnouncementPayload(
       ctaLabel,
       ctaUrl,
       endsAt,
+      sendEmailUsers,
     },
   };
 }

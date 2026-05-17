@@ -33,6 +33,15 @@ type AnnouncementManagerResponse = {
   message?: string;
 };
 
+type AnnouncementEmailDeliverySummary = {
+  enabled: boolean;
+  attempted: number;
+  sent: number;
+  failed: number;
+  skipped: number;
+  sampleErrors: string[];
+};
+
 type SettingsFieldProps = {
   label: string;
   hint: string;
@@ -159,6 +168,8 @@ export default function BusinessSettingsPage() {
   const [announcementCtaLabel, setAnnouncementCtaLabel] = useState("");
   const [announcementCtaUrl, setAnnouncementCtaUrl] = useState("");
   const [announcementEndsAt, setAnnouncementEndsAt] = useState("");
+  const [announcementSendEmailUsers, setAnnouncementSendEmailUsers] =
+    useState(true);
 
   const appData = useAppData(session?.user?.id ?? "");
 
@@ -233,6 +244,7 @@ export default function BusinessSettingsPage() {
     setAnnouncementCtaLabel("");
     setAnnouncementCtaUrl("");
     setAnnouncementEndsAt("");
+    setAnnouncementSendEmailUsers(true);
   }
 
   async function handlePublishAnnouncement() {
@@ -250,6 +262,7 @@ export default function BusinessSettingsPage() {
         endsAt: announcementEndsAt
           ? new Date(`${announcementEndsAt}T23:59:59`).toISOString()
           : null,
+        sendEmailUsers: announcementSendEmailUsers,
       };
 
       const response = await fetch("/api/announcements/manage", {
@@ -263,6 +276,7 @@ export default function BusinessSettingsPage() {
       const result = (await response.json()) as {
         ok?: boolean;
         message?: string;
+        emailDelivery?: AnnouncementEmailDeliverySummary;
       };
 
       if (!response.ok || !result.ok) {
@@ -270,6 +284,11 @@ export default function BusinessSettingsPage() {
       }
 
       setAnnouncementStatus(result.message ?? "Aviso publicado com sucesso.");
+      if (result.emailDelivery?.sampleErrors?.length) {
+        setAnnouncementError(
+          `Aviso publicado, mas tivemos alerta no envio por e-mail: ${result.emailDelivery.sampleErrors[0]}`,
+        );
+      }
       clearAnnouncementForm();
       await loadAnnouncementManagerData();
     } catch (error) {
@@ -894,6 +913,24 @@ export default function BusinessSettingsPage() {
                 </p>
               </div>
             </div>
+
+            <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={announcementSendEmailUsers}
+                onChange={(event) =>
+                  setAnnouncementSendEmailUsers(event.target.checked)
+                }
+                disabled={isPublishingAnnouncement}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-700 focus:ring-sky-400"
+              />
+              <span>
+                <strong>Enviar tambem por e-mail para os usuarios</strong>
+                <span className="mt-1 block text-xs text-slate-500">
+                  Usa o remetente configurado no Resend (ex: novidades@calculaartesao.com.br).
+                </span>
+              </span>
+            </label>
 
             <div className="flex flex-wrap gap-3">
               <button
