@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
@@ -22,8 +22,16 @@ import {
   DEFAULT_STORE_SUBTITLE,
   resolveQuoteDocumentConfig,
 } from "@/lib/app-data/defaults";
+import type { AnnouncementKind, AnnouncementRecord } from "@/lib/announcements/types";
 
 const DEFAULT_LOGO_URL = createDefaultAppDataState().config.userLogo;
+
+type AnnouncementManagerResponse = {
+  ok: boolean;
+  activeAnnouncement: AnnouncementRecord | null;
+  recentAnnouncements: AnnouncementRecord[];
+  message?: string;
+};
 
 type SettingsFieldProps = {
   label: string;
@@ -104,9 +112,53 @@ function SettingsTextarea({
   );
 }
 
+const ANNOUNCEMENT_KIND_OPTIONS: Array<{
+  value: AnnouncementKind;
+  label: string;
+}> = [
+  { value: "info", label: "Informacao" },
+  { value: "success", label: "Promocao / cupom" },
+  { value: "warning", label: "Aviso importante" },
+];
+
+function formatAnnouncementDate(dateValue: string) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Data invalida";
+  }
+
+  return date.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function BusinessSettingsPage() {
   const { data: session, status } = useSession();
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [announcementError, setAnnouncementError] = useState<string | null>(null);
+  const [announcementStatus, setAnnouncementStatus] = useState<string | null>(null);
+  const [isAnnouncementSectionEnabled, setIsAnnouncementSectionEnabled] =
+    useState(false);
+  const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(false);
+  const [isPublishingAnnouncement, setIsPublishingAnnouncement] = useState(false);
+  const [isClosingAnnouncement, setIsClosingAnnouncement] = useState(false);
+  const [activeAnnouncement, setActiveAnnouncement] =
+    useState<AnnouncementRecord | null>(null);
+  const [recentAnnouncements, setRecentAnnouncements] = useState<
+    AnnouncementRecord[]
+  >([]);
+  const [announcementTitle, setAnnouncementTitle] = useState("");
+  const [announcementMessage, setAnnouncementMessage] = useState("");
+  const [announcementKind, setAnnouncementKind] =
+    useState<AnnouncementKind>("info");
+  const [announcementCtaLabel, setAnnouncementCtaLabel] = useState("");
+  const [announcementCtaUrl, setAnnouncementCtaUrl] = useState("");
+  const [announcementEndsAt, setAnnouncementEndsAt] = useState("");
 
   const appData = useAppData(session?.user?.id ?? "");
 
@@ -122,6 +174,154 @@ export default function BusinessSettingsPage() {
     () => createDefaultQuoteDocumentConfig(),
     [],
   );
+
+  async function loadAnnouncementManagerData() {
+    if (status !== "authenticated" || !session?.user?.id) {
+      return;
+    }
+
+    setIsLoadingAnnouncements(true);
+    setAnnouncementError(null);
+
+    try {
+      const response = await fetch("/api/announcements/manage", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        setIsAnnouncementSectionEnabled(false);
+        setActiveAnnouncement(null);
+        setRecentAnnouncements([]);
+        return;
+      }
+
+      const result = (await response.json()) as AnnouncementManagerResponse;
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.message ?? "Nao foi possivel carregar os avisos.");
+      }
+
+      setIsAnnouncementSectionEnabled(true);
+      setActiveAnnouncement(result.activeAnnouncement);
+      setRecentAnnouncements(result.recentAnnouncements);
+    } catch (error) {
+      setIsAnnouncementSectionEnabled(true);
+      setAnnouncementError(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel carregar os avisos agora.",
+      );
+    } finally {
+      setIsLoadingAnnouncements(false);
+    }
+  }
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user?.id) {
+      return;
+    }
+
+    void loadAnnouncementManagerData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, session?.user?.id]);
+
+  function clearAnnouncementForm() {
+    setAnnouncementTitle("");
+    setAnnouncementMessage("");
+    setAnnouncementKind("info");
+    setAnnouncementCtaLabel("");
+    setAnnouncementCtaUrl("");
+    setAnnouncementEndsAt("");
+  }
+
+  async function handlePublishAnnouncement() {
+    setAnnouncementStatus(null);
+    setAnnouncementError(null);
+    setIsPublishingAnnouncement(true);
+
+    try {
+      const payload = {
+        title: announcementTitle,
+        message: announcementMessage,
+        kind: announcementKind,
+        ctaLabel: announcementCtaLabel,
+        ctaUrl: announcementCtaUrl,
+        endsAt: announcementEndsAt
+          ? new Date(`${announcementEndsAt}T23:59:59`).toISOString()
+          : null,
+      };
+
+      const response = await fetch("/api/announcements/manage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = (await response.json()) as {
+        ok?: boolean;
+        message?: string;
+      };
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.message ?? "Nao foi possivel publicar o aviso.");
+      }
+
+      setAnnouncementStatus(result.message ?? "Aviso publicado com sucesso.");
+      clearAnnouncementForm();
+      await loadAnnouncementManagerData();
+    } catch (error) {
+      setAnnouncementError(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel publicar o aviso agora.",
+      );
+    } finally {
+      setIsPublishingAnnouncement(false);
+    }
+  }
+
+  async function handleCloseAnnouncement() {
+    if (!activeAnnouncement?.id) {
+      return;
+    }
+
+    setAnnouncementStatus(null);
+    setAnnouncementError(null);
+    setIsClosingAnnouncement(true);
+
+    try {
+      const response = await fetch("/api/announcements/manage", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: activeAnnouncement.id }),
+      });
+
+      const result = (await response.json()) as {
+        ok?: boolean;
+        message?: string;
+      };
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.message ?? "Nao foi possivel encerrar o aviso.");
+      }
+
+      setAnnouncementStatus(result.message ?? "Aviso encerrado com sucesso.");
+      await loadAnnouncementManagerData();
+    } catch (error) {
+      setAnnouncementError(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel encerrar o aviso agora.",
+      );
+    } finally {
+      setIsClosingAnnouncement(false);
+    }
+  }
 
   if (status === "loading" || !session || !appData.isLoaded) {
     return (
@@ -540,6 +740,222 @@ export default function BusinessSettingsPage() {
             </div>
           </div>
         </Card>
+
+        {isAnnouncementSectionEnabled && (
+          <Card className="space-y-5 border-sky-200 bg-gradient-to-br from-white via-sky-50/40 to-indigo-50/50">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Mensagem para todos os usuarios
+                </p>
+                <h3 className="mt-1 text-lg font-black text-slate-900">
+                  Aviso global (cupom, atualizacao, comunicado)
+                </h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  Tudo que voce publicar aqui aparece no topo do app para os
+                  usuarios logados.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void loadAnnouncementManagerData()}
+                disabled={isLoadingAnnouncements}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isLoadingAnnouncements ? "Atualizando..." : "Atualizar lista"}
+              </button>
+            </div>
+
+            {announcementStatus && (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                {announcementStatus}
+              </div>
+            )}
+
+            {announcementError && (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {announcementError}
+              </div>
+            )}
+
+            {activeAnnouncement ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">
+                  Aviso ativo agora
+                </p>
+                <p className="mt-1 text-base font-black text-slate-900">
+                  {activeAnnouncement.title}
+                </p>
+                <p className="mt-1 text-sm text-slate-700">
+                  {activeAnnouncement.message}
+                </p>
+                <p className="mt-2 text-xs text-slate-500">
+                  Publicado em {formatAnnouncementDate(activeAnnouncement.createdAt)}
+                </p>
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => void handleCloseAnnouncement()}
+                    disabled={isClosingAnnouncement}
+                    className="inline-flex items-center justify-center rounded-xl border border-rose-300 bg-rose-600 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isClosingAnnouncement
+                      ? "Encerrando aviso..."
+                      : "Encerrar aviso ativo"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+                Nenhum aviso ativo no momento.
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <SettingsField
+                label="Titulo do aviso"
+                hint="Exemplo: Cupom de lancamento para novos assinantes."
+                value={announcementTitle}
+                disabled={isPublishingAnnouncement}
+                placeholder="Titulo curto do aviso"
+                maxLength={90}
+                onChange={setAnnouncementTitle}
+              />
+
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Tipo do aviso
+                </label>
+                <select
+                  value={announcementKind}
+                  onChange={(event) =>
+                    setAnnouncementKind(event.target.value as AnnouncementKind)
+                  }
+                  disabled={isPublishingAnnouncement}
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-base text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 disabled:bg-slate-100 disabled:text-slate-400"
+                >
+                  {ANNOUNCEMENT_KIND_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-xs text-slate-500">
+                  Isso muda apenas a cor do aviso no app.
+                </p>
+              </div>
+            </div>
+
+            <SettingsTextarea
+              label="Mensagem"
+              hint="Texto principal que os usuarios vao ler no topo do app."
+              value={announcementMessage}
+              disabled={isPublishingAnnouncement}
+              placeholder="Ex: Use o cupom LANCAMENTO30 e ganhe 30 dias de Premium."
+              maxLength={420}
+              onChange={setAnnouncementMessage}
+            />
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+              <SettingsField
+                label="Texto do botao (opcional)"
+                hint="Ex: Ver cupom"
+                value={announcementCtaLabel}
+                disabled={isPublishingAnnouncement}
+                placeholder="Texto do botao"
+                maxLength={40}
+                onChange={setAnnouncementCtaLabel}
+              />
+
+              <SettingsField
+                label="Link do botao (opcional)"
+                hint="Aceita link completo (https://...) ou rota interna (/assinatura)."
+                value={announcementCtaUrl}
+                disabled={isPublishingAnnouncement}
+                placeholder="https://..."
+                maxLength={280}
+                onChange={setAnnouncementCtaUrl}
+              />
+
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Data limite (opcional)
+                </label>
+                <input
+                  type="date"
+                  value={announcementEndsAt}
+                  onChange={(event) => setAnnouncementEndsAt(event.target.value)}
+                  disabled={isPublishingAnnouncement}
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-base text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 disabled:bg-slate-100 disabled:text-slate-400"
+                />
+                <p className="mt-2 text-xs text-slate-500">
+                  Se preencher, o aviso para nessa data automaticamente.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => void handlePublishAnnouncement()}
+                disabled={
+                  isPublishingAnnouncement ||
+                  !announcementTitle.trim() ||
+                  !announcementMessage.trim()
+                }
+                className="inline-flex items-center justify-center rounded-xl border border-sky-600 bg-sky-700 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isPublishingAnnouncement
+                  ? "Publicando aviso..."
+                  : "Publicar para todos"}
+              </button>
+
+              <button
+                type="button"
+                onClick={clearAnnouncementForm}
+                disabled={isPublishingAnnouncement}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Limpar formulario
+              </button>
+            </div>
+
+            {recentAnnouncements.length > 0 && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Ultimos avisos publicados
+                </p>
+                <ul className="mt-3 space-y-3">
+                  {recentAnnouncements.slice(0, 5).map((announcement) => (
+                    <li
+                      key={announcement.id}
+                      className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-bold text-slate-900">
+                          {announcement.title}
+                        </p>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${
+                            announcement.isActive
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-200 text-slate-600"
+                          }`}
+                        >
+                          {announcement.isActive ? "Ativo" : "Encerrado"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {formatAnnouncementDate(announcement.createdAt)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Card>
+        )}
       </main>
     </div>
   );

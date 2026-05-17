@@ -18,6 +18,7 @@ import { signOut } from "next-auth/react";
 
 import CalculatorTab from "./CalculatorTab";
 import DashboardTab from "./DashboardTab";
+import GlobalAnnouncementBanner from "./GlobalAnnouncementBanner";
 import InventoryTab from "./InventoryTab";
 import OperationCostsTab from "./OperationCostsTab";
 import ProfileModal from "./ProfileModal";
@@ -181,6 +182,8 @@ export default function AuthenticatedAppShell({
           </nav>
         </div>
       </div>
+
+      <GlobalAnnouncementBanner userId={session.user.id} />
 
       <main className="mx-auto max-w-6xl px-4 py-5 md:py-6">
         {activeTab === "inventory" && (

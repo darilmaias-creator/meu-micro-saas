@@ -122,6 +122,25 @@ create table if not exists public.user_testimonials (
 create index if not exists user_testimonials_publish_idx
   on public.user_testimonials (is_public, publish_after desc);
 
+create table if not exists public.global_announcements (
+  id text primary key,
+  title text not null,
+  message text not null,
+  kind text not null default 'info' check (kind in ('info', 'success', 'warning')),
+  cta_label text null,
+  cta_url text null,
+  starts_at timestamptz not null default timezone('utc', now()),
+  ends_at timestamptz null,
+  is_active boolean not null default true,
+  created_by_user_id text null references public.auth_users (id) on delete set null,
+  created_by_email text null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists global_announcements_active_idx
+  on public.global_announcements (is_active, starts_at desc);
+
 create or replace function public.set_user_app_data_updated_at()
 returns trigger
 language plpgsql
@@ -162,6 +181,16 @@ begin
 end;
 $$;
 
+create or replace function public.set_global_announcements_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = timezone('utc', now());
+  return new;
+end;
+$$;
+
 drop trigger if exists trg_auth_users_updated_at on public.auth_users;
 
 create trigger trg_auth_users_updated_at
@@ -190,7 +219,15 @@ before update on public.user_testimonials
 for each row
 execute function public.set_user_testimonials_updated_at();
 
+drop trigger if exists trg_global_announcements_updated_at on public.global_announcements;
+
+create trigger trg_global_announcements_updated_at
+before update on public.global_announcements
+for each row
+execute function public.set_global_announcements_updated_at();
+
 alter table public.auth_users enable row level security;
 alter table public.auth_rate_limits enable row level security;
 alter table public.user_app_data enable row level security;
 alter table public.user_testimonials enable row level security;
+alter table public.global_announcements enable row level security;
