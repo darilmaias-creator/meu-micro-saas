@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import type Stripe from "stripe";
 
 import {
   PREMIUM_FOUNDER_LIMIT,
@@ -30,6 +31,44 @@ const EMBEDDED_CHECKOUT_UI_MODE = "embedded_page" as const;
 
 function getBaseUrl(request: Request) {
   return request.headers.get("origin")?.trim() || new URL(request.url).origin;
+}
+
+function normalizePromotionCodeInput(value: unknown) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized.slice(0, 64);
+}
+
+async function resolvePromotionCodeIdByCode(
+  stripe: ReturnType<typeof createStripeServerClient>,
+  promotionCode: string,
+) {
+  const codeCandidates = Array.from(
+    new Set([promotionCode, promotionCode.toUpperCase(), promotionCode.toLowerCase()]),
+  );
+
+  for (const codeCandidate of codeCandidates) {
+    const list = await stripe.promotionCodes.list({
+      code: codeCandidate,
+      active: true,
+      limit: 1,
+    });
+
+    const [firstPromotionCode] = list.data;
+
+    if (firstPromotionCode) {
+      return firstPromotionCode.id;
+    }
+  }
+  return null;
 }
 
 async function resolveStripeCustomerForCheckout(input: {
@@ -84,6 +123,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    const requestPayload = (await request.json().catch(() => null)) as
+      | { promotionCode?: unknown }
+      | null;
+    const promotionCodeInput = normalizePromotionCodeInput(
+      requestPayload?.promotionCode,
+    );
     const user = await findUserById(session.user.id);
 
     if (!user) {
@@ -138,12 +183,11 @@ export async function POST(request: Request) {
     const founderOfferApplied =
       user.founderOfferApplied || offerTier === "founder";
     const baseUrl = getBaseUrl(request);
-    const checkoutSession = await stripe.checkout.sessions.create({
+    const checkoutSessionInput: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
       // The Stripe account/API version used in this project expects
       // `embedded_page` for the in-app Checkout flow.
       ui_mode: EMBEDDED_CHECKOUT_UI_MODE,
-      allow_promotion_codes: true,
       customer: stripeCustomerId,
       client_reference_id: user.id,
       line_items: [
@@ -168,7 +212,40 @@ export async function POST(request: Request) {
           founderOfferApplied: String(founderOfferApplied),
         },
       },
-    });
+    };
+
+    if (promotionCodeInput) {
+      const promotionCodeId = await resolvePromotionCodeIdByCode(
+        stripe,
+        promotionCodeInput,
+      );
+
+      if (!promotionCodeId) {
+        return NextResponse.json(
+          { message: "Esse cupom nao existe ou nao esta ativo." },
+          { status: 400 },
+        );
+      }
+
+      checkoutSessionInput.discounts = [{ promotion_code: promotionCodeId }];
+      checkoutSessionInput.metadata = {
+        ...checkoutSessionInput.metadata,
+        promotionCodeInput,
+      };
+      checkoutSessionInput.subscription_data = {
+        ...checkoutSessionInput.subscription_data,
+        metadata: {
+          ...checkoutSessionInput.subscription_data?.metadata,
+          promotionCodeInput,
+        },
+      };
+    } else {
+      checkoutSessionInput.allow_promotion_codes = true;
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.create(
+      checkoutSessionInput,
+    );
 
     if (!checkoutSession.client_secret) {
       throw new Error("A Stripe nao retornou o client secret do checkout.");
@@ -180,6 +257,7 @@ export async function POST(request: Request) {
       context: {
         userId: user.id,
         offerTier,
+        promotionCodeInput,
         checkoutSessionId: checkoutSession.id,
         stripeCustomerId,
       },

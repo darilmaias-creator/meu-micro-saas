@@ -12,10 +12,23 @@ const stripePromise = loadStripe(
 export default function EmbeddedCheckoutClient() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const checkoutSessionIdRef = useRef<string | null>(null);
+  const promotionCodeRef = useRef<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [detectedPromotionCode, setDetectedPromotionCode] = useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const couponFromUrl =
+      searchParams.get("cupom") ?? searchParams.get("coupon");
+    const normalizedCoupon = couponFromUrl?.trim() ?? "";
+    promotionCodeRef.current = normalizedCoupon ? normalizedCoupon : null;
+    setDetectedPromotionCode(promotionCodeRef.current);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -35,6 +48,12 @@ export default function EmbeddedCheckoutClient() {
           fetchClientSecret: async () => {
             const response = await fetch("/api/billing/checkout", {
               method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                promotionCode: promotionCodeRef.current,
+              }),
             });
 
             const result = (await response.json().catch(() => null)) as
@@ -136,6 +155,12 @@ export default function EmbeddedCheckoutClient() {
             Se voce tiver um cupom, o campo para aplicar o codigo aparece no
             proprio checkout da Stripe.
           </p>
+          {detectedPromotionCode && (
+            <p className="mt-2 text-xs font-bold text-emerald-700">
+              Cupom detectado no link: {detectedPromotionCode}. Vamos aplicar
+              automaticamente no checkout.
+            </p>
+          )}
           <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
             <div className="flex items-start gap-2">
               <BadgeInfo size={16} className="mt-0.5 shrink-0" />

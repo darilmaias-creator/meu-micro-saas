@@ -29,12 +29,14 @@ import {
   updateUserBillingState,
 } from "@/lib/auth/user-store";
 
-function createCheckoutRequest() {
+function createCheckoutRequest(body?: Record<string, unknown>) {
   return new Request("https://calculaartesao.com.br/api/billing/checkout", {
     method: "POST",
     headers: {
       origin: "https://calculaartesao.com.br",
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify(body ?? {}),
   });
 }
 
@@ -48,6 +50,9 @@ describe("checkout route", () => {
       sessions: {
         create: ReturnType<typeof vi.fn>;
       };
+    };
+    promotionCodes: {
+      list: ReturnType<typeof vi.fn>;
     };
   };
 
@@ -89,6 +94,11 @@ describe("checkout route", () => {
             client_secret: "secret_123",
           }),
         },
+      },
+      promotionCodes: {
+        list: vi.fn().mockResolvedValue({
+          data: [],
+        }),
       },
     };
 
@@ -162,5 +172,46 @@ describe("checkout route", () => {
       offerTier: "standard",
     });
     expect(getStripePriceIdForTier).toHaveBeenCalledWith("standard");
+  });
+
+  it("applies an active promotion code sent by link", async () => {
+    stripeClient.promotionCodes.list.mockResolvedValue({
+      data: [{ id: "promo_123" }],
+    });
+
+    const response = await POST(
+      createCheckoutRequest({
+        promotionCode: "LANCAMENTO30",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(stripeClient.promotionCodes.list).toHaveBeenCalledWith({
+      code: "LANCAMENTO30",
+      active: true,
+      limit: 1,
+    });
+    expect(stripeClient.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        discounts: [{ promotion_code: "promo_123" }],
+      }),
+    );
+  });
+
+  it("returns 400 when the promotion code is invalid", async () => {
+    stripeClient.promotionCodes.list.mockResolvedValue({
+      data: [],
+    });
+
+    const response = await POST(
+      createCheckoutRequest({
+        promotionCode: "CUPOM_INEXISTENTE",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      message: "Esse cupom nao existe ou nao esta ativo.",
+    });
   });
 });
