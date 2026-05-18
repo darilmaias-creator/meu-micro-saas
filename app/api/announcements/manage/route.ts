@@ -24,6 +24,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const ANNOUNCEMENT_SELECT_FIELDS =
+  "id, title, message, kind, audience, target_emails, cta_label, cta_url, starts_at, ends_at, is_active, created_by_user_id, created_by_email, created_at, updated_at";
+
 type DeactivateAnnouncementPayload = {
   id?: unknown;
 };
@@ -81,6 +84,17 @@ function buildAnnouncementPublishMessage(input: {
 function hasResendEnvConfigured() {
   return Boolean(
     process.env.RESEND_API_KEY?.trim() && process.env.RESEND_FROM_EMAIL?.trim(),
+  );
+}
+
+function filterRecipientsByTargetEmails(
+  recipients: AnnouncementEmailRecipient[],
+  targetEmails: string[],
+) {
+  const targetSet = new Set(targetEmails.map((email) => email.trim().toLowerCase()));
+
+  return recipients.filter((recipient) =>
+    targetSet.has(recipient.email.trim().toLowerCase()),
   );
 }
 
@@ -147,9 +161,7 @@ export async function GET() {
     const supabase = createSupabaseServerClient();
     const { data, error } = await supabase
       .from("global_announcements")
-      .select(
-        "id, title, message, kind, cta_label, cta_url, starts_at, ends_at, is_active, created_by_user_id, created_by_email, created_at, updated_at",
-      )
+      .select(ANNOUNCEMENT_SELECT_FIELDS)
       .order("created_at", { ascending: false })
       .limit(15);
 
@@ -233,6 +245,11 @@ export async function POST(request: Request) {
         title: validation.data.title,
         message: validation.data.message,
         kind: validation.data.kind,
+        audience: validation.data.audience,
+        target_emails:
+          validation.data.audience === "selected"
+            ? validation.data.targetEmails
+            : null,
         cta_label: validation.data.ctaLabel,
         cta_url: validation.data.ctaUrl,
         starts_at: new Date().toISOString(),
@@ -241,9 +258,7 @@ export async function POST(request: Request) {
         created_by_user_id: adminSession.session.user.id,
         created_by_email: adminEmail,
       })
-      .select(
-        "id, title, message, kind, cta_label, cta_url, starts_at, ends_at, is_active, created_by_user_id, created_by_email, created_at, updated_at",
-      )
+      .select(ANNOUNCEMENT_SELECT_FIELDS)
       .single();
 
     if (error) {
@@ -267,7 +282,15 @@ export async function POST(request: Request) {
         };
       } else {
         try {
-          const recipients = await listAnnouncementEmailRecipients();
+          const allRecipients = await listAnnouncementEmailRecipients();
+          const recipients =
+            validation.data.audience === "selected"
+              ? filterRecipientsByTargetEmails(
+                  allRecipients,
+                  validation.data.targetEmails,
+                )
+              : allRecipients;
+
           emailDelivery = await sendAnnouncementEmailToUsers({
             announcement: announcementRecord,
             recipients,
@@ -305,6 +328,8 @@ export async function POST(request: Request) {
         userId: adminSession.session.user.id,
         deactivatedCount: (deactivatedRows ?? []).length,
         announcementId: (data as AnnouncementRow).id,
+        audience: validation.data.audience,
+        targetEmailsCount: validation.data.targetEmails.length,
         sendEmailUsers: validation.data.sendEmailUsers,
         emailAttempted: emailDelivery?.attempted ?? 0,
         emailSent: emailDelivery?.sent ?? 0,
@@ -315,7 +340,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       message: buildAnnouncementPublishMessage({
-        baseMessage: "Aviso publicado para todos os usuarios com sucesso.",
+        baseMessage:
+          validation.data.audience === "selected"
+            ? `Aviso publicado para ${validation.data.targetEmails.length} usuario(s) direcionado(s).`
+            : "Aviso publicado para todos os usuarios com sucesso.",
         emailDelivery,
       }),
       announcement: announcementRecord,
@@ -373,9 +401,7 @@ export async function PATCH(request: Request) {
       .from("global_announcements")
       .update({ is_active: false })
       .eq("id", body.id.trim())
-      .select(
-        "id, title, message, kind, cta_label, cta_url, starts_at, ends_at, is_active, created_by_user_id, created_by_email, created_at, updated_at",
-      )
+      .select(ANNOUNCEMENT_SELECT_FIELDS)
       .maybeSingle();
 
     if (error) {

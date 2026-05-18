@@ -127,6 +127,8 @@ create table if not exists public.global_announcements (
   title text not null,
   message text not null,
   kind text not null default 'info' check (kind in ('info', 'success', 'warning')),
+  audience text not null default 'all' check (audience in ('all', 'selected')),
+  target_emails text[] null,
   cta_label text null,
   cta_url text null,
   starts_at timestamptz not null default timezone('utc', now()),
@@ -137,6 +139,19 @@ create table if not exists public.global_announcements (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.global_announcements
+  add column if not exists audience text not null default 'all';
+
+alter table public.global_announcements
+  add column if not exists target_emails text[] null;
+
+alter table public.global_announcements
+  drop constraint if exists global_announcements_audience_check;
+
+alter table public.global_announcements
+  add constraint global_announcements_audience_check
+  check (audience in ('all', 'selected'));
 
 create index if not exists global_announcements_active_idx
   on public.global_announcements (is_active, starts_at desc);

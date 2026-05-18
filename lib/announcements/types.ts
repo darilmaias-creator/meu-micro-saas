@@ -1,10 +1,13 @@
 export type AnnouncementKind = "info" | "success" | "warning";
+export type AnnouncementAudience = "all" | "selected";
 
 export type AnnouncementRecord = {
   id: string;
   title: string;
   message: string;
   kind: AnnouncementKind;
+  audience: AnnouncementAudience;
+  targetEmails: string[];
   ctaLabel: string | null;
   ctaUrl: string | null;
   startsAt: string;
@@ -21,6 +24,8 @@ export type AnnouncementRow = {
   title: string;
   message: string;
   kind: AnnouncementKind;
+  audience: AnnouncementAudience;
+  target_emails: string[] | null;
   cta_label: string | null;
   cta_url: string | null;
   starts_at: string;

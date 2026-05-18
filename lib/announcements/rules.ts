@@ -1,14 +1,22 @@
-import type { AnnouncementKind, AnnouncementRow, AnnouncementRecord } from "./types";
+import type {
+  AnnouncementAudience,
+  AnnouncementKind,
+  AnnouncementRow,
+  AnnouncementRecord,
+} from "./types";
 
 export const ANNOUNCEMENT_TITLE_MAX_LENGTH = 90;
 export const ANNOUNCEMENT_MESSAGE_MAX_LENGTH = 420;
 export const ANNOUNCEMENT_CTA_LABEL_MAX_LENGTH = 40;
 export const ANNOUNCEMENT_CTA_URL_MAX_LENGTH = 280;
+export const ANNOUNCEMENT_TARGET_EMAILS_MAX_COUNT = 60;
 
 type AnnouncementPayload = {
   title?: unknown;
   message?: unknown;
   kind?: unknown;
+  audience?: unknown;
+  targetEmails?: unknown;
   ctaLabel?: unknown;
   ctaUrl?: unknown;
   endsAt?: unknown;
@@ -22,6 +30,8 @@ type ValidationResult =
         title: string;
         message: string;
         kind: AnnouncementKind;
+        audience: AnnouncementAudience;
+        targetEmails: string[];
         ctaLabel: string | null;
         ctaUrl: string | null;
         endsAt: string | null;
@@ -67,6 +77,38 @@ function normalizeKind(value: unknown): AnnouncementKind {
   }
 
   return "info";
+}
+
+function normalizeAudience(value: unknown): AnnouncementAudience {
+  if (value === "selected") {
+    return "selected";
+  }
+
+  return "all";
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function normalizeTargetEmails(value: unknown) {
+  const values =
+    typeof value === "string"
+      ? value
+          .split(/[\n,;]+/g)
+          .map((entry) => entry.trim().toLowerCase())
+      : Array.isArray(value)
+        ? value
+            .map((entry) =>
+              typeof entry === "string" ? entry.trim().toLowerCase() : "",
+            )
+        : [];
+
+  const uniqueEmails = Array.from(new Set(values.filter(Boolean)));
+
+  return uniqueEmails
+    .filter(isValidEmail)
+    .slice(0, ANNOUNCEMENT_TARGET_EMAILS_MAX_COUNT);
 }
 
 function normalizeIsoDateString(value: unknown) {
@@ -129,6 +171,8 @@ export function validateAnnouncementPayload(
   }
 
   const kind = normalizeKind(payload.kind);
+  const audience = normalizeAudience(payload.audience);
+  const targetEmails = normalizeTargetEmails(payload.targetEmails);
   const ctaLabel = normalizeOptionalText(
     payload.ctaLabel,
     ANNOUNCEMENT_CTA_LABEL_MAX_LENGTH,
@@ -152,12 +196,22 @@ export function validateAnnouncementPayload(
     };
   }
 
+  if (audience === "selected" && targetEmails.length === 0) {
+    return {
+      ok: false,
+      message:
+        "Para aviso direcionado, informe pelo menos um e-mail valido de destino.",
+    };
+  }
+
   return {
     ok: true,
     data: {
       title,
       message,
       kind,
+      audience,
+      targetEmails: audience === "selected" ? targetEmails : [],
       ctaLabel,
       ctaUrl,
       endsAt,
@@ -166,12 +220,42 @@ export function validateAnnouncementPayload(
   };
 }
 
+export function isAnnouncementVisibleForEmail(input: {
+  audience: AnnouncementAudience | null | undefined;
+  targetEmails: string[] | null | undefined;
+  userEmail: string | null | undefined;
+}) {
+  if (input.audience !== "selected") {
+    return true;
+  }
+
+  const userEmail = input.userEmail?.trim().toLowerCase() ?? "";
+  if (!userEmail) {
+    return false;
+  }
+
+  const targets = (input.targetEmails ?? [])
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  return targets.includes(userEmail);
+}
+
 export function mapAnnouncementRow(row: AnnouncementRow): AnnouncementRecord {
+  const audience = row.audience === "selected" ? "selected" : "all";
+  const targetEmails = Array.isArray(row.target_emails)
+    ? row.target_emails
+        .map((email) => email.trim().toLowerCase())
+        .filter((email) => email.length > 0)
+    : [];
+
   return {
     id: row.id,
     title: row.title,
     message: row.message,
     kind: row.kind,
+    audience,
+    targetEmails: audience === "selected" ? targetEmails : [],
     ctaLabel: row.cta_label,
     ctaUrl: row.cta_url,
     startsAt: row.starts_at,

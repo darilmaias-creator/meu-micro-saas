@@ -65,7 +65,7 @@ function createAnnouncementEmailBody(input: {
     text: [
       `Ola, ${recipientName}.`,
       "",
-      `${appName} publicou um novo aviso para todos os usuarios:`,
+      `${appName} publicou um novo aviso no app:`,
       `${title}`,
       "",
       parsedMessage.text || "Temos uma atualizacao importante para voce.",

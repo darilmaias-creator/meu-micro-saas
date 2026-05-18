@@ -2,13 +2,19 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/lib/auth/options";
-import { mapAnnouncementRow } from "@/lib/announcements/rules";
+import {
+  isAnnouncementVisibleForEmail,
+  mapAnnouncementRow,
+} from "@/lib/announcements/rules";
 import type { AnnouncementRow } from "@/lib/announcements/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+const ANNOUNCEMENT_SELECT_FIELDS =
+  "id, title, message, kind, audience, target_emails, cta_label, cta_url, starts_at, ends_at, is_active, created_by_user_id, created_by_email, created_at, updated_at";
 
 function isAnnouncementActiveNow(row: AnnouncementRow, now: Date) {
   const startsAt = new Date(row.starts_at);
@@ -43,9 +49,7 @@ export async function GET() {
     const supabase = createSupabaseServerClient();
     const { data, error } = await supabase
       .from("global_announcements")
-      .select(
-        "id, title, message, kind, cta_label, cta_url, starts_at, ends_at, is_active, created_by_user_id, created_by_email, created_at, updated_at",
-      )
+      .select(ANNOUNCEMENT_SELECT_FIELDS)
       .eq("is_active", true)
       .order("starts_at", { ascending: false })
       .limit(10);
@@ -56,7 +60,15 @@ export async function GET() {
 
     const rows = (data as AnnouncementRow[] | null) ?? [];
     const now = new Date();
-    const activeAnnouncement = rows.find((row) => isAnnouncementActiveNow(row, now));
+    const activeAnnouncement = rows.find(
+      (row) =>
+        isAnnouncementActiveNow(row, now) &&
+        isAnnouncementVisibleForEmail({
+          audience: row.audience,
+          targetEmails: row.target_emails,
+          userEmail: session.user.email,
+        }),
+    );
 
     if (!activeAnnouncement) {
       return NextResponse.json(

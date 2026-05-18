@@ -22,7 +22,11 @@ import {
   DEFAULT_STORE_SUBTITLE,
   resolveQuoteDocumentConfig,
 } from "@/lib/app-data/defaults";
-import type { AnnouncementKind, AnnouncementRecord } from "@/lib/announcements/types";
+import type {
+  AnnouncementAudience,
+  AnnouncementKind,
+  AnnouncementRecord,
+} from "@/lib/announcements/types";
 
 const DEFAULT_LOGO_URL = createDefaultAppDataState().config.userLogo;
 
@@ -146,6 +150,15 @@ function formatAnnouncementDate(dateValue: string) {
   });
 }
 
+function normalizeAnnouncementTargetEmailsInput(rawValue: string) {
+  const parsed = rawValue
+    .split(/[\n,;]+/g)
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  return Array.from(new Set(parsed));
+}
+
 export default function BusinessSettingsPage() {
   const { data: session, status } = useSession();
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -168,6 +181,10 @@ export default function BusinessSettingsPage() {
   const [announcementCtaLabel, setAnnouncementCtaLabel] = useState("");
   const [announcementCtaUrl, setAnnouncementCtaUrl] = useState("");
   const [announcementEndsAt, setAnnouncementEndsAt] = useState("");
+  const [announcementAudience, setAnnouncementAudience] =
+    useState<AnnouncementAudience>("all");
+  const [announcementTargetEmailsInput, setAnnouncementTargetEmailsInput] =
+    useState("");
   const [announcementSendEmailUsers, setAnnouncementSendEmailUsers] =
     useState(true);
 
@@ -244,6 +261,8 @@ export default function BusinessSettingsPage() {
     setAnnouncementCtaLabel("");
     setAnnouncementCtaUrl("");
     setAnnouncementEndsAt("");
+    setAnnouncementAudience("all");
+    setAnnouncementTargetEmailsInput("");
     setAnnouncementSendEmailUsers(true);
   }
 
@@ -257,6 +276,11 @@ export default function BusinessSettingsPage() {
         title: announcementTitle,
         message: announcementMessage,
         kind: announcementKind,
+        audience: announcementAudience,
+        targetEmails:
+          announcementAudience === "selected"
+            ? normalizeAnnouncementTargetEmailsInput(announcementTargetEmailsInput)
+            : [],
         ctaLabel: announcementCtaLabel,
         ctaUrl: announcementCtaUrl,
         endsAt: announcementEndsAt
@@ -765,10 +789,10 @@ export default function BusinessSettingsPage() {
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  Mensagem para todos os usuarios
+                  Caixa de mensagens do app
                 </p>
                 <h3 className="mt-1 text-lg font-black text-slate-900">
-                  Aviso global (cupom, atualizacao, comunicado)
+                  Aviso no topo do app (global ou direcionado)
                 </h3>
                 <p className="mt-2 text-sm text-slate-600">
                   Tudo que voce publicar aqui aparece no topo do app para os
@@ -808,6 +832,11 @@ export default function BusinessSettingsPage() {
                 </p>
                 <p className="mt-1 text-sm text-slate-700">
                   {activeAnnouncement.message}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {activeAnnouncement.audience === "selected"
+                    ? `Direcionado para ${activeAnnouncement.targetEmails.length} e-mail(s).`
+                    : "Visivel para todos os usuarios."}
                 </p>
                 <p className="mt-2 text-xs text-slate-500">
                   Publicado em {formatAnnouncementDate(activeAnnouncement.createdAt)}
@@ -877,6 +906,28 @@ export default function BusinessSettingsPage() {
             />
 
             <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Destino do aviso
+                </label>
+                <select
+                  value={announcementAudience}
+                  onChange={(event) =>
+                    setAnnouncementAudience(
+                      event.target.value as AnnouncementAudience,
+                    )
+                  }
+                  disabled={isPublishingAnnouncement}
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-base text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 disabled:bg-slate-100 disabled:text-slate-400"
+                >
+                  <option value="all">Todos os usuarios</option>
+                  <option value="selected">Somente e-mails de teste</option>
+                </select>
+                <p className="mt-2 text-xs text-slate-500">
+                  Use &quot;Somente e-mails de teste&quot; para validar tudo antes do disparo geral.
+                </p>
+              </div>
+
               <SettingsField
                 label="Texto do botao (opcional)"
                 hint="Ex: Ver cupom"
@@ -914,6 +965,53 @@ export default function BusinessSettingsPage() {
               </div>
             </div>
 
+            {announcementAudience === "selected" && (
+              <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                  E-mails de destino (teste)
+                </label>
+                <textarea
+                  rows={3}
+                  value={announcementTargetEmailsInput}
+                  onChange={(event) =>
+                    setAnnouncementTargetEmailsInput(event.target.value)
+                  }
+                  disabled={isPublishingAnnouncement}
+                  placeholder="exemplo1@email.com, exemplo2@email.com"
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 disabled:bg-slate-100 disabled:text-slate-400"
+                />
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentEmails = normalizeAnnouncementTargetEmailsInput(
+                        announcementTargetEmailsInput,
+                      );
+                      const adminEmail = session.user.email?.trim().toLowerCase();
+
+                      if (!adminEmail) {
+                        return;
+                      }
+
+                      if (currentEmails.includes(adminEmail)) {
+                        return;
+                      }
+
+                      const updatedEmails = [...currentEmails, adminEmail].join(", ");
+                      setAnnouncementTargetEmailsInput(updatedEmails);
+                    }}
+                    disabled={isPublishingAnnouncement || !session.user.email}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Usar meu e-mail de admin
+                  </button>
+                  <p className="text-xs text-slate-600">
+                    Separe por virgula, ponto e virgula ou quebra de linha.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
               <input
                 type="checkbox"
@@ -939,13 +1037,19 @@ export default function BusinessSettingsPage() {
                 disabled={
                   isPublishingAnnouncement ||
                   !announcementTitle.trim() ||
-                  !announcementMessage.trim()
+                  !announcementMessage.trim() ||
+                  (announcementAudience === "selected" &&
+                    normalizeAnnouncementTargetEmailsInput(
+                      announcementTargetEmailsInput,
+                    ).length === 0)
                 }
                 className="inline-flex items-center justify-center rounded-xl border border-sky-600 bg-sky-700 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isPublishingAnnouncement
                   ? "Publicando aviso..."
-                  : "Publicar para todos"}
+                  : announcementAudience === "selected"
+                    ? "Publicar aviso de teste"
+                    : "Publicar para todos"}
               </button>
 
               <button
