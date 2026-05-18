@@ -868,10 +868,10 @@ export default function BusinessSettingsPage() {
 
             <SettingsTextarea
               label="Mensagem"
-              hint="Texto principal que os usuarios vao ler no topo do app."
+              hint='Texto principal do aviso. Para banner clicavel, use: <a href="https://..."><img src="https://..." alt="Banner" /></a>'
               value={announcementMessage}
               disabled={isPublishingAnnouncement}
-              placeholder="Ex: Use o cupom LANCAMENTO30 e ganhe 30 dias de Premium."
+              placeholder='Ex: <a href="https://calculaartesao.com.br/assinatura/checkout?cupom=LANCAMENTO30"><img src="https://i.postimg.cc/0QCr506G/image.png" alt="Banner" /></a>'
               maxLength={420}
               onChange={setAnnouncementMessage}
             />

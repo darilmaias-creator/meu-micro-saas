@@ -1,6 +1,7 @@
 import "server-only";
 
 import { sendResendEmail } from "@/lib/email/resend";
+import { parseAnnouncementMessageContent } from "@/lib/announcements/message-content";
 
 import type { AnnouncementRecord } from "./types";
 
@@ -38,15 +39,26 @@ function createAnnouncementEmailBody(input: {
   const recipientName = input.recipientName?.trim() || "usuario";
   const title = input.announcement.title;
   const message = input.announcement.message;
+  const parsedMessage = parseAnnouncementMessageContent(message);
   const ctaLabel = input.announcement.ctaLabel?.trim() || "";
   const ctaUrl = input.announcement.ctaUrl?.trim() || "";
   const hasCta = Boolean(ctaLabel && ctaUrl);
 
   const safeRecipientName = sanitizeText(recipientName);
   const safeTitle = sanitizeText(title);
-  const safeMessage = sanitizeText(message).replace(/\n/g, "<br />");
+  const safeMessage = sanitizeText(parsedMessage.text).replace(/\n/g, "<br />");
   const safeCtaLabel = sanitizeText(ctaLabel);
   const safeCtaUrl = sanitizeText(ctaUrl);
+  const safeImageSrc = parsedMessage.image?.src
+    ? sanitizeText(parsedMessage.image.src)
+    : null;
+  const safeImageHref = parsedMessage.image?.href
+    ? sanitizeText(parsedMessage.image.href)
+    : null;
+  const safeImageAlt = parsedMessage.image?.alt
+    ? sanitizeText(parsedMessage.image.alt)
+    : "Banner do aviso";
+  const imageFallbackUrl = parsedMessage.image?.href ?? parsedMessage.image?.src ?? "";
 
   return {
     subject: `${appName}: ${title}`,
@@ -56,7 +68,8 @@ function createAnnouncementEmailBody(input: {
       `${appName} publicou um novo aviso para todos os usuarios:`,
       `${title}`,
       "",
-      message,
+      parsedMessage.text || "Temos uma atualizacao importante para voce.",
+      imageFallbackUrl ? `Imagem do aviso: ${imageFallbackUrl}` : "",
       "",
       hasCta ? `${ctaLabel}: ${ctaUrl}` : "",
       "",
@@ -71,7 +84,24 @@ function createAnnouncementEmailBody(input: {
         <p>Publicamos um novo aviso no app:</p>
         <div style="border: 1px solid #dbeafe; border-radius: 12px; padding: 16px; background: #f8fbff;">
           <p style="margin: 0 0 6px; font-size: 18px; font-weight: 700; color: #0b2f44;">${safeTitle}</p>
-          <p style="margin: 0; color: #334155;">${safeMessage}</p>
+          ${
+            safeImageSrc
+              ? safeImageHref
+                ? `<p style="margin: 0 0 10px;">
+                     <a href="${safeImageHref}" target="_blank" rel="noreferrer noopener">
+                       <img src="${safeImageSrc}" alt="${safeImageAlt}" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:10px;" />
+                     </a>
+                   </p>`
+                : `<p style="margin: 0 0 10px;">
+                     <img src="${safeImageSrc}" alt="${safeImageAlt}" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:10px;" />
+                   </p>`
+              : ""
+          }
+          ${
+            safeMessage
+              ? `<p style="margin: 0; color: #334155;">${safeMessage}</p>`
+              : ""
+          }
         </div>
         ${
           hasCta

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Info, Megaphone, X } from "lucide-react";
 
 import type { AnnouncementRecord } from "@/lib/announcements/types";
+import { parseAnnouncementMessageContent } from "@/lib/announcements/message-content";
 
 const STORAGE_NAMESPACE = "meu-micro-saas";
 
@@ -126,6 +127,13 @@ export default function GlobalAnnouncementBanner({
     () => (announcement ? getAnnouncementStyles(announcement.kind) : null),
     [announcement],
   );
+  const parsedMessage = useMemo(
+    () =>
+      announcement
+        ? parseAnnouncementMessageContent(announcement.message)
+        : { text: "", image: null },
+    [announcement],
+  );
 
   if (isLoading || !announcement || hasDismissedCurrentAnnouncement || !styles) {
     return null;
@@ -176,9 +184,37 @@ export default function GlobalAnnouncementBanner({
               <h2 className={`text-base font-black md:text-lg ${styles.icon}`}>
                 {announcement.title}
               </h2>
-              <p className="text-sm leading-relaxed md:text-[15px]">
-                {announcement.message}
-              </p>
+              {parsedMessage.image && (
+                <div className="max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  {parsedMessage.image.href ? (
+                    <a
+                      href={parsedMessage.image.href}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="block"
+                    >
+                      <img
+                        src={parsedMessage.image.src}
+                        alt={parsedMessage.image.alt}
+                        className="h-auto w-full object-contain"
+                        loading="lazy"
+                      />
+                    </a>
+                  ) : (
+                    <img
+                      src={parsedMessage.image.src}
+                      alt={parsedMessage.image.alt}
+                      className="h-auto w-full object-contain"
+                      loading="lazy"
+                    />
+                  )}
+                </div>
+              )}
+              {parsedMessage.text && (
+                <p className="whitespace-pre-line text-sm leading-relaxed md:text-[15px]">
+                  {parsedMessage.text}
+                </p>
+              )}
             </div>
           </div>
 
