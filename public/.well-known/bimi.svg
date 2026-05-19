@@ -1,0 +1,28 @@
+<svg version="1.2" baseProfile="tiny-ps" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Calcula Artesao</title>
+  <desc>Logo BIMI da marca Calcula Artesao</desc>
+  <rect width="512" height="512" rx="96" fill="#063B53"/>
+
+  <rect x="140" y="90" width="232" height="332" rx="42" fill="#FFFFFF"/>
+  <rect x="176" y="130" width="160" height="52" rx="14" fill="#063B53"/>
+
+  <rect x="176" y="214" width="40" height="40" rx="10" fill="#063B53"/>
+  <rect x="232" y="214" width="40" height="40" rx="10" fill="#063B53"/>
+  <rect x="288" y="214" width="40" height="40" rx="10" fill="#063B53"/>
+
+  <rect x="176" y="270" width="40" height="40" rx="10" fill="#063B53"/>
+  <rect x="232" y="270" width="40" height="40" rx="10" fill="#063B53"/>
+  <rect x="288" y="270" width="40" height="40" rx="10" fill="#063B53"/>
+
+  <rect x="232" y="326" width="40" height="40" rx="10" fill="#063B53"/>
+  <rect x="288" y="326" width="40" height="40" rx="10" fill="#FF7A00"/>
+
+  <circle cx="206" cy="378" r="34" fill="#FF7A00"/>
+  <circle cx="306" cy="378" r="34" fill="#FF7A00"/>
+  <circle cx="206" cy="378" r="17" fill="#FFFFFF"/>
+  <circle cx="306" cy="378" r="17" fill="#FFFFFF"/>
+
+  <path d="M178 364L338 194L356 212L196 382Z" fill="#FF7A00"/>
+  <path d="M188 366L332 224L344 236L200 378Z" fill="#063B53" opacity="0.2"/>
+  <circle cx="256" cy="286" r="8" fill="#FFFFFF"/>
+</svg>
