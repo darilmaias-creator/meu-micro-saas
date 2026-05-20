@@ -22,6 +22,7 @@ type ChatMessage = {
   role: "bot" | "user";
   text: string;
   targetTab?: ActiveTab;
+  targetTabs?: ActiveTab[];
 };
 
 type QuickAction = {
@@ -59,7 +60,18 @@ const QUICK_ACTIONS: QuickAction[] = [
     label: "Orçamentos e vendas",
     prompt: "me explica orçamentos",
   },
+  {
+    id: "all-tabs",
+    label: "Explicar cada aba",
+    prompt: "pode explicar cada um e como uso cada aba",
+  },
 ];
+
+type BotReply = {
+  text: string;
+  targetTab?: ActiveTab;
+  targetTabs?: ActiveTab[];
+};
 
 function normalizeText(value: string) {
   return value
@@ -69,93 +81,126 @@ function normalizeText(value: string) {
     .trim();
 }
 
+function includesAny(text: string, terms: string[]) {
+  return terms.some((term) => text.includes(term));
+}
+
 function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
+  void activeTab;
   const normalizedPrompt = normalizeText(userPrompt);
 
-  if (
-    normalizedPrompt.includes("como comeco") ||
-    normalizedPrompt.includes("por onde comeco") ||
-    normalizedPrompt.includes("primeiro passo")
-  ) {
+  if (normalizedPrompt.length <= 2) {
     return {
       text:
-        "Perfeito. Primeiro cadastre seus materiais. Depois monte a ficha técnica em Calcular Preço e finalize em Orçamentos e Vendas. Esse é o fluxo mais seguro para precificar sem erro.",
-      targetTab: "inventory" as const,
-    };
+        "Pode escrever sua dúvida com mais detalhe? Exemplo: “como criar meu primeiro orçamento?”.",
+      targetTab: "sales",
+    } satisfies BotReply;
+  }
+
+  if (includesAny(normalizedPrompt, ["cada um", "cada uma"])) {
+    return {
+      text:
+        "Perfeito, vamos por partes:\n1) Meus Materiais: aqui você cadastra seus insumos e preços.\n2) Calcular Preço: aqui monta a ficha técnica e vê o preço sugerido.\n3) Orçamentos e Vendas: aqui cria o orçamento do cliente e registra venda.\n4) Custos da Operação: aqui registra custos do negócio (aluguel, luz, etc.).\n5) Resumo: aqui vê uma visão geral para decidir melhor.\n\nSe quiser, te levo direto para a aba que você escolher.",
+      targetTabs: [
+        "inventory",
+        "calculator",
+        "sales",
+        "operationCosts",
+        "dashboard",
+      ],
+    } satisfies BotReply;
   }
 
   if (
-    normalizedPrompt.includes("material") ||
-    normalizedPrompt.includes("estoque") ||
-    normalizedPrompt.includes("insumo")
+    includesAny(normalizedPrompt, [
+      "cada aba",
+      "explica cada",
+      "como uso cada",
+      "me explica tudo",
+      "como funciona o app",
+      "explicar abas",
+      "me explica as abas",
+      "como usar as abas",
+    ])
   ) {
     return {
       text:
-        "Na aba Meus Materiais você cadastra cada insumo com preço e estoque. Esses dados alimentam toda a ficha técnica e os cálculos seguintes.",
-      targetTab: "inventory" as const,
-    };
+        "Claro! Resumo simples:\n1) Meus Materiais: cadastre nome, preço e estoque dos insumos.\n2) Calcular Preço: monte a ficha técnica e veja custo + preço sugerido.\n3) Orçamentos e Vendas: gere proposta para cliente e registre venda.\n4) Custos da Operação: registre aluguel, luz e outros custos do negócio.\n5) Resumo: acompanhe a visão geral dos resultados.",
+      targetTabs: [
+        "inventory",
+        "calculator",
+        "sales",
+        "operationCosts",
+        "dashboard",
+      ],
+    } satisfies BotReply;
   }
 
-  if (
-    normalizedPrompt.includes("ficha") ||
-    normalizedPrompt.includes("preco") ||
-    normalizedPrompt.includes("precificar") ||
-    normalizedPrompt.includes("margem")
-  ) {
+  if (includesAny(normalizedPrompt, ["como comeco", "por onde comeco", "primeiro passo", "sou iniciante", "nao sei por onde comecar"])) {
     return {
       text:
-        "Na aba Calcular Preço você monta a ficha técnica do produto, define margem e vê o preço sugerido com base nos custos reais.",
+        "Perfeito. Caminho mais fácil:\n1) Cadastre um insumo em Meus Materiais.\n2) Vá em Calcular Preço e monte a primeira ficha técnica.\n3) Vá em Orçamentos e Vendas para gerar a proposta.\n\nSe seguir essa ordem, você já consegue vender com preço mais seguro.",
+      targetTab: "inventory" as const,
+    } satisfies BotReply;
+  }
+
+  if (includesAny(normalizedPrompt, ["material", "estoque", "insumo"])) {
+    return {
+      text:
+        "Na aba Meus Materiais você cadastra cada insumo com preço e estoque. Exemplo: fita, cola, tecido, embalagem. Esses dados entram automaticamente nos cálculos depois.",
+      targetTab: "inventory" as const,
+    } satisfies BotReply;
+  }
+
+  if (includesAny(normalizedPrompt, ["ficha", "preco", "precificar", "margem"])) {
+    return {
+      text:
+        "Na aba Calcular Preço você monta a ficha técnica do produto, define sua margem e o app mostra o preço sugerido com base no custo real.",
       targetTab: "calculator" as const,
-    };
+    } satisfies BotReply;
   }
 
-  if (
-    normalizedPrompt.includes("orcamento") ||
-    normalizedPrompt.includes("venda") ||
-    normalizedPrompt.includes("cliente")
-  ) {
+  if (includesAny(normalizedPrompt, ["orcamento", "venda", "cliente"])) {
     return {
       text:
-        "Em Orçamentos e Vendas você cria propostas para clientes, registra vendas e mantém o histórico organizado para consultar depois.",
+        "Em Orçamentos e Vendas você cria propostas para clientes, registra vendas e mantém o histórico organizado. É a parte prática para fechar pedido.",
       targetTab: "sales" as const,
-    };
+    } satisfies BotReply;
   }
 
-  if (
-    normalizedPrompt.includes("custo") ||
-    normalizedPrompt.includes("fixo") ||
-    normalizedPrompt.includes("operacao")
-  ) {
+  if (includesAny(normalizedPrompt, ["custo", "fixo", "operacao"])) {
     return {
       text:
-        "Na aba Custos da Operação você registra custos fixos e variáveis do negócio para enxergar o custo real da operação com mais clareza.",
+        "Na aba Custos da Operação você registra custos fixos e variáveis do negócio para ter visão do custo real mensal da sua operação.",
       targetTab: "operationCosts" as const,
-    };
+    } satisfies BotReply;
   }
 
-  if (
-    normalizedPrompt.includes("resumo") ||
-    normalizedPrompt.includes("dashboard") ||
-    normalizedPrompt.includes("relatorio")
-  ) {
+  if (includesAny(normalizedPrompt, ["resumo", "dashboard", "relatorio"])) {
     return {
       text:
-        "No Resumo você acompanha visão geral do período, incluindo resultados e dados de apoio para decisões rápidas.",
+        "No Resumo você acompanha a visão geral do período: resultados, sinais de atenção e dados para decidir mais rápido.",
       targetTab: "dashboard" as const,
-    };
+    } satisfies BotReply;
   }
 
   return {
-    text: `Entendi sua dúvida. Como você está em ${TAB_LABELS[activeTab]}, posso te levar direto para Meus Materiais, Calcular Preço, Orçamentos e Vendas, Custos da Operação ou Resumo.`,
-  };
+    text:
+      "Entendi sua dúvida. Posso te explicar cada aba em linguagem simples ou te levar direto para a área certa.\n\nSe quiser o passo a passo completo, clique em “Explicar cada aba”.",
+    targetTabs: ["inventory", "calculator", "sales", "operationCosts", "dashboard"],
+  } satisfies BotReply;
 }
 
-function createBotMessage(text: string, targetTab?: ActiveTab): ChatMessage {
+function createBotMessage(
+  text: string,
+  options?: { targetTab?: ActiveTab; targetTabs?: ActiveTab[] },
+): ChatMessage {
   return {
     id: `bot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     role: "bot",
     text,
-    targetTab,
+    targetTab: options?.targetTab,
+    targetTabs: options?.targetTabs,
   };
 }
 
@@ -197,7 +242,10 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
     setMessages((currentMessages) => [
       ...currentMessages,
       userMessage,
-      createBotMessage(botReply.text, botReply.targetTab),
+      createBotMessage(botReply.text, {
+        targetTab: botReply.targetTab,
+        targetTabs: botReply.targetTabs,
+      }),
     ]);
     setInputValue("");
   }
@@ -242,7 +290,7 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
                     : "ml-7 bg-slate-900 text-white"
                 }`}
               >
-                <p>{message.text}</p>
+                <p className="whitespace-pre-line">{message.text}</p>
 
                 {message.role === "bot" && message.targetTab && (
                   <button
@@ -254,6 +302,25 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
                     <ArrowRight size={12} />
                   </button>
                 )}
+
+                {message.role === "bot" &&
+                  !message.targetTab &&
+                  message.targetTabs &&
+                  message.targetTabs.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {message.targetTabs.map((tabId) => (
+                        <button
+                          key={`${message.id}-${tabId}`}
+                          type="button"
+                          onClick={() => goToTab(tabId)}
+                          className="inline-flex items-center gap-1 rounded-lg bg-amber-600 px-2 py-1 text-[11px] font-bold text-white transition-colors hover:bg-amber-700"
+                        >
+                          {TAB_LABELS[tabId]}
+                          <ArrowRight size={11} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
             ))}
           </div>
