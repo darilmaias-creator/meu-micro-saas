@@ -23,6 +23,7 @@ import InventoryTab from "./InventoryTab";
 import OperationCostsTab from "./OperationCostsTab";
 import ProfileModal from "./ProfileModal";
 import SalesTab from "./SalesTab";
+import AppHelpAssistant from "./AppHelpAssistant";
 import OnboardingGuide from "./onboarding/OnboardingGuide";
 import { useAppData } from "./hooks/useAppData";
 import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
@@ -212,6 +213,7 @@ export default function AuthenticatedAppShell({
       </main>
 
       <OnboardingGuide userId={session.user.id} activeTab={activeTab} />
+      <AppHelpAssistant activeTab={activeTab} />
 
       <ProfileModal
         isOpen={isProfileOpen}
