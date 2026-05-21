@@ -25,6 +25,9 @@ vi.mock("html2pdf.js", () => ({
 
 describe("DashboardTab", () => {
   const mockAppData = {
+    insumos: [],
+    savedProducts: [],
+    quotes: [],
     sales: [
       {
         id: 1,
@@ -41,25 +44,25 @@ describe("DashboardTab", () => {
   };
 
   it("deve renderizar os totais corretamente", () => {
-    render(<DashboardTab appData={mockAppData} />);
+    render(<DashboardTab appData={mockAppData} isPremium={false} />);
 
-    expect(screen.getByText("R$ 100.00")).toBeInTheDocument(); // Faturamento
-    expect(screen.getByText("R$ 50.00")).toBeInTheDocument(); // Custos
-    expect(screen.getByText("R$ 10.00")).toBeInTheDocument(); // Dízimo
-    expect(screen.getByText("R$ 50.00")).toBeInTheDocument(); // Lucro
-    expect(screen.getByText("50.0%")).toBeInTheDocument(); // Margem
+    expect(screen.getByText("R$ 100.00")).toBeTruthy(); // Faturamento
+    expect(screen.getByText("R$ 50.00")).toBeTruthy(); // Custos
+    expect(screen.getByText("R$ 10.00")).toBeTruthy(); // Dízimo
+    expect(screen.getByText("R$ 50.00")).toBeTruthy(); // Lucro
+    expect(screen.getByText("50.0%")).toBeTruthy(); // Margem
   });
 
   it("deve renderizar os gráficos", () => {
-    render(<DashboardTab appData={mockAppData} />);
+    render(<DashboardTab appData={mockAppData} isPremium={false} />);
 
-    expect(screen.getByTestId("bar-chart")).toBeInTheDocument();
-    expect(screen.getByTestId("pie-chart")).toBeInTheDocument();
+    expect(screen.getByTestId("bar-chart")).toBeTruthy();
+    expect(screen.getByTestId("pie-chart")).toBeTruthy();
   });
 
   it("deve calcular margem corretamente", () => {
     // Margem = profit / revenue * 100 = 50 / 100 * 100 = 50%
-    render(<DashboardTab appData={mockAppData} />);
-    expect(screen.getByText("50.0%")).toBeInTheDocument();
+    render(<DashboardTab appData={mockAppData} isPremium={false} />);
+    expect(screen.getByText("50.0%")).toBeTruthy();
   });
 });

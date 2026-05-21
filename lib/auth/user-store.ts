@@ -37,6 +37,9 @@ export type StoredUser = {
   premiumActivatedAt?: string | null;
   founderOfferApplied: boolean;
   founderOfferRevokedAt?: string | null;
+  premiumTrialStartedAt?: string | null;
+  premiumTrialExpiresAt?: string | null;
+  premiumTrialUsed: boolean;
   passwordResetTokenHash?: string | null;
   passwordResetExpiresAt?: string | null;
   passwordResetRequestedAt?: string | null;
@@ -66,6 +69,9 @@ export type SessionUser = {
   premiumActivatedAt?: string | null;
   founderOfferApplied: boolean;
   founderOfferRevokedAt?: string | null;
+  premiumTrialStartedAt?: string | null;
+  premiumTrialExpiresAt?: string | null;
+  premiumTrialUsed: boolean;
 };
 
 type AuthUserRow = {
@@ -88,6 +94,9 @@ type AuthUserRow = {
   premium_activated_at: string | null;
   founder_offer_applied: boolean | null;
   founder_offer_revoked_at: string | null;
+  premium_trial_started_at: string | null;
+  premium_trial_expires_at: string | null;
+  premium_trial_used: boolean | null;
   password_reset_token_hash: string | null;
   password_reset_expires_at: string | null;
   password_reset_requested_at: string | null;
@@ -98,7 +107,7 @@ type AuthUserRow = {
 const dataDirectory = path.join(process.cwd(), "data");
 const usersFilePath = path.join(dataDirectory, "users.json");
 const AUTH_USER_SELECT_COLUMNS =
-  "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, premium_activated_at, founder_offer_applied, founder_offer_revoked_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at";
+  "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, premium_activated_at, founder_offer_applied, founder_offer_revoked_at, premium_trial_started_at, premium_trial_expires_at, premium_trial_used, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at";
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -144,6 +153,9 @@ function mapAuthUserRow(row: AuthUserRow | null | undefined) {
     premiumActivatedAt: row.premium_activated_at ?? null,
     founderOfferApplied: row.founder_offer_applied ?? false,
     founderOfferRevokedAt: row.founder_offer_revoked_at ?? null,
+    premiumTrialStartedAt: row.premium_trial_started_at ?? null,
+    premiumTrialExpiresAt: row.premium_trial_expires_at ?? null,
+    premiumTrialUsed: row.premium_trial_used ?? false,
     passwordResetTokenHash: row.password_reset_token_hash ?? null,
     passwordResetExpiresAt: row.password_reset_expires_at ?? null,
     passwordResetRequestedAt: row.password_reset_requested_at ?? null,
@@ -173,6 +185,9 @@ function buildAuthUserRow(user: StoredUser) {
     premium_activated_at: user.premiumActivatedAt ?? null,
     founder_offer_applied: user.founderOfferApplied,
     founder_offer_revoked_at: user.founderOfferRevokedAt ?? null,
+    premium_trial_started_at: user.premiumTrialStartedAt ?? null,
+    premium_trial_expires_at: user.premiumTrialExpiresAt ?? null,
+    premium_trial_used: user.premiumTrialUsed,
     password_reset_token_hash: user.passwordResetTokenHash ?? null,
     password_reset_expires_at: user.passwordResetExpiresAt ?? null,
     password_reset_requested_at: user.passwordResetRequestedAt ?? null,
@@ -647,7 +662,11 @@ export async function deleteUserById(userId: string) {
 }
 
 export function getSessionUserFromStoredUser(user: StoredUser): SessionUser {
-  const isPremium = isPremiumPlan(user.plan);
+  const hasActivePremiumTrial = Boolean(
+    user.premiumTrialExpiresAt &&
+      new Date(user.premiumTrialExpiresAt).getTime() > Date.now(),
+  );
+  const isPremium = isPremiumPlan(user.plan) || hasActivePremiumTrial;
   const freeNameChangesRemaining = getRemainingFreeNameChanges(
     user.freeNameChangesUsed,
   );
@@ -674,6 +693,9 @@ export function getSessionUserFromStoredUser(user: StoredUser): SessionUser {
     premiumActivatedAt: user.premiumActivatedAt ?? null,
     founderOfferApplied: user.founderOfferApplied,
     founderOfferRevokedAt: user.founderOfferRevokedAt ?? null,
+    premiumTrialStartedAt: user.premiumTrialStartedAt ?? null,
+    premiumTrialExpiresAt: user.premiumTrialExpiresAt ?? null,
+    premiumTrialUsed: user.premiumTrialUsed,
   };
 }
 
@@ -710,6 +732,9 @@ export async function createCredentialsUser(input: {
     premiumActivatedAt: null,
     founderOfferApplied: false,
     founderOfferRevokedAt: null,
+    premiumTrialStartedAt: null,
+    premiumTrialExpiresAt: null,
+    premiumTrialUsed: false,
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
@@ -784,6 +809,9 @@ export async function upsertOAuthUser(input: {
     premiumActivatedAt: null,
     founderOfferApplied: false,
     founderOfferRevokedAt: null,
+    premiumTrialStartedAt: null,
+    premiumTrialExpiresAt: null,
+    premiumTrialUsed: false,
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
@@ -955,6 +983,9 @@ function normalizeStoredUser(rawUser: unknown): StoredUser | null {
     founderOfferRevokedAt: normalizeNullableString(
       candidate.founderOfferRevokedAt,
     ),
+    premiumTrialStartedAt: normalizeNullableString(candidate.premiumTrialStartedAt),
+    premiumTrialExpiresAt: normalizeNullableString(candidate.premiumTrialExpiresAt),
+    premiumTrialUsed: Boolean(candidate.premiumTrialUsed),
     passwordResetTokenHash:
       typeof candidate.passwordResetTokenHash === "string"
         ? candidate.passwordResetTokenHash

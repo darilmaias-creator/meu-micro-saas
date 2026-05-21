@@ -110,6 +110,17 @@ export default function AuthenticatedAppShell({
                 </span>
               </div>
             </div>
+            {session?.user?.isPremium && session?.user?.premiumTrialExpiresAt && (
+              <div className="text-sm text-amber-100">
+                Premium Trial:{" "}
+                {Math.ceil(
+                  (new Date(session.user.premiumTrialExpiresAt).getTime() -
+                    new Date().getTime()) /
+                    (1000 * 60 * 60 * 24),
+                )}{" "}
+                dias restantes
+              </div>
+            )}
 
             <div className="flex w-full items-center justify-between gap-2 md:w-auto md:justify-end md:gap-4">
               <Link
@@ -209,7 +220,9 @@ export default function AuthenticatedAppShell({
           <SalesTab appData={appData} isPremium={isPremium} />
         )}
 
-        {activeTab === "dashboard" && <DashboardTab appData={appData} />}
+        {activeTab === "dashboard" && (
+          <DashboardTab appData={appData} isPremium={isPremium} />
+        )}
       </main>
 
       <OnboardingGuide userId={session.user.id} activeTab={activeTab} />

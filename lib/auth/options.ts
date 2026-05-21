@@ -205,11 +205,21 @@ export const authOptions: NextAuthOptions = {
         }
 
         const sessionUser = getSessionUserFromStoredUser(storedUser);
+        const hasPremiumTrialDate = Boolean(sessionUser.premiumTrialExpiresAt);
+        const isPremiumTrialActive = Boolean(
+          sessionUser.premiumTrialExpiresAt &&
+            new Date(sessionUser.premiumTrialExpiresAt).getTime() > Date.now(),
+        );
+        const hasPaidPremium = storedUser.plan === "premium";
 
         session.user = {
           ...session.user,
           ...sessionUser,
         };
+
+        if (hasPremiumTrialDate) {
+          session.user.isPremium = isPremiumTrialActive || hasPaidPremium;
+        }
 
         return session;
       } catch (error) {

@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { BarChart2, Download, FileText, ShoppingBag, Trash2 } from "lucide-react";
+import {
+  BarChart2,
+  Calculator,
+  Download,
+  FileText,
+  Package,
+  ShoppingBag,
+  Trash2,
+} from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -20,6 +28,9 @@ import {
 import EmptyState from "@/components/ui/empty-state";
 import { type GenericRecord } from "@/lib/app-data/defaults";
 import { Card } from "./ui";
+import { ProgressCard } from "@/app/components/ProgressCard";
+import { SavingsEstimate } from "@/app/components/SavingsEstimate";
+import { DailyTip } from "@/app/components/DailyTip";
 
 type DashboardSale = GenericRecord & {
   id: number;
@@ -43,9 +54,13 @@ type DashboardTotals = {
 
 type DashboardTabProps = {
   appData: {
+    insumos: GenericRecord[];
+    savedProducts: GenericRecord[];
+    quotes: GenericRecord[];
     sales: GenericRecord[];
     setSales: (items: GenericRecord[]) => void;
   };
+  isPremium: boolean;
 };
 
 type Html2PdfChain = {
@@ -54,8 +69,8 @@ type Html2PdfChain = {
   save: () => Promise<void>;
 };
 
-export default function DashboardTab({ appData }: DashboardTabProps) {
-  const { sales, setSales } = appData;
+export default function DashboardTab({ appData, isPremium }: DashboardTabProps) {
+  const { insumos, savedProducts, quotes, sales, setSales } = appData;
   const salesItems = sales as DashboardSale[];
 
   const [filterStart, setFilterStart] = useState(() => {
@@ -110,6 +125,14 @@ export default function DashboardTab({ appData }: DashboardTabProps) {
     { name: 'Custos Produção', value: dashTotals.cost, color: '#ef4444' },
     { name: 'Lucro Líquido', value: dashTotals.profit, color: '#f59e0b' },
   ];
+
+  function calculateTotalCost() {
+    return Number(dashTotals.cost || 0);
+  }
+
+  function calculateAverageMargin() {
+    return Number(dashTotals.margin || 0);
+  }
 
   function exportSalesToCSV() {
     let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
@@ -189,6 +212,38 @@ export default function DashboardTab({ appData }: DashboardTabProps) {
 
   return (
     <div className="animate-fadeIn space-y-6 w-full" id="relatorio-vendas">
+      <div className="space-y-6">
+        <DailyTip />
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <ProgressCard
+            title="Insumos Cadastrados"
+            current={insumos.length}
+            total={isPremium ? undefined : 20}
+            icon={<Package size={20} className="text-emerald-600" />}
+            color="emerald"
+          />
+          <ProgressCard
+            title="Produtos Criados"
+            current={savedProducts.length}
+            total={isPremium ? undefined : 10}
+            icon={<Calculator size={20} className="text-amber-600" />}
+            color="amber"
+          />
+          <ProgressCard
+            title="Orçamentos Feitos"
+            current={quotes.length}
+            icon={<ShoppingBag size={20} className="text-blue-600" />}
+            color="blue"
+          />
+        </div>
+
+        <SavingsEstimate
+          totalCost={calculateTotalCost()}
+          averageMargin={calculateAverageMargin()}
+        />
+      </div>
+
       <Card className="bg-slate-800 text-white border-slate-700">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
