@@ -5,11 +5,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
-
 const EMAIL_TEMPLATES = {
   day1: {
     subject: "Bem-vindo ao Calcula Artesão! 🎉",
@@ -69,6 +64,20 @@ function getSafeName(name: string | null | undefined, email: string | null | und
 
 export async function POST(request: Request) {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceRoleKey =
+      process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      console.error("[email:send-engagement] missing supabase env vars");
+      return NextResponse.json(
+        { error: "Configuração do servidor incompleta (Supabase)." },
+        { status: 500 },
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
     const body = (await request.json()) as SendEngagementPayload;
     const userId = body.userId?.trim();
     const emailType = body.emailType?.trim() as EmailType | undefined;
