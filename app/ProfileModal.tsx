@@ -44,6 +44,7 @@ import {
   getTestimonialRemainingDays,
   TESTIMONIAL_MAX_LENGTH,
 } from "@/lib/testimonials/rules";
+import { PremiumTrialButton } from "@/app/components/PremiumTrialButton";
 import { clearLocalAppDataCache } from "./hooks/useAppData";
 
 type ProfileModalProps = {
@@ -1108,6 +1109,10 @@ export default function ProfileModal({
               </div>
 
               <div className="flex w-full flex-col gap-2 md:w-auto">
+                <div className="mb-4">
+                  <PremiumTrialButton />
+                </div>
+
                 {!isPremium && (
                   <button
                     type="button"
@@ -1149,6 +1154,13 @@ export default function ProfileModal({
                       : "Pedir reembolso"}
                   </button>
                 )}
+
+                <Link
+                  href="/premium"
+                  className="text-center text-sm font-semibold text-amber-600 transition-colors hover:text-amber-700"
+                >
+                  Ver Comparacao de Planos
+                </Link>
 
                 <Link
                   href="/politicas/cancelamento-e-reembolso"
