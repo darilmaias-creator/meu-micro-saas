@@ -1,11 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!url || !key) {
+    throw new Error("Supabase URL and anon key are required");
+  }
+  
+  return createClient(url, key);
+}
 
 export async function checkAndNotifyLowStock(userId: string) {
+  const supabase = getSupabaseClient();
   const { data: insumos } = await supabase
     .from("insumo")
     .select("id, name, estoque_atual, estoque_minimo")
@@ -23,6 +30,7 @@ export async function checkAndNotifyLowStock(userId: string) {
 }
 
 export async function checkAndNotifyPendingQuotes(userId: string) {
+  const supabase = getSupabaseClient();
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const { data: quotes } = await supabase
