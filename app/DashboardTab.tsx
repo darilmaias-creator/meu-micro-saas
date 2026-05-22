@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   BarChart2,
   Calculator,
@@ -31,6 +32,11 @@ import { Card } from "./ui";
 import { ProgressCard } from "@/app/components/ProgressCard";
 import { SavingsEstimate } from "@/app/components/SavingsEstimate";
 import { DailyTip } from "@/app/components/DailyTip";
+import {
+  checkAndNotifyLowStock,
+  checkAndNotifyPendingQuotes,
+  requestNotificationPermission,
+} from "@/lib/notifications/notification-service";
 
 type DashboardSale = GenericRecord & {
   id: number;
@@ -70,6 +76,7 @@ type Html2PdfChain = {
 };
 
 export default function DashboardTab({ appData, isPremium }: DashboardTabProps) {
+  const { data: session } = useSession();
   const { insumos, savedProducts, quotes, sales, setSales } = appData;
   const salesItems = sales as DashboardSale[];
 
@@ -209,6 +216,25 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
       setSales(salesItems.filter((sale) => sale && sale.id !== id));
     }
   }
+
+  useEffect(() => {
+    void requestNotificationPermission();
+
+    const userId = session?.user?.id;
+    if (!userId) {
+      return;
+    }
+
+    void checkAndNotifyLowStock(userId);
+    void checkAndNotifyPendingQuotes(userId);
+
+    const interval = setInterval(() => {
+      void checkAndNotifyLowStock(userId);
+      void checkAndNotifyPendingQuotes(userId);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [session?.user?.id]);
 
   return (
     <div className="animate-fadeIn space-y-6 w-full" id="relatorio-vendas">
