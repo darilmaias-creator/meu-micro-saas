@@ -5,7 +5,8 @@ function getSupabaseClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
   if (!url || !key) {
-    throw new Error("Supabase URL and anon key are required");
+    console.warn("Supabase env vars not configured - notifications disabled");
+    return null;
   }
   
   return createClient(url, key);
@@ -13,6 +14,8 @@ function getSupabaseClient() {
 
 export async function checkAndNotifyLowStock(userId: string) {
   const supabase = getSupabaseClient();
+  if (!supabase) return;
+  
   const { data: insumos } = await supabase
     .from("insumo")
     .select("id, name, estoque_atual, estoque_minimo")
@@ -31,6 +34,8 @@ export async function checkAndNotifyLowStock(userId: string) {
 
 export async function checkAndNotifyPendingQuotes(userId: string) {
   const supabase = getSupabaseClient();
+  if (!supabase) return;
+  
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const { data: quotes } = await supabase
