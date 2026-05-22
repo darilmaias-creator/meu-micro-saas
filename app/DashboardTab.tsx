@@ -79,6 +79,9 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
   const { data: session } = useSession();
   const { insumos, savedProducts, quotes, sales, setSales } = appData;
   const salesItems = sales as DashboardSale[];
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("default");
 
   const [filterStart, setFilterStart] = useState(() => {
     const date = new Date();
@@ -218,6 +221,12 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
   }
 
   useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+
+    setNotificationPermission(Notification.permission);
     void requestNotificationPermission();
 
     const userId = session?.user?.id;
@@ -236,10 +245,46 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
     return () => clearInterval(interval);
   }, [session?.user?.id]);
 
+  const handleEnableNotifications = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      return;
+    }
+
+    await requestNotificationPermission();
+    setNotificationPermission(Notification.permission);
+  };
+
+  const shouldShowNotificationBanner =
+    notificationPermission !== "granted" && notificationPermission !== "unsupported";
+
   return (
     <div className="animate-fadeIn space-y-6 w-full" id="relatorio-vendas">
       <div className="space-y-6">
         <DailyTip />
+
+        {shouldShowNotificationBanner ? (
+          <Card className="border-amber-200 bg-amber-50">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-amber-900">
+                  Ative as notificações para receber alertas de estoque baixo e orçamentos pendentes.
+                </p>
+                <p className="text-sm text-amber-800">
+                  {notificationPermission === "denied"
+                    ? "Você bloqueou as notificações no navegador. Para reativar, ajuste as permissões do site."
+                    : "Permita o uso de notificações para receber avisos importantes do seu negócio."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleEnableNotifications}
+                className="inline-flex items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+              >
+                {notificationPermission === "denied" ? "Reativar notificações" : "Ativar notificações"}
+              </button>
+            </div>
+          </Card>
+        ) : null}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <ProgressCard
