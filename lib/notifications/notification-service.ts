@@ -38,7 +38,7 @@ function clearStoredSignature(key: string) {
   getStorage()?.removeItem(key);
 }
 
-function notify(title: string, body: string) {
+function notify(title: string, body: string, targetPath?: string) {
   if (typeof window === "undefined" || !("Notification" in window)) {
     return;
   }
@@ -53,6 +53,11 @@ function notify(title: string, body: string) {
     n.onclick = (event) => {
       event.preventDefault();
       n.close();
+
+      if (targetPath) {
+        window.focus();
+        window.location.assign(targetPath);
+      }
     };
   }
 }
@@ -132,6 +137,7 @@ export async function checkAndNotifyLowStock(items: GenericRecord[] | undefined)
   notify(
     "Estoque Baixo",
     String(lowStockItems.length) + " insumo(s) com estoque no nivel de aviso ou abaixo.",
+    "/estoque",
   );
   saveStoredSignature(lowStockNoticeKey, signature);
 }
@@ -152,6 +158,7 @@ export async function checkAndNotifyPendingQuotes(quotes: GenericRecord[] | unde
   notify(
     "Orcamentos Pendentes",
     String(pendingQuotes.length) + " orcamento(s) aguardando resposta ha mais de 7 dias.",
+    "/vendas",
   );
   saveStoredSignature(pendingQuotesNoticeKey, signature);
 }
