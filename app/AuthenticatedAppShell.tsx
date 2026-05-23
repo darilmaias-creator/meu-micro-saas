@@ -226,7 +226,10 @@ export default function AuthenticatedAppShell({
       </main>
 
       <OnboardingGuide userId={session.user.id} activeTab={activeTab} />
-      <AppHelpAssistant activeTab={activeTab} />
+      <AppHelpAssistant
+        activeTab={activeTab}
+        savedProductCount={appData.savedProducts.length}
+      />
 
       <ProfileModal
         isOpen={isProfileOpen}

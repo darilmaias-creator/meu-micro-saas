@@ -19,6 +19,7 @@ import {
 
 type AppHelpAssistantProps = {
   activeTab: ActiveTab;
+  savedProductCount?: number;
 };
 
 type ChatMessage = {
@@ -424,10 +425,18 @@ function buildPriceDoubtStepReply(
   };
 }
 
-function buildOptimizationStartReply() {
+function buildOptimizationStartReply(savedProductCount: number) {
+  if (savedProductCount <= 0) {
+    return {
+      text:
+        "Ainda não encontrei produtos cadastrados para analisar.\n\nPara otimizar de verdade, primeiro salve alguns produtos no catálogo com custo, preço e margem. Depois eu posso te ajudar a comparar quais têm melhor resultado.\n\nQuer uma dica para preparar essa análise?",
+      targetTabs: ["calculator", "dashboard"],
+    } satisfies BotReply;
+  }
+
   return {
     text:
-      "Vejo que você tem 5 produtos cadastrados. Parabéns! 🎉\n\nQuer uma dica para ganhar mais dinheiro?",
+      `Vejo que você tem ${savedProductCount} ${savedProductCount === 1 ? "produto cadastrado" : "produtos cadastrados"}. Parabéns! 🎉\n\nQuer uma dica para ganhar mais dinheiro?`,
     targetTab: "dashboard" as const,
   } satisfies BotReply;
 }
@@ -435,6 +444,7 @@ function buildOptimizationStartReply() {
 function buildOptimizationStepReply(
   userPrompt: string,
   flowState: OptimizationFlowState,
+  savedProductCount: number,
 ) {
   if (flowState.step === 1) {
     const normalizedPrompt = normalizeText(userPrompt);
@@ -457,6 +467,17 @@ function buildOptimizationStepReply(
       };
     }
 
+    if (savedProductCount <= 0) {
+      return {
+        nextFlowState: null,
+        reply: {
+          text:
+            "Perfeito. Comece salvando de 3 a 5 produtos no catálogo. Para cada um, confira:\n\n1. Custo total por unidade\n2. Preço de venda\n3. Lucro real\n4. Margem\n\nDepois compare assim:\n- Produto com margem alta: foque mais nele\n- Produto com margem baixa: aumente preço ou reduza custo\n- Produto que vende muito: teste pequenos aumentos de preço\n\nQuando tiver produtos salvos, me chame de novo para otimizar.",
+          targetTabs: ["calculator", "dashboard"],
+        } satisfies BotReply,
+      };
+    }
+
     return {
       nextFlowState: {
         type: "optimization",
@@ -464,7 +485,7 @@ function buildOptimizationStepReply(
       } satisfies OptimizationFlowState,
       reply: {
         text:
-          "Analisando seus produtos:\n- Pulseira: margem 50% ✅\n- Colar: margem 40% ⚠️\n- Brinco: margem 60% ⭐\n- Anel: margem 35% ❌\n- Tornozeleira: margem 55% ✅\n\nRecomendações:\n1. Aumente o preço do Anel (está muito baixo)\n2. Foque em Brincos (melhor margem)\n3. Reduza custos do Colar\n\nSe você seguir essas dicas, sua margem média vai de 48% para 55%!",
+          "Boa. Para otimizar seus produtos, olhe primeiro para estes 3 sinais:\n\n1. Produtos com margem baixa: revise preço, desperdício e embalagem\n2. Produtos com margem alta: tente vender mais deles ou criar variações\n3. Produtos com custo alto: veja se dá para comprar material melhor ou reduzir tempo\n\nComo próximo passo, abra o Resumo e compare seus produtos salvos. Se encontrar um produto com margem baixa, me diga o nome e o preço atual que eu te ajudo a ajustar.",
         targetTabs: ["dashboard", "sales", "calculator"],
       } satisfies BotReply,
     };
@@ -483,6 +504,7 @@ function buildOptimizationStepReply(
 function buildConversationStepReply(
   userPrompt: string,
   flowState: ConversationFlowState,
+  savedProductCount: number,
 ) {
   if (flowState.type === "onboarding") {
     return buildOnboardingStepReply(userPrompt, flowState);
@@ -496,7 +518,7 @@ function buildConversationStepReply(
     return buildPriceDoubtStepReply(userPrompt, flowState);
   }
 
-  return buildOptimizationStepReply(userPrompt, flowState);
+  return buildOptimizationStepReply(userPrompt, flowState, savedProductCount);
 }
 
 function buildContextualHelpReply(topic: AppHelpContextEventDetail["topic"]) {
@@ -1120,7 +1142,10 @@ function createUserMessage(text: string): ChatMessage {
   };
 }
 
-export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
+export default function AppHelpAssistant({
+  activeTab,
+  savedProductCount = 0,
+}: AppHelpAssistantProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -1184,7 +1209,11 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
     const userMessage = createUserMessage(trimmedPrompt);
     const normalizedPrompt = normalizeText(trimmedPrompt);
     const flowReply = conversationFlow
-      ? buildConversationStepReply(trimmedPrompt, conversationFlow)
+      ? buildConversationStepReply(
+          trimmedPrompt,
+          conversationFlow,
+          savedProductCount,
+        )
       : null;
     const shouldStartOnboardingFlow = shouldStartOnboarding(normalizedPrompt);
     const shouldStartPriceCalculationFlow =
@@ -1201,7 +1230,7 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
           : shouldStartPriceDoubtFlow
             ? buildPriceDoubtStartReply()
             : shouldStartOptimizationFlow
-              ? buildOptimizationStartReply()
+              ? buildOptimizationStartReply(savedProductCount)
               : buildBotReply(trimmedPrompt, activeTab));
 
     setMessages((currentMessages) => [
