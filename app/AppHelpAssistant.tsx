@@ -16,10 +16,11 @@ import {
   APP_HELP_CONTEXT_EVENT,
   type AppHelpContextEventDetail,
 } from "@/lib/help-assistant-events";
+import type { AssistantContext } from "@/lib/assistant-context";
 
 type AppHelpAssistantProps = {
   activeTab: ActiveTab;
-  savedProductCount?: number;
+  assistantContext: AssistantContext;
 };
 
 type ChatMessage = {
@@ -441,11 +442,79 @@ function buildOptimizationStartReply(savedProductCount: number) {
   } satisfies BotReply;
 }
 
+function getOptimizationProductHighlights(
+  products: AssistantContext["appData"]["savedProducts"],
+) {
+  const productsWithMargin = products.filter(
+    (product) => product.margin !== null,
+  );
+
+  if (productsWithMargin.length === 0) {
+    return {
+      bestProduct: null,
+      lowestProduct: null,
+      summaryLines: products
+        .slice(0, 5)
+        .map((product) => `- ${product.name}: margem ainda não calculada`),
+    };
+  }
+
+  const sortedByMargin = [...productsWithMargin].sort(
+    (firstProduct, secondProduct) =>
+      (firstProduct.margin ?? 0) - (secondProduct.margin ?? 0),
+  );
+  const lowestProduct = sortedByMargin[0] ?? null;
+  const bestProduct = sortedByMargin[sortedByMargin.length - 1] ?? null;
+
+  return {
+    bestProduct,
+    lowestProduct,
+    summaryLines: products.slice(0, 5).map((product) => {
+      const marginLabel =
+        product.margin === null
+          ? "margem não calculada"
+          : `margem ${product.margin.toFixed(1)}%`;
+
+      return `- ${product.name}: ${marginLabel}`;
+    }),
+  };
+}
+
+function buildOptimizationAnalysisText(
+  products: AssistantContext["appData"]["savedProducts"],
+) {
+  const { bestProduct, lowestProduct, summaryLines } =
+    getOptimizationProductHighlights(products);
+
+  if (!bestProduct || !lowestProduct || bestProduct.id === lowestProduct.id) {
+    return `Boa. Com os produtos cadastrados, dá para começar por esta leitura:\n\n${summaryLines.join(
+      "\n",
+    )}\n\nRecomendações:\n1. Confira se todos têm custo e preço preenchidos\n2. Identifique qual tem melhor margem\n3. Revise produtos com margem baixa, custo alto ou preço manual muito apertado\n\nAbra o Resumo e me diga qual produto você quer ajustar primeiro.`;
+  }
+
+  const averageMargin =
+    products.reduce((total, product) => total + (product.margin ?? 0), 0) /
+    products.filter((product) => product.margin !== null).length;
+
+  return `Analisando seus produtos cadastrados:\n${summaryLines.join(
+    "\n",
+  )}\n\nRecomendações:\n1. Revise ${lowestProduct.name} (menor margem: ${lowestProduct.margin?.toFixed(
+    1,
+  )}%)\n2. Foque em ${bestProduct.name} (melhor margem: ${bestProduct.margin?.toFixed(
+    1,
+  )}%)\n3. Compare materiais e tempo dos produtos com margem menor\n\nSua margem média nos produtos com margem calculada está em ${averageMargin.toFixed(
+    1,
+  )}%. Se quiser, me diga qual produto quer ajustar primeiro.`;
+}
+
 function buildOptimizationStepReply(
   userPrompt: string,
   flowState: OptimizationFlowState,
-  savedProductCount: number,
+  assistantContext: AssistantContext,
 ) {
+  const savedProducts = assistantContext.appData.savedProducts;
+  const savedProductCount = savedProducts.length;
+
   if (flowState.step === 1) {
     const normalizedPrompt = normalizeText(userPrompt);
 
@@ -484,8 +553,7 @@ function buildOptimizationStepReply(
         step: 2,
       } satisfies OptimizationFlowState,
       reply: {
-        text:
-          "Boa. Para otimizar seus produtos, olhe primeiro para estes 3 sinais:\n\n1. Produtos com margem baixa: revise preço, desperdício e embalagem\n2. Produtos com margem alta: tente vender mais deles ou criar variações\n3. Produtos com custo alto: veja se dá para comprar material melhor ou reduzir tempo\n\nComo próximo passo, abra o Resumo e compare seus produtos salvos. Se encontrar um produto com margem baixa, me diga o nome e o preço atual que eu te ajudo a ajustar.",
+        text: buildOptimizationAnalysisText(savedProducts),
         targetTabs: ["dashboard", "sales", "calculator"],
       } satisfies BotReply,
     };
@@ -504,7 +572,7 @@ function buildOptimizationStepReply(
 function buildConversationStepReply(
   userPrompt: string,
   flowState: ConversationFlowState,
-  savedProductCount: number,
+  assistantContext: AssistantContext,
 ) {
   if (flowState.type === "onboarding") {
     return buildOnboardingStepReply(userPrompt, flowState);
@@ -518,7 +586,7 @@ function buildConversationStepReply(
     return buildPriceDoubtStepReply(userPrompt, flowState);
   }
 
-  return buildOptimizationStepReply(userPrompt, flowState, savedProductCount);
+  return buildOptimizationStepReply(userPrompt, flowState, assistantContext);
 }
 
 function buildContextualHelpReply(topic: AppHelpContextEventDetail["topic"]) {
@@ -1144,7 +1212,7 @@ function createUserMessage(text: string): ChatMessage {
 
 export default function AppHelpAssistant({
   activeTab,
-  savedProductCount = 0,
+  assistantContext,
 }: AppHelpAssistantProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -1212,7 +1280,7 @@ export default function AppHelpAssistant({
       ? buildConversationStepReply(
           trimmedPrompt,
           conversationFlow,
-          savedProductCount,
+          assistantContext,
         )
       : null;
     const shouldStartOnboardingFlow = shouldStartOnboarding(normalizedPrompt);
@@ -1230,7 +1298,9 @@ export default function AppHelpAssistant({
           : shouldStartPriceDoubtFlow
             ? buildPriceDoubtStartReply()
             : shouldStartOptimizationFlow
-              ? buildOptimizationStartReply(savedProductCount)
+              ? buildOptimizationStartReply(
+                  assistantContext.appData.savedProducts.length,
+                )
               : buildBotReply(trimmedPrompt, activeTab));
 
     setMessages((currentMessages) => [

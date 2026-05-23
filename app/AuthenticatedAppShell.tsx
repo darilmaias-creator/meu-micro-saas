@@ -27,6 +27,7 @@ import AppHelpAssistant from "./AppHelpAssistant";
 import OnboardingGuide from "./onboarding/OnboardingGuide";
 import { useAppData } from "./hooks/useAppData";
 import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
+import { buildAssistantContext } from "@/lib/assistant-context";
 import type { ActiveTab } from "../lib/app-tabs";
 import { getPathForActiveTab } from "../lib/app-tabs";
 
@@ -77,6 +78,13 @@ export default function AuthenticatedAppShell({
   const activeTab = initialTab;
   const isPremium = session.user.isPremium;
   const displayHeaderAvatar = isPremium ? session.user?.image : null;
+  const assistantContext = buildAssistantContext(session, {
+    config: appData.config,
+    insumos: appData.insumos,
+    savedProducts: appData.savedProducts,
+    sales: appData.sales,
+    quotes: appData.quotes,
+  });
 
   if (!appData.isLoaded) {
     return (
@@ -228,7 +236,7 @@ export default function AuthenticatedAppShell({
       <OnboardingGuide userId={session.user.id} activeTab={activeTab} />
       <AppHelpAssistant
         activeTab={activeTab}
-        savedProductCount={appData.savedProducts.length}
+        assistantContext={assistantContext}
       />
 
       <ProfileModal
