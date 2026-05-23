@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 
 import { getPathForActiveTab, type ActiveTab } from "@/lib/app-tabs";
+import {
+  APP_HELP_CONTEXT_EVENT,
+  type AppHelpContextEventDetail,
+} from "@/lib/help-assistant-events";
 
 type AppHelpAssistantProps = {
   activeTab: ActiveTab;
@@ -59,8 +63,8 @@ const QUICK_ACTIONS: QuickAction[] = [
   },
   {
     id: "pricing",
-    label: "Criar produto",
-    prompt: "como criar meu primeiro produto",
+    label: "Calcular preço",
+    prompt: "quero calcular preço de um novo produto",
   },
   {
     id: "margin",
@@ -89,6 +93,30 @@ type OnboardingFlowState = {
   hasMaterials?: string;
 };
 
+type PriceCalculationFlowState = {
+  type: "price-calculation";
+  step: 1 | 2 | 3;
+  productName?: string;
+  materials?: string;
+};
+
+type PriceDoubtFlowState = {
+  type: "price-doubt";
+  step: 1 | 2;
+  reason?: string;
+};
+
+type OptimizationFlowState = {
+  type: "optimization";
+  step: 1 | 2;
+};
+
+type ConversationFlowState =
+  | OnboardingFlowState
+  | PriceCalculationFlowState
+  | PriceDoubtFlowState
+  | OptimizationFlowState;
+
 function normalizeText(value: string) {
   return value
     .normalize("NFD")
@@ -112,6 +140,60 @@ function shouldStartOnboarding(normalizedPrompt: string) {
     "me guie passo",
     "vamos comecar",
     "vamos começar",
+  ]);
+}
+
+function shouldStartPriceCalculation(normalizedPrompt: string) {
+  return includesAny(normalizedPrompt, [
+    "quero calcular preco",
+    "quero calcular preço",
+    "calcular preco de um novo produto",
+    "calcular preço de um novo produto",
+    "calcular preco do produto",
+    "calcular preço do produto",
+    "me ajuda a calcular preco",
+    "me ajuda a calcular preço",
+    "preciso calcular preco",
+    "preciso calcular preço",
+  ]);
+}
+
+function shouldStartPriceDoubt(normalizedPrompt: string) {
+  return (
+    includesAny(normalizedPrompt, [
+      "preco de r$16 esta muito alto",
+      "preço de r$16 está muito alto",
+      "preco de 16 esta muito alto",
+      "preço de 16 está muito alto",
+      "r$16 esta muito alto",
+      "r$16 está muito alto",
+      "16 esta muito alto",
+      "16 está muito alto",
+      "preco esta muito alto",
+      "preço está muito alto",
+      "preco ficou muito alto",
+      "preço ficou muito alto",
+    ]) ||
+    (includesAny(normalizedPrompt, ["preco", "preço", "valor"]) &&
+      includesAny(normalizedPrompt, ["muito alto", "caro", "alto demais"]))
+  );
+}
+
+function shouldStartOptimization(normalizedPrompt: string) {
+  return includesAny(normalizedPrompt, [
+    "quero otimizar",
+    "otimizar meus produtos",
+    "otimizar produtos",
+    "ganhar mais dinheiro",
+    "como ganho mais",
+    "como ganhar mais",
+    "melhorar margem",
+    "melhorar minha margem",
+    "aumentar lucro",
+    "aumentar meu lucro",
+    "analisar meus produtos",
+    "analise meus produtos",
+    "análise meus produtos",
   ]);
 }
 
@@ -244,6 +326,187 @@ function buildOnboardingStepReply(
       targetTab: "inventory" as const,
     } satisfies BotReply,
   };
+}
+
+function buildPriceCalculationStartReply() {
+  return {
+    text:
+      "Vejo que você está criando um novo produto!\n\nPara calcular o preço certo, preciso de algumas informações:\n\n1️⃣ Qual é o nome do produto?",
+    targetTab: "calculator" as const,
+  } satisfies BotReply;
+}
+
+function buildPriceCalculationStepReply(
+  userPrompt: string,
+  flowState: PriceCalculationFlowState,
+) {
+  if (flowState.step === 1) {
+    const productName = userPrompt.trim();
+
+    return {
+      nextFlowState: {
+        type: "price-calculation",
+        step: 2,
+        productName,
+      } satisfies PriceCalculationFlowState,
+      reply: {
+        text: "2️⃣ Quais materiais você usa?",
+        targetTab: "calculator" as const,
+      } satisfies BotReply,
+    };
+  }
+
+  if (flowState.step === 2) {
+    const materials = userPrompt.trim();
+
+    return {
+      nextFlowState: {
+        type: "price-calculation",
+        step: 3,
+        productName: flowState.productName,
+        materials,
+      } satisfies PriceCalculationFlowState,
+      reply: {
+        text: "3️⃣ Quanto tempo leva para fazer?",
+        targetTab: "calculator" as const,
+      } satisfies BotReply,
+    };
+  }
+
+  const productionTime = userPrompt.trim();
+  const productName = flowState.productName || "seu produto";
+  const materials = flowState.materials || "os materiais informados";
+
+  return {
+    nextFlowState: null,
+    reply: {
+      text:
+        `Perfeito! Deixa eu calcular...\n\n📊 Seu produto: ${productName}\n- Materiais: ${materials}\n- Custo de material: R$5\n- Mão de obra (${productionTime}): R$2\n- Embalagem: R$1\n- **Custo Total: R$8**\n\nCom margem de 50%, o preço sugerido é: **R$16**\n\nIsso faz sentido para você? Quer ajustar?\n\nPara valores exatos, preencha esses dados na ficha técnica da aba Calcular Preço.`,
+      targetTab: "calculator" as const,
+    } satisfies BotReply,
+  };
+}
+
+function buildPriceDoubtStartReply() {
+  return {
+    text: "Entendo! Vamos analisar:\n\nVocê acha que está alto por quê?",
+    targetTab: "calculator" as const,
+  } satisfies BotReply;
+}
+
+function buildPriceDoubtStepReply(
+  userPrompt: string,
+  flowState: PriceDoubtFlowState,
+) {
+  if (flowState.step === 1) {
+    const reason = userPrompt.trim();
+
+    return {
+      nextFlowState: {
+        type: "price-doubt",
+        step: 2,
+        reason,
+      } satisfies PriceDoubtFlowState,
+      reply: {
+        text:
+          "Ah, entendi. Vamos comparar:\n\nSe você cobra R$10 em uma pulseira que custa R$8:\n- Lucro por pulseira: R$2\n- Margem: 20% (muito baixa!)\n- Você precisa vender 5x mais para ganhar bem\n\nSe você cobra R$16:\n- Lucro por pulseira: R$8\n- Margem: 50% (ideal!)\n- Você vende menos, mas ganha mais por venda\n\nDica: Teste cobrar R$14 e veja se vende. Pode ser o ponto ótimo!",
+        targetTab: "calculator" as const,
+      } satisfies BotReply,
+    };
+  }
+
+  return {
+    nextFlowState: null,
+    reply: {
+      text: "Ótimo! Me avisa como foi. Estou aqui para ajudar!",
+      targetTabs: ["calculator", "sales", "dashboard"],
+    } satisfies BotReply,
+  };
+}
+
+function buildOptimizationStartReply() {
+  return {
+    text:
+      "Vejo que você tem 5 produtos cadastrados. Parabéns! 🎉\n\nQuer uma dica para ganhar mais dinheiro?",
+    targetTab: "dashboard" as const,
+  } satisfies BotReply;
+}
+
+function buildOptimizationStepReply(
+  userPrompt: string,
+  flowState: OptimizationFlowState,
+) {
+  if (flowState.step === 1) {
+    const normalizedPrompt = normalizeText(userPrompt);
+
+    if (
+      includesAny(normalizedPrompt, [
+        "nao",
+        "não",
+        "agora nao",
+        "agora não",
+        "depois",
+      ])
+    ) {
+      return {
+        nextFlowState: null,
+        reply: {
+          text: "Tudo bem. Quando quiser otimizar margem, preço ou custos, é só me chamar.",
+          targetTabs: ["calculator", "dashboard"],
+        } satisfies BotReply,
+      };
+    }
+
+    return {
+      nextFlowState: {
+        type: "optimization",
+        step: 2,
+      } satisfies OptimizationFlowState,
+      reply: {
+        text:
+          "Analisando seus produtos:\n- Pulseira: margem 50% ✅\n- Colar: margem 40% ⚠️\n- Brinco: margem 60% ⭐\n- Anel: margem 35% ❌\n- Tornozeleira: margem 55% ✅\n\nRecomendações:\n1. Aumente o preço do Anel (está muito baixo)\n2. Foque em Brincos (melhor margem)\n3. Reduza custos do Colar\n\nSe você seguir essas dicas, sua margem média vai de 48% para 55%!",
+        targetTabs: ["dashboard", "sales", "calculator"],
+      } satisfies BotReply,
+    };
+  }
+
+  return {
+    nextFlowState: null,
+    reply: {
+      text:
+        "Teste aumentar 15% (de R$12 para R$13,80) e veja se as vendas caem. Se caírem menos de 20%, você ganha mais dinheiro!",
+      targetTabs: ["calculator", "sales", "dashboard"],
+    } satisfies BotReply,
+  };
+}
+
+function buildConversationStepReply(
+  userPrompt: string,
+  flowState: ConversationFlowState,
+) {
+  if (flowState.type === "onboarding") {
+    return buildOnboardingStepReply(userPrompt, flowState);
+  }
+
+  if (flowState.type === "price-calculation") {
+    return buildPriceCalculationStepReply(userPrompt, flowState);
+  }
+
+  if (flowState.type === "price-doubt") {
+    return buildPriceDoubtStepReply(userPrompt, flowState);
+  }
+
+  return buildOptimizationStepReply(userPrompt, flowState);
+}
+
+function buildContextualHelpReply(topic: AppHelpContextEventDetail["topic"]) {
+  if (topic === "material-cost") {
+    return {
+      text:
+        "Custo de Material é quanto você gasta em insumos para fazer 1 unidade do produto.\n\nExemplo: Se você faz uma bijuteria com:\n- Fio de nylon: R$2\n- Miçanga: R$3\n- Total: R$5\n\nVocê já adicionou seus insumos? Se sim, selecione-os aqui.",
+      targetTabs: ["inventory", "calculator"],
+    } satisfies BotReply;
+  }
 }
 
 function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
@@ -862,7 +1125,7 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [conversationFlow, setConversationFlow] =
-    useState<OnboardingFlowState | null>(null);
+    useState<ConversationFlowState | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "bot-initial",
@@ -876,6 +1139,41 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
     [activeTab],
   );
 
+  useEffect(() => {
+    function handleContextHelp(event: Event) {
+      const helpEvent = event as CustomEvent<AppHelpContextEventDetail>;
+      const topic = helpEvent.detail?.topic;
+
+      if (!topic) {
+        return;
+      }
+
+      const botReply: BotReply | undefined = buildContextualHelpReply(topic);
+
+      if (!botReply) {
+        return;
+      }
+
+      setIsOpen(true);
+      setConversationFlow(null);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        createBotMessage(botReply.text, {
+          targetHref: botReply.targetHref,
+          targetLabel: botReply.targetLabel,
+          targetTab: botReply.targetTab,
+          targetTabs: botReply.targetTabs,
+        }),
+      ]);
+    }
+
+    window.addEventListener(APP_HELP_CONTEXT_EVENT, handleContextHelp);
+
+    return () => {
+      window.removeEventListener(APP_HELP_CONTEXT_EVENT, handleContextHelp);
+    };
+  }, []);
+
   function submitPrompt(prompt: string) {
     const trimmedPrompt = prompt.trim();
 
@@ -886,13 +1184,25 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
     const userMessage = createUserMessage(trimmedPrompt);
     const normalizedPrompt = normalizeText(trimmedPrompt);
     const flowReply = conversationFlow
-      ? buildOnboardingStepReply(trimmedPrompt, conversationFlow)
+      ? buildConversationStepReply(trimmedPrompt, conversationFlow)
       : null;
+    const shouldStartOnboardingFlow = shouldStartOnboarding(normalizedPrompt);
+    const shouldStartPriceCalculationFlow =
+      shouldStartPriceCalculation(normalizedPrompt);
+    const shouldStartPriceDoubtFlow = shouldStartPriceDoubt(normalizedPrompt);
+    const shouldStartOptimizationFlow =
+      shouldStartOptimization(normalizedPrompt);
     const botReply: BotReply =
       flowReply?.reply ??
-      (shouldStartOnboarding(normalizedPrompt)
+      (shouldStartOnboardingFlow
         ? buildOnboardingStartReply()
-        : buildBotReply(trimmedPrompt, activeTab));
+        : shouldStartPriceCalculationFlow
+          ? buildPriceCalculationStartReply()
+          : shouldStartPriceDoubtFlow
+            ? buildPriceDoubtStartReply()
+            : shouldStartOptimizationFlow
+              ? buildOptimizationStartReply()
+              : buildBotReply(trimmedPrompt, activeTab));
 
     setMessages((currentMessages) => [
       ...currentMessages,
@@ -906,11 +1216,26 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
     ]);
     setConversationFlow(
       flowReply?.nextFlowState ??
-        (shouldStartOnboarding(normalizedPrompt)
+        (shouldStartOnboardingFlow
           ? {
               type: "onboarding",
               step: 1,
             }
+          : shouldStartPriceCalculationFlow
+            ? {
+                type: "price-calculation",
+                step: 1,
+              }
+            : shouldStartPriceDoubtFlow
+              ? {
+                  type: "price-doubt",
+                  step: 1,
+                }
+              : shouldStartOptimizationFlow
+                ? {
+                    type: "optimization",
+                    step: 1,
+                  }
           : null),
     );
     setInputValue("");

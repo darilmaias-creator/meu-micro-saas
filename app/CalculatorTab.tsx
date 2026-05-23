@@ -2,11 +2,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from 'next/link';
 import React, { useState } from 'react';
-import { Settings, Package, Plus, Trash2, DollarSign, RefreshCw, Heart, Sparkles, Save, Copy, Download, Upload } from 'lucide-react';
+import { Settings, Package, Plus, Trash2, DollarSign, RefreshCw, Heart, Sparkles, Save, Copy, Download, Upload, CircleHelp } from 'lucide-react';
 import { Card, InputGroup, TimeInputGroup, Toggle, sanitizeDecimalInput, sanitizeIntegerInput } from './ui';
 import EmptyState from '@/components/ui/empty-state';
 import { FREE_TIER_PRODUCT_LIMIT } from '@/lib/app-data/plan-limits';
 import { calculateOperationCostBreakdown } from '@/lib/app-data/operation-costs';
+import { dispatchAppHelpContext } from '@/lib/help-assistant-events';
 import { OperationCostsSummary } from './OperationCostsTab';
 
 export default function CalculatorTab({ appData, isPremium }: any) {
@@ -325,7 +326,20 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                                     </Link>
                                 </div>
                             </div>
-                            <div className="flex justify-between text-xs text-slate-400"><span>Materiais (Lote)</span><span>R$ {Number(materialTotalCost || 0).toFixed(2)}</span></div>
+                            <div className="flex justify-between text-xs text-slate-400">
+                                <span className="inline-flex items-center gap-1">
+                                    Custo de Material
+                                    <button
+                                        type="button"
+                                        onClick={() => dispatchAppHelpContext("material-cost")}
+                                        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-700 hover:text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                        aria-label="Explicar custo de material"
+                                    >
+                                        <CircleHelp size={13} />
+                                    </button>
+                                </span>
+                                <span>R$ {Number(materialTotalCost || 0).toFixed(2)}</span>
+                            </div>
                             <div className="flex justify-between text-xs text-slate-400"><span>Tempo (Máquina + Mão de Obra)</span><span>R$ {(Number(cutCost || 0) + Number(laborCost || 0)).toFixed(2)}</span></div>
                             <div className="flex justify-between text-xs text-slate-400"><span>Operação rateada</span><span>R$ {Number(operationCostBreakdown.operationCostBatchTotal || 0).toFixed(2)}</span></div>
                             {operationCostBreakdown.markupBatchTotal > 0 && (
