@@ -1,4 +1,5 @@
-const CACHE_NAME = "calculadora-do-produtor-pwa-v6-notification-click";
+const CACHE_NAME = "calculadora-do-produtor-pwa-v7-notification-router";
+const NOTIFICATION_CLICK_MESSAGE_TYPE = "CALC_ARTESAO_NOTIFICATION_CLICK";
 const ICON_VERSION = "20260502-favicon-refresh";
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
@@ -151,12 +152,23 @@ self.addEventListener("notificationclick", (event) => {
         });
 
         if (appClient) {
-          if ("navigate" in appClient && appClient.url !== targetUrl.href) {
-            await appClient.navigate(targetUrl.href);
+          if ("postMessage" in appClient) {
+            appClient.postMessage({
+              type: NOTIFICATION_CLICK_MESSAGE_TYPE,
+              targetPath: `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`,
+            });
           }
 
           if ("focus" in appClient) {
-            return appClient.focus();
+            await appClient.focus();
+          }
+
+          if ("navigate" in appClient) {
+            const currentUrl = new URL(appClient.url);
+
+            if (currentUrl.pathname !== targetUrl.pathname) {
+              return appClient.navigate(targetUrl.href);
+            }
           }
 
           return appClient;
