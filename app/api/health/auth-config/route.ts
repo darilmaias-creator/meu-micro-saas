@@ -4,6 +4,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function blockProductionDiagnostics() {
+  return process.env.NODE_ENV === "production"
+    ? NextResponse.json({ message: "Not found." }, { status: 404 })
+    : null;
+}
+
 function getHost(value: string | undefined) {
   if (!value) {
     return null;
@@ -17,6 +23,12 @@ function getHost(value: string | undefined) {
 }
 
 export async function GET() {
+  const blockedResponse = blockProductionDiagnostics();
+
+  if (blockedResponse) {
+    return blockedResponse;
+  }
+
   const nextAuthUrl = process.env.NEXTAUTH_URL?.trim();
   const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();

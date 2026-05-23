@@ -6,6 +6,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function blockProductionDiagnostics() {
+  return process.env.NODE_ENV === "production"
+    ? NextResponse.json({ message: "Not found." }, { status: 404 })
+    : null;
+}
+
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -37,6 +43,12 @@ function getSupabaseKeyKind() {
 }
 
 export async function GET() {
+  const blockedResponse = blockProductionDiagnostics();
+
+  if (blockedResponse) {
+    return blockedResponse;
+  }
+
   const result = {
     ok: false,
     keyKind: getSupabaseKeyKind(),

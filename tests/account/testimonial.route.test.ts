@@ -71,7 +71,7 @@ describe("account testimonial route", () => {
       id: "user-1",
       name: "Daril",
       email: "daril@example.com",
-      createdAt: "2026-04-20T12:00:00.000Z",
+      createdAt: new Date().toISOString(),
     } as Awaited<ReturnType<typeof findUserById>>);
 
     const response = await POST(

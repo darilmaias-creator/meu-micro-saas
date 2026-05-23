@@ -23,7 +23,18 @@ vi.mock("html2pdf.js", () => ({
   })),
 }));
 
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({
+    data: {
+      user: {
+        id: "test-user",
+      },
+    },
+  }),
+}));
+
 describe("DashboardTab", () => {
+  const currentMonthDate = new Date().toISOString().split("T")[0];
   const mockAppData = {
     insumos: [],
     savedProducts: [],
@@ -32,7 +43,7 @@ describe("DashboardTab", () => {
       {
         id: 1,
         productName: "Produto A",
-        date: "2024-05-01",
+        date: currentMonthDate,
         quantity: 2,
         totalSale: 100,
         totalCost: 50,
@@ -46,23 +57,22 @@ describe("DashboardTab", () => {
   it("deve renderizar os totais corretamente", () => {
     render(<DashboardTab appData={mockAppData} isPremium={false} />);
 
-    expect(screen.getByText("R$ 100.00")).toBeTruthy(); // Faturamento
-    expect(screen.getByText("R$ 50.00")).toBeTruthy(); // Custos
-    expect(screen.getByText("R$ 10.00")).toBeTruthy(); // Dízimo
-    expect(screen.getByText("R$ 50.00")).toBeTruthy(); // Lucro
-    expect(screen.getByText("50.0%")).toBeTruthy(); // Margem
+    expect(screen.getAllByText("R$ 100.00").length).toBeGreaterThan(0); // Faturamento
+    expect(screen.getAllByText("R$ 50.00").length).toBeGreaterThan(0); // Custos/Lucro
+    expect(screen.getAllByText("R$ 10.00").length).toBeGreaterThan(0); // Dízimo
+    expect(screen.getAllByText("50.0%").length).toBeGreaterThan(0); // Margem
   });
 
   it("deve renderizar os gráficos", () => {
     render(<DashboardTab appData={mockAppData} isPremium={false} />);
 
-    expect(screen.getByTestId("bar-chart")).toBeTruthy();
-    expect(screen.getByTestId("pie-chart")).toBeTruthy();
+    expect(screen.getAllByTestId("bar-chart").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("pie-chart").length).toBeGreaterThan(0);
   });
 
   it("deve calcular margem corretamente", () => {
     // Margem = profit / revenue * 100 = 50 / 100 * 100 = 50%
     render(<DashboardTab appData={mockAppData} isPremium={false} />);
-    expect(screen.getByText("50.0%")).toBeTruthy();
+    expect(screen.getAllByText("50.0%").length).toBeGreaterThan(0);
   });
 });

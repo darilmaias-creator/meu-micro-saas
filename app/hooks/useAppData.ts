@@ -769,7 +769,7 @@ export function useAppData(userId: string) {
       lastSyncedState: lastSyncedStateRef.current,
       latestSerializedState: latestSerializedStateRef.current,
     });
-  }, [state]);
+  }, [state, userId]);
 
   useEffect(() => {
     flushPendingSaveRef.current = flushPendingSave;
