@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Package, Box, AlertCircle, Trash2, Save, Upload, X } from 'lucide-react';
 import { Card, InputGroup } from './ui';
+import { SoftLimitWarning } from '@/app/components/SoftLimitWarning';
 import EmptyState from '@/components/ui/empty-state';
 import { FREE_TIER_INSUMO_LIMIT } from '@/lib/app-data/plan-limits';
 import type { GenericRecord } from '@/lib/app-data/defaults';
@@ -53,6 +54,13 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
     );
     const isInsumoLimitReached = !isPremium && freeInsumoUsage >= FREE_TIER_INSUMO_LIMIT;
     const isInsumoLimitNear = !isPremium && !isInsumoLimitReached && freeInsumoRemaining <= 2;
+    const [dismissedWarning, setDismissedWarning] = useState(false);
+
+    const showSoftLimitWarning =
+        !isPremium &&
+        freeInsumoRemaining <= 2 &&
+        freeInsumoRemaining > 0 &&
+        !dismissedWarning;
 
     const resetForm = () => {
         setEditingInsumoId(null);
@@ -156,7 +164,15 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn w-full">
+        <>
+            {showSoftLimitWarning && (
+                <SoftLimitWarning
+                    message={`Você tem apenas ${freeInsumoRemaining} insumo(s) restante(s). Teste Premium para ilimitado.`}
+                    onDismiss={() => setDismissedWarning(true)}
+                />
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn w-full">
             <Card
                 data-onboarding="inventory-insumo-form"
                 className={`md:col-span-1 border-t-4 border-amber-500`}
@@ -348,6 +364,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                     </div>
                 )}
             </Card>
-        </div>
+            </div>
+        </>
     );
 }
