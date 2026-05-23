@@ -234,24 +234,31 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
       return;
     }
 
-    void checkAndNotifyLowStock(userId);
-    void checkAndNotifyPendingQuotes(userId);
+    void checkAndNotifyLowStock(insumos);
+    void checkAndNotifyPendingQuotes(quotes);
 
     const interval = setInterval(() => {
-      void checkAndNotifyLowStock(userId);
-      void checkAndNotifyPendingQuotes(userId);
+      void checkAndNotifyLowStock(insumos);
+      void checkAndNotifyPendingQuotes(quotes);
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [session?.user?.id]);
+  }, [insumos, quotes, session?.user?.id]);
 
   const handleEnableNotifications = async () => {
     if (typeof window === "undefined" || !("Notification" in window)) {
       return;
     }
 
-    await requestNotificationPermission();
-    setNotificationPermission(Notification.permission);
+    const permission = await requestNotificationPermission();
+    setNotificationPermission(
+      permission === "unsupported" ? "unsupported" : permission,
+    );
+
+    if (permission === "granted") {
+      void checkAndNotifyLowStock(insumos);
+      void checkAndNotifyPendingQuotes(quotes);
+    }
   };
 
   const shouldShowNotificationBanner =
