@@ -17,6 +17,17 @@ import {
   type AppHelpContextEventDetail,
 } from "@/lib/help-assistant-events";
 import type { AssistantContext } from "@/lib/assistant-context";
+import {
+  appendConversationMessages,
+  createConversationContext,
+  getConversationContextStorageKey,
+  normalizeConversationContext,
+  type ConversationContext,
+} from "@/lib/assistant-conversation-context";
+import {
+  detectAssistantIntent,
+  matchesAssistantIntent,
+} from "@/lib/assistant-intents";
 
 type AppHelpAssistantProps = {
   activeTab: ActiveTab;
@@ -148,49 +159,50 @@ function shouldStartOnboarding(normalizedPrompt: string) {
 }
 
 function isGettingStartedQuestion(normalizedPrompt: string) {
-  return includesAny(normalizedPrompt, [
-    "como funciona a calculadora",
-    "como funciona isso",
-    "como funciona o app",
-    "como isso funciona",
-    "oi como funciona",
-    "ola como funciona",
-    "olá como funciona",
-    "como comeco",
-    "por onde comeco",
-    "primeiro passo",
-    "me ajuda a criar meu primeiro produto",
-    "nao entendo como usar isso",
-    "sou iniciante",
-    "nao sei por onde comecar",
-    "começar",
-    "comecar",
-  ]);
+  return (
+    matchesAssistantIntent(normalizedPrompt, "HELP_GETTING_STARTED") ||
+    includesAny(normalizedPrompt, [
+      "como funciona a calculadora",
+      "como funciona isso",
+      "como funciona o app",
+      "como isso funciona",
+      "oi como funciona",
+      "ola como funciona",
+      "olá como funciona",
+      "como comeco",
+      "primeiro passo",
+      "me ajuda a criar meu primeiro produto",
+      "sou iniciante",
+      "nao sei por onde comecar",
+      "começar",
+      "comecar",
+    ])
+  );
 }
 
 function isMaterialHelpQuestion(normalizedPrompt: string) {
-  return includesAny(normalizedPrompt, [
-    "material",
-    "estoque",
-    "insumo",
-    "meus materiais",
-    "aba meus materiais",
-    "como uso a aba meus materiais",
-    "como usar meus materiais",
-    "como adiciono um material",
-    "adicionar um material",
-    "adiciono um material",
-    "qual informacao preciso do insumo",
-    "qual informação preciso do insumo",
-    "nao sei quanto custa o material",
-    "não sei quanto custa o material",
-    "material e vendido por metro",
-    "material é vendido por metro",
-    "vendido por metro",
-    "cadastrar insumo",
-    "cadastrar material",
-    "materiais",
-  ]);
+  return (
+    matchesAssistantIntent(normalizedPrompt, "HELP_ADD_MATERIALS") ||
+    includesAny(normalizedPrompt, [
+      "estoque",
+      "meus materiais",
+      "aba meus materiais",
+      "como uso a aba meus materiais",
+      "como usar meus materiais",
+      "adicionar um material",
+      "adiciono um material",
+      "qual informacao preciso do insumo",
+      "qual informação preciso do insumo",
+      "nao sei quanto custa o material",
+      "não sei quanto custa o material",
+      "material e vendido por metro",
+      "material é vendido por metro",
+      "vendido por metro",
+      "cadastrar insumo",
+      "cadastrar material",
+      "materiais",
+    ])
+  );
 }
 
 function isFollowUpQuestion(normalizedPrompt: string) {
@@ -1283,6 +1295,31 @@ export default function AppHelpAssistant({
     useState<ConversationFlowState | null>(null);
   const [conversationTopic, setConversationTopic] =
     useState<ConversationTopic | null>(null);
+  const [persistentContext, setPersistentContext] =
+    useState<ConversationContext>(() => {
+      const fallbackContext = createConversationContext({
+        userId: assistantContext.user.id,
+        sector: assistantContext.user.sector ?? "",
+        isPremium: assistantContext.user.isPremium,
+      });
+
+      if (typeof window === "undefined") {
+        return fallbackContext;
+      }
+
+      try {
+        const storedContext = window.localStorage.getItem(
+          getConversationContextStorageKey(assistantContext.user.id),
+        );
+
+        return normalizeConversationContext(
+          storedContext ? JSON.parse(storedContext) : null,
+          fallbackContext,
+        );
+      } catch {
+        return fallbackContext;
+      }
+    });
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "bot-initial",
@@ -1295,6 +1332,17 @@ export default function AppHelpAssistant({
     () => `Você está em ${TAB_LABELS[activeTab]}.`,
     [activeTab],
   );
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        getConversationContextStorageKey(assistantContext.user.id),
+        JSON.stringify(persistentContext),
+      );
+    } catch {
+      // The assistant still works if browser storage is unavailable.
+    }
+  }, [assistantContext.user.id, persistentContext]);
 
   useEffect(() => {
     function handleContextHelp(event: Event) {
@@ -1311,17 +1359,21 @@ export default function AppHelpAssistant({
         return;
       }
 
+      const botMessage = createBotMessage(botReply.text, {
+        targetHref: botReply.targetHref,
+        targetLabel: botReply.targetLabel,
+        targetTab: botReply.targetTab,
+        targetTabs: botReply.targetTabs,
+      });
+
       setIsOpen(true);
       setConversationFlow(null);
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        createBotMessage(botReply.text, {
-          targetHref: botReply.targetHref,
-          targetLabel: botReply.targetLabel,
-          targetTab: botReply.targetTab,
-          targetTabs: botReply.targetTabs,
-        }),
-      ]);
+      setMessages((currentMessages) => [...currentMessages, botMessage]);
+      setPersistentContext((currentContext) =>
+        appendConversationMessages(currentContext, [
+          { role: "bot", text: botMessage.text },
+        ]),
+      );
     }
 
     window.addEventListener(APP_HELP_CONTEXT_EVENT, handleContextHelp);
@@ -1340,6 +1392,7 @@ export default function AppHelpAssistant({
 
     const userMessage = createUserMessage(trimmedPrompt);
     const normalizedPrompt = normalizeText(trimmedPrompt);
+    const detectedIntent = detectAssistantIntent(trimmedPrompt);
     const flowReply = conversationFlow
       ? buildConversationStepReply(
           trimmedPrompt,
@@ -1370,16 +1423,17 @@ export default function AppHelpAssistant({
                   assistantContext.appData.savedProducts.length,
                 )
               : buildBotReply(trimmedPrompt, activeTab));
+    const botMessage = createBotMessage(botReply.text, {
+      targetHref: botReply.targetHref,
+      targetLabel: botReply.targetLabel,
+      targetTab: botReply.targetTab,
+      targetTabs: botReply.targetTabs,
+    });
 
     setMessages((currentMessages) => [
       ...currentMessages,
       userMessage,
-      createBotMessage(botReply.text, {
-        targetHref: botReply.targetHref,
-        targetLabel: botReply.targetLabel,
-        targetTab: botReply.targetTab,
-        targetTabs: botReply.targetTabs,
-      }),
+      botMessage,
     ]);
     setConversationFlow(
       flowReply?.nextFlowState ??
@@ -1406,6 +1460,32 @@ export default function AppHelpAssistant({
           : null),
     );
     setConversationTopic(getTopicFromReply(normalizedPrompt, botReply));
+    setPersistentContext((currentContext) => {
+      const nextContext = appendConversationMessages(currentContext, [
+        { role: "user", text: userMessage.text },
+        { role: "bot", text: botMessage.text },
+      ]);
+
+      if (
+        flowReply?.nextFlowState?.type === "price-calculation" &&
+        flowReply.nextFlowState.productName
+      ) {
+        nextContext.lastProductCreated = flowReply.nextFlowState.productName;
+      }
+
+      if (
+        detectedIntent === "HELP_TROUBLESHOOT" ||
+        shouldStartPriceDoubtFlow
+      ) {
+        nextContext.lastProblem = trimmedPrompt;
+      }
+
+      if (detectedIntent === "HELP_SUGGEST_PRICE") {
+        nextContext.suggestedMargin = 50;
+      }
+
+      return nextContext;
+    });
     setInputValue("");
   }
 
