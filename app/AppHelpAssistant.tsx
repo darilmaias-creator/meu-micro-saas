@@ -132,6 +132,12 @@ type ConversationFlowState =
 
 type ConversationTopic = "materials";
 
+const INITIAL_BOT_MESSAGE: ChatMessage = {
+  id: "bot-initial",
+  role: "bot",
+  text: "Oi! Sou o assistente da Calcula Artesão. Posso te ajudar a cadastrar insumos, montar ficha técnica, entender custos e escolher uma margem inicial.",
+};
+
 function normalizeText(value: string) {
   return value
     .normalize("NFD")
@@ -1284,12 +1290,83 @@ function createUserMessage(text: string): ChatMessage {
   };
 }
 
+function getChatMessagesStorageKey(userId: string) {
+  return `calcula-artesao:assistant-messages:${userId}`;
+}
+
+function getChatOpenStorageKey(userId: string) {
+  return `calcula-artesao:assistant-open:${userId}`;
+}
+
+function isActiveTab(value: unknown): value is ActiveTab {
+  return (
+    value === "calculator" ||
+    value === "inventory" ||
+    value === "operationCosts" ||
+    value === "sales" ||
+    value === "dashboard"
+  );
+}
+
+function normalizeStoredChatMessages(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [INITIAL_BOT_MESSAGE];
+  }
+
+  const storedMessages = value
+    .filter((message): message is Partial<ChatMessage> => {
+      if (!message || typeof message !== "object") {
+        return false;
+      }
+
+      const role = (message as Partial<ChatMessage>).role;
+      const text = (message as Partial<ChatMessage>).text;
+
+      return (role === "bot" || role === "user") && typeof text === "string";
+    })
+    .slice(-30)
+    .map((message, index) => ({
+      id:
+        typeof message.id === "string" && message.id
+          ? message.id
+          : `stored-${index}`,
+      role: message.role as "bot" | "user",
+      text: message.text as string,
+      targetHref:
+        typeof message.targetHref === "string" ? message.targetHref : undefined,
+      targetLabel:
+        typeof message.targetLabel === "string"
+          ? message.targetLabel
+          : undefined,
+      targetTab: isActiveTab(message.targetTab) ? message.targetTab : undefined,
+      targetTabs: Array.isArray(message.targetTabs)
+        ? message.targetTabs.filter(isActiveTab)
+        : undefined,
+    }));
+
+  return storedMessages.length > 0 ? storedMessages : [INITIAL_BOT_MESSAGE];
+}
+
 export default function AppHelpAssistant({
   activeTab,
   assistantContext,
 }: AppHelpAssistantProps) {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    try {
+      return (
+        window.localStorage.getItem(
+          getChatOpenStorageKey(assistantContext.user.id),
+        ) === "true"
+      );
+    } catch {
+      return false;
+    }
+  });
   const [inputValue, setInputValue] = useState("");
   const [conversationFlow, setConversationFlow] =
     useState<ConversationFlowState | null>(null);
@@ -1320,13 +1397,23 @@ export default function AppHelpAssistant({
         return fallbackContext;
       }
     });
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "bot-initial",
-      role: "bot",
-      text: "Oi! Sou o assistente da Calcula Artesão. Posso te ajudar a cadastrar insumos, montar ficha técnica, entender custos e escolher uma margem inicial.",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window === "undefined") {
+      return [INITIAL_BOT_MESSAGE];
+    }
+
+    try {
+      const storedMessages = window.localStorage.getItem(
+        getChatMessagesStorageKey(assistantContext.user.id),
+      );
+
+      return normalizeStoredChatMessages(
+        storedMessages ? JSON.parse(storedMessages) : null,
+      );
+    } catch {
+      return [INITIAL_BOT_MESSAGE];
+    }
+  });
 
   const chatSummary = useMemo(
     () => `Você está em ${TAB_LABELS[activeTab]}.`,
@@ -1343,6 +1430,28 @@ export default function AppHelpAssistant({
       // The assistant still works if browser storage is unavailable.
     }
   }, [assistantContext.user.id, persistentContext]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        getChatMessagesStorageKey(assistantContext.user.id),
+        JSON.stringify(messages),
+      );
+    } catch {
+      // The assistant still works if browser storage is unavailable.
+    }
+  }, [assistantContext.user.id, messages]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        getChatOpenStorageKey(assistantContext.user.id),
+        String(isOpen),
+      );
+    } catch {
+      // The assistant still works if browser storage is unavailable.
+    }
+  }, [assistantContext.user.id, isOpen]);
 
   useEffect(() => {
     function handleContextHelp(event: Event) {
@@ -1491,7 +1600,6 @@ export default function AppHelpAssistant({
 
   function goToTab(tab: ActiveTab) {
     router.push(getPathForActiveTab(tab));
-    setIsOpen(false);
   }
 
   return (
@@ -1547,7 +1655,6 @@ export default function AppHelpAssistant({
                     type="button"
                     onClick={() => {
                       router.push(message.targetHref as string);
-                      setIsOpen(false);
                     }}
                     className="mt-2 inline-flex items-center gap-1 rounded-lg bg-amber-600 px-2.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-amber-700"
                   >
