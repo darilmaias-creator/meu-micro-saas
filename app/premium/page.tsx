@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { Check, X, Crown, ArrowRight } from "lucide-react";
 
+import {
+  formatBrlPriceFromCents,
+  PREMIUM_FOUNDER_LIMIT,
+  PREMIUM_FOUNDER_PRICE_BRL,
+  PREMIUM_STANDARD_PRICE_BRL,
+} from "@/lib/billing/plans";
+
 const COMPARISON = [
   { feature: "Insumos", free: "20", premium: "Ilimitado" },
   { feature: "Produtos", free: "10", premium: "Ilimitado" },
@@ -14,6 +21,9 @@ const COMPARISON = [
 ];
 
 export default function PremiumPage() {
+  const founderPrice = formatBrlPriceFromCents(PREMIUM_FOUNDER_PRICE_BRL);
+  const standardPrice = formatBrlPriceFromCents(PREMIUM_STANDARD_PRICE_BRL);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-amber-50 p-4">
       <div className="mx-auto max-w-6xl">
@@ -101,13 +111,20 @@ export default function PremiumPage() {
 
           <div className="relative rounded-2xl border-2 border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 p-8 shadow-xl">
             <div className="absolute right-0 top-0 rounded-bl-lg bg-amber-500 px-4 py-1 text-sm font-bold text-white">
-              MAIS POPULAR
+              FOUNDER
             </div>
             <h2 className="mb-2 text-2xl font-bold text-slate-900">Premium</h2>
-            <p className="mb-6 text-slate-600">Acesso completo</p>
+            <p className="mb-6 text-slate-600">
+              Acesso completo com valor de lançamento
+            </p>
             <div className="mb-2 text-4xl font-bold text-amber-600">
-              R$ 29,90<span className="text-lg text-slate-600">/mês</span>
+              {founderPrice}
+              <span className="text-lg text-slate-600">/mês</span>
             </div>
+            <p className="mb-6 text-sm font-semibold text-amber-800">
+              Para os {PREMIUM_FOUNDER_LIMIT} primeiros assinantes. Depois,{" "}
+              {standardPrice}/mês.
+            </p>
             <Link
               href="/assinatura/checkout"
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-3 font-bold text-white transition hover:bg-amber-700"
