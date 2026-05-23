@@ -38,16 +38,33 @@ function clearStoredSignature(key: string) {
   getStorage()?.removeItem(key);
 }
 
-function notify(title: string, body: string, targetPath?: string) {
+async function notify(title: string, body: string, targetPath?: string) {
   if (typeof window === "undefined" || !("Notification" in window)) {
     return;
   }
 
   if (Notification.permission === "granted") {
-    const n = new Notification(title, {
+    const notificationOptions: NotificationOptions = {
       body,
-      icon: "/icon.png",
+      icon: "/android-chrome-192x192.png",
       tag: title,
+      data: {
+        targetPath,
+      },
+    };
+
+    if ("serviceWorker" in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, notificationOptions);
+        return;
+      } catch (error) {
+        console.error("[notifications:service-worker]", error);
+      }
+    }
+
+    const n = new Notification(title, {
+      ...notificationOptions,
     });
 
     n.onclick = (event) => {
@@ -134,7 +151,7 @@ export async function checkAndNotifyLowStock(items: GenericRecord[] | undefined)
     return;
   }
 
-  notify(
+  await notify(
     "Estoque Baixo",
     String(lowStockItems.length) + " insumo(s) com estoque no nivel de aviso ou abaixo.",
     "/estoque",
@@ -155,7 +172,7 @@ export async function checkAndNotifyPendingQuotes(quotes: GenericRecord[] | unde
     return;
   }
 
-  notify(
+  await notify(
     "Orcamentos Pendentes",
     String(pendingQuotes.length) + " orcamento(s) aguardando resposta ha mais de 7 dias.",
     "/vendas",

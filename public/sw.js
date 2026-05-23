@@ -1,4 +1,4 @@
-const CACHE_NAME = "calculadora-do-produtor-pwa-v5-icon-refresh";
+const CACHE_NAME = "calculadora-do-produtor-pwa-v6-notification-click";
 const ICON_VERSION = "20260502-favicon-refresh";
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
@@ -106,5 +106,67 @@ self.addEventListener("fetch", (event) => {
 
       return response;
     }),
+  );
+});
+
+function getNotificationTargetUrl(notification) {
+  const fallbackUrl = new URL("/", self.location.origin);
+  const targetPath = notification?.data?.targetPath;
+
+  if (typeof targetPath !== "string" || !targetPath.trim()) {
+    return fallbackUrl;
+  }
+
+  try {
+    const targetUrl = new URL(targetPath, self.location.origin);
+
+    if (targetUrl.origin !== self.location.origin) {
+      return fallbackUrl;
+    }
+
+    return targetUrl;
+  } catch {
+    return fallbackUrl;
+  }
+}
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = getNotificationTargetUrl(event.notification);
+
+  event.waitUntil(
+    self.clients
+      .matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      })
+      .then(async (clientList) => {
+        const appClient = clientList.find((client) => {
+          try {
+            return new URL(client.url).origin === self.location.origin;
+          } catch {
+            return false;
+          }
+        });
+
+        if (appClient) {
+          if ("navigate" in appClient && appClient.url !== targetUrl.href) {
+            await appClient.navigate(targetUrl.href);
+          }
+
+          if ("focus" in appClient) {
+            return appClient.focus();
+          }
+
+          return appClient;
+        }
+
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl.href);
+        }
+
+        return undefined;
+      }),
   );
 });
