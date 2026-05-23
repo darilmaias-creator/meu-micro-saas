@@ -15,16 +15,45 @@ function toNumber(value: unknown) {
   return 0;
 }
 
+const lowStockNoticeKey = "notification.low-stock.signature";
+const pendingQuotesNoticeKey = "notification.pending-quotes.signature";
+
+function getStorage() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage;
+}
+
+function readStoredSignature(key: string) {
+  return getStorage()?.getItem(key) ?? null;
+}
+
+function saveStoredSignature(key: string, signature: string) {
+  getStorage()?.setItem(key, signature);
+}
+
+function clearStoredSignature(key: string) {
+  getStorage()?.removeItem(key);
+}
+
 function notify(title: string, body: string) {
   if (typeof window === "undefined" || !("Notification" in window)) {
     return;
   }
 
   if (Notification.permission === "granted") {
-    new Notification(title, {
+    const n = new Notification(title, {
       body,
       icon: "/icon.png",
+      tag: title,
     });
+
+    n.onclick = (event) => {
+      event.preventDefault();
+      n.close();
+    };
   }
 }
 
@@ -34,6 +63,15 @@ function getLowStockItems(items: GenericRecord[] | undefined) {
     const minStock = toNumber(item.minStock);
     return stock <= minStock;
   });
+}
+
+function getLowStockSignature(items: GenericRecord[] | undefined) {
+  const lowStockItems = getLowStockItems(items);
+
+  return lowStockItems
+    .map((item) => `${String(item.id ?? "" )}|${String(item.name ?? "")}|${toNumber(item.stock)}|${toNumber(item.minStock)}`)
+    .sort()
+    .join(";");
 }
 
 function getPendingQuotes(quotes: GenericRecord[] | undefined) {
@@ -69,9 +107,25 @@ function getPendingQuotes(quotes: GenericRecord[] | undefined) {
   });
 }
 
+function getPendingQuotesSignature(quotes: GenericRecord[] | undefined) {
+  const pendingQuotes = getPendingQuotes(quotes);
+
+  return pendingQuotes
+    .map((quote) => `${String(quote.id ?? "")} | ${String(quote.date ?? quote.createdAt ?? quote.created_at ?? "")}`)
+    .sort()
+    .join(";");
+}
+
 export async function checkAndNotifyLowStock(items: GenericRecord[] | undefined) {
   const lowStockItems = getLowStockItems(items);
+  const signature = getLowStockSignature(items);
+
   if (lowStockItems.length === 0) {
+    clearStoredSignature(lowStockNoticeKey);
+    return;
+  }
+
+  if (readStoredSignature(lowStockNoticeKey) === signature) {
     return;
   }
 
@@ -79,11 +133,19 @@ export async function checkAndNotifyLowStock(items: GenericRecord[] | undefined)
     "Estoque Baixo",
     String(lowStockItems.length) + " insumo(s) com estoque no nivel de aviso ou abaixo.",
   );
+  saveStoredSignature(lowStockNoticeKey, signature);
 }
 
 export async function checkAndNotifyPendingQuotes(quotes: GenericRecord[] | undefined) {
   const pendingQuotes = getPendingQuotes(quotes);
+  const signature = getPendingQuotesSignature(quotes);
+
   if (pendingQuotes.length === 0) {
+    clearStoredSignature(pendingQuotesNoticeKey);
+    return;
+  }
+
+  if (readStoredSignature(pendingQuotesNoticeKey) === signature) {
     return;
   }
 
@@ -91,6 +153,7 @@ export async function checkAndNotifyPendingQuotes(quotes: GenericRecord[] | unde
     "Orcamentos Pendentes",
     String(pendingQuotes.length) + " orcamento(s) aguardando resposta ha mais de 7 dias.",
   );
+  saveStoredSignature(pendingQuotesNoticeKey, signature);
 }
 
 export async function requestNotificationPermission(): Promise<NotificationPermission | "unsupported"> {
