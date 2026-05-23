@@ -35,6 +35,16 @@ import {
   detectAssistantIntent,
   matchesAssistantIntent,
 } from "@/lib/assistant-intents";
+import {
+  addAgentSessionDuration,
+  calculateAgentMetrics,
+  createDefaultAgentMetricsState,
+  formatAgentMetricsDashboard,
+  getAgentMetricsStorageKey,
+  markAgentSessionStarted,
+  normalizeAgentMetricsState,
+  type AgentMetricsState,
+} from "@/lib/assistant-metrics";
 
 type AppHelpAssistantProps = {
   activeTab: ActiveTab;
@@ -95,6 +105,11 @@ const QUICK_ACTIONS: QuickAction[] = [
     id: "mistakes",
     label: "Erros comuns",
     prompt: "quais erros comuns devo evitar na precificação",
+  },
+  {
+    id: "metrics",
+    label: "Métricas IA",
+    prompt: "métricas do agente",
   },
 ];
 
@@ -231,6 +246,18 @@ function isFollowUpQuestion(normalizedPrompt: string) {
     "como continuo",
     "o que faco depois",
     "o que faço depois",
+  ]);
+}
+
+function isAgentMetricsQuestion(normalizedPrompt: string) {
+  return includesAny(normalizedPrompt, [
+    "metricas ia",
+    "métricas ia",
+    "metricas do agente",
+    "métricas do agente",
+    "dashboard do agente",
+    "analise do agente",
+    "análise do agente",
   ]);
 }
 
@@ -1404,6 +1431,28 @@ export default function AppHelpAssistant({
         return fallbackContext;
       }
     });
+  const [agentMetrics, setAgentMetrics] = useState<AgentMetricsState>(() => {
+    const fallbackMetrics = createDefaultAgentMetricsState(
+      assistantContext.appData.savedProducts.length,
+    );
+
+    if (typeof window === "undefined") {
+      return fallbackMetrics;
+    }
+
+    try {
+      const storedMetrics = window.localStorage.getItem(
+        getAgentMetricsStorageKey(assistantContext.user.id),
+      );
+
+      return normalizeAgentMetricsState(
+        storedMetrics ? JSON.parse(storedMetrics) : null,
+        fallbackMetrics,
+      );
+    } catch {
+      return fallbackMetrics;
+    }
+  });
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     if (typeof window === "undefined") {
       return [INITIAL_BOT_MESSAGE];
@@ -1422,6 +1471,9 @@ export default function AppHelpAssistant({
     }
   });
   const scheduledAutoTriggerRef = useRef<string | null>(null);
+  const sessionStartedAtRef = useRef<number | null>(null);
+  const sessionLastRecordedAtRef = useRef<number | null>(null);
+  const hasMarkedSessionStartedRef = useRef(false);
 
   const chatSummary = useMemo(
     () => `Você está em ${TAB_LABELS[activeTab]}.`,
@@ -1460,6 +1512,72 @@ export default function AppHelpAssistant({
       // The assistant still works if browser storage is unavailable.
     }
   }, [assistantContext.user.id, isOpen]);
+
+  useEffect(() => {
+    if (hasMarkedSessionStartedRef.current) {
+      return;
+    }
+
+    hasMarkedSessionStartedRef.current = true;
+    const timeoutId = window.setTimeout(() => {
+      const now = Date.now();
+      sessionStartedAtRef.current = now;
+      sessionLastRecordedAtRef.current = now;
+      setAgentMetrics((currentMetrics) =>
+        markAgentSessionStarted(currentMetrics),
+      );
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  function getSessionDurationDelta() {
+    const now = Date.now();
+    const lastRecordedAt = sessionLastRecordedAtRef.current ?? now;
+    const durationDelta = now - lastRecordedAt;
+    sessionStartedAtRef.current = sessionStartedAtRef.current ?? now;
+    sessionLastRecordedAtRef.current = now;
+    return durationDelta;
+  }
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        getAgentMetricsStorageKey(assistantContext.user.id),
+        JSON.stringify(agentMetrics),
+      );
+    } catch {
+      // The assistant still works if browser storage is unavailable.
+    }
+  }, [agentMetrics, assistantContext.user.id]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setAgentMetrics((currentMetrics) => {
+        const productCount = assistantContext.appData.savedProducts.length;
+
+        if (productCount <= currentMetrics.lastProductCount) {
+          return currentMetrics;
+        }
+
+        return {
+          ...currentMetrics,
+          lastProductCount: productCount,
+          productsCreatedAfterHelp:
+            currentMetrics.totalMessages > 0
+              ? currentMetrics.productsCreatedAfterHelp +
+                (productCount - currentMetrics.lastProductCount)
+              : currentMetrics.productsCreatedAfterHelp,
+        };
+      });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [assistantContext.appData.savedProducts.length]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -1532,6 +1650,13 @@ export default function AppHelpAssistant({
           { role: "bot", text: botMessage.text },
         ]),
       );
+      setAgentMetrics((currentMetrics) => ({
+        ...addAgentSessionDuration(
+          currentMetrics,
+          getSessionDurationDelta(),
+        ),
+        totalMessages: currentMetrics.totalMessages + 1,
+      }));
     }, 0);
 
     return () => {
@@ -1574,6 +1699,13 @@ export default function AppHelpAssistant({
           { role: "bot", text: botMessage.text },
         ]),
       );
+      setAgentMetrics((currentMetrics) => ({
+        ...addAgentSessionDuration(
+          currentMetrics,
+          getSessionDurationDelta(),
+        ),
+        totalMessages: currentMetrics.totalMessages + 1,
+      }));
     }
 
     window.addEventListener(APP_HELP_CONTEXT_EVENT, handleContextHelp);
@@ -1609,9 +1741,16 @@ export default function AppHelpAssistant({
     const shouldStartPriceDoubtFlow = shouldStartPriceDoubt(normalizedPrompt);
     const shouldStartOptimizationFlow =
       shouldStartOptimization(normalizedPrompt);
+    const metricsReply = isAgentMetricsQuestion(normalizedPrompt)
+      ? ({
+          text: formatAgentMetricsDashboard(calculateAgentMetrics(agentMetrics)),
+          targetTab: "dashboard" as const,
+        } satisfies BotReply)
+      : null;
     const botReply: BotReply =
       flowReply?.reply ??
       followUpReply ??
+      metricsReply ??
       (shouldStartOnboardingFlow
         ? buildOnboardingStartReply()
         : shouldStartPriceCalculationFlow
@@ -1686,11 +1825,38 @@ export default function AppHelpAssistant({
 
       return nextContext;
     });
+    setAgentMetrics((currentMetrics) => ({
+      ...addAgentSessionDuration(
+        currentMetrics,
+        getSessionDurationDelta(),
+      ),
+      totalMessages: currentMetrics.totalMessages + 2,
+      problemsSolved:
+        detectedIntent === "HELP_TROUBLESHOOT" || shouldStartPriceDoubtFlow
+          ? currentMetrics.problemsSolved + 1
+          : currentMetrics.problemsSolved,
+      priceOptimizationAttempts:
+        detectedIntent === "HELP_OPTIMIZE_PRICE" || shouldStartOptimizationFlow
+          ? currentMetrics.priceOptimizationAttempts + 1
+          : currentMetrics.priceOptimizationAttempts,
+    }));
     setInputValue("");
   }
 
   function goToTab(tab: ActiveTab) {
     router.push(getPathForActiveTab(tab));
+  }
+
+  function rateAssistantHelpfulness(isHelpful: boolean) {
+    setAgentMetrics((currentMetrics) => ({
+      ...currentMetrics,
+      helpfulnessPositive: isHelpful
+        ? currentMetrics.helpfulnessPositive + 1
+        : currentMetrics.helpfulnessPositive,
+      helpfulnessNegative: isHelpful
+        ? currentMetrics.helpfulnessNegative
+        : currentMetrics.helpfulnessNegative + 1,
+    }));
   }
 
   return (
@@ -1745,6 +1911,14 @@ export default function AppHelpAssistant({
                   <button
                     type="button"
                     onClick={() => {
+                      if (message.targetHref === "/premium") {
+                        setAgentMetrics((currentMetrics) => ({
+                          ...currentMetrics,
+                          trialSignupsFromAgent:
+                            currentMetrics.trialSignupsFromAgent + 1,
+                        }));
+                      }
+
                       router.push(message.targetHref as string);
                     }}
                     className="mt-2 inline-flex items-center gap-1 rounded-lg bg-amber-600 px-2.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-amber-700"
@@ -1772,6 +1946,28 @@ export default function AppHelpAssistant({
                       ))}
                     </div>
                   )}
+
+                {message.role === "bot" && message.id !== "bot-initial" && (
+                  <div className="mt-2 flex items-center gap-1.5 border-t border-amber-100 pt-2">
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      Foi útil?
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => rateAssistantHelpfulness(true)}
+                      className="rounded-md bg-white px-2 py-1 text-[11px] font-bold text-green-700 ring-1 ring-green-100 transition-colors hover:bg-green-50"
+                    >
+                      Sim
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => rateAssistantHelpfulness(false)}
+                      className="rounded-md bg-white px-2 py-1 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200 transition-colors hover:bg-slate-50"
+                    >
+                      Não
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
