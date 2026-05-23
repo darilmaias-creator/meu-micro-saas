@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -17,6 +17,13 @@ import {
   type AppHelpContextEventDetail,
 } from "@/lib/help-assistant-events";
 import type { AssistantContext } from "@/lib/assistant-context";
+import {
+  getAssistantLastSeenStorageKey,
+  getAssistantShownTriggersStorageKey,
+  getNextAssistantAutoTrigger,
+  readShownAssistantTriggers,
+  serializeShownAssistantTriggers,
+} from "@/lib/assistant-auto-triggers";
 import {
   appendConversationMessages,
   createConversationContext,
@@ -1414,6 +1421,7 @@ export default function AppHelpAssistant({
       return [INITIAL_BOT_MESSAGE];
     }
   });
+  const scheduledAutoTriggerRef = useRef<string | null>(null);
 
   const chatSummary = useMemo(
     () => `Você está em ${TAB_LABELS[activeTab]}.`,
@@ -1452,6 +1460,89 @@ export default function AppHelpAssistant({
       // The assistant still works if browser storage is unavailable.
     }
   }, [assistantContext.user.id, isOpen]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const shownTriggers = readShownAssistantTriggers(
+      window.localStorage.getItem(
+        getAssistantShownTriggersStorageKey(assistantContext.user.id),
+      ),
+    );
+    const lastSeenAt = window.localStorage.getItem(
+      getAssistantLastSeenStorageKey(assistantContext.user.id),
+    );
+    const hasConversationStarted =
+      persistentContext.messagesCount > 0 || messages.length > 1;
+    const autoTrigger = getNextAssistantAutoTrigger({
+      assistantContext,
+      hasConversationStarted,
+      lastSeenAt,
+      shownTriggers,
+    });
+
+    if (!autoTrigger) {
+      window.localStorage.setItem(
+        getAssistantLastSeenStorageKey(assistantContext.user.id),
+        new Date().toISOString(),
+      );
+      scheduledAutoTriggerRef.current = null;
+      return;
+    }
+
+    if (scheduledAutoTriggerRef.current === autoTrigger.id) {
+      return;
+    }
+
+    scheduledAutoTriggerRef.current = autoTrigger.id;
+    const timeoutId = window.setTimeout(() => {
+      const nextShownTriggers = readShownAssistantTriggers(
+        window.localStorage.getItem(
+          getAssistantShownTriggersStorageKey(assistantContext.user.id),
+        ),
+      );
+
+      if (nextShownTriggers.has(autoTrigger.id)) {
+        return;
+      }
+
+      const botMessage = createBotMessage(autoTrigger.text, {
+        targetHref: autoTrigger.targetHref,
+        targetLabel: autoTrigger.targetLabel,
+        targetTab: autoTrigger.targetTab,
+        targetTabs: autoTrigger.targetTabs,
+      });
+
+      nextShownTriggers.add(autoTrigger.id);
+      window.localStorage.setItem(
+        getAssistantShownTriggersStorageKey(assistantContext.user.id),
+        serializeShownAssistantTriggers(nextShownTriggers),
+      );
+      window.localStorage.setItem(
+        getAssistantLastSeenStorageKey(assistantContext.user.id),
+        new Date().toISOString(),
+      );
+
+      setIsOpen(true);
+      setMessages((currentMessages) => [...currentMessages, botMessage]);
+      setPersistentContext((currentContext) =>
+        appendConversationMessages(currentContext, [
+          { role: "bot", text: botMessage.text },
+        ]),
+      );
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    assistantContext,
+    assistantContext.user.id,
+    messages.length,
+    persistentContext.messagesCount,
+  ]);
 
   useEffect(() => {
     function handleContextHelp(event: Event) {
