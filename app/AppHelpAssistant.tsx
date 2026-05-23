@@ -119,6 +119,8 @@ type ConversationFlowState =
   | PriceDoubtFlowState
   | OptimizationFlowState;
 
+type ConversationTopic = "materials";
+
 function normalizeText(value: string) {
   return value
     .normalize("NFD")
@@ -142,6 +144,68 @@ function shouldStartOnboarding(normalizedPrompt: string) {
     "me guie passo",
     "vamos comecar",
     "vamos começar",
+  ]);
+}
+
+function isGettingStartedQuestion(normalizedPrompt: string) {
+  return includesAny(normalizedPrompt, [
+    "como funciona a calculadora",
+    "como funciona isso",
+    "como funciona o app",
+    "como isso funciona",
+    "oi como funciona",
+    "ola como funciona",
+    "olá como funciona",
+    "como comeco",
+    "por onde comeco",
+    "primeiro passo",
+    "me ajuda a criar meu primeiro produto",
+    "nao entendo como usar isso",
+    "sou iniciante",
+    "nao sei por onde comecar",
+    "começar",
+    "comecar",
+  ]);
+}
+
+function isMaterialHelpQuestion(normalizedPrompt: string) {
+  return includesAny(normalizedPrompt, [
+    "material",
+    "estoque",
+    "insumo",
+    "meus materiais",
+    "aba meus materiais",
+    "como uso a aba meus materiais",
+    "como usar meus materiais",
+    "como adiciono um material",
+    "adicionar um material",
+    "adiciono um material",
+    "qual informacao preciso do insumo",
+    "qual informação preciso do insumo",
+    "nao sei quanto custa o material",
+    "não sei quanto custa o material",
+    "material e vendido por metro",
+    "material é vendido por metro",
+    "vendido por metro",
+    "cadastrar insumo",
+    "cadastrar material",
+    "materiais",
+  ]);
+}
+
+function isFollowUpQuestion(normalizedPrompt: string) {
+  return includesAny(normalizedPrompt, [
+    "e depois",
+    "depois",
+    "proximo",
+    "próximo",
+    "qual o proximo",
+    "qual o próximo",
+    "continua",
+    "continuar",
+    "como continuo",
+    "o que faco depois",
+    "o que faço depois",
   ]);
 }
 
@@ -599,6 +663,40 @@ function buildContextualHelpReply(topic: AppHelpContextEventDetail["topic"]) {
   }
 }
 
+function buildFollowUpReply(
+  topic: ConversationTopic | null,
+  normalizedPrompt: string,
+) {
+  if (!isFollowUpQuestion(normalizedPrompt)) {
+    return null;
+  }
+
+  if (topic === "materials") {
+    return {
+      text:
+        "Depois você vai para **Calcular Preço** e cria um novo produto.\n\nSelecione os materiais que você usa, informe a quantidade de cada um, adicione o tempo de produção e pronto: a calculadora mostra o custo e o preço sugerido.",
+      targetTab: "calculator" as const,
+    } satisfies BotReply;
+  }
+
+  return {
+    text:
+      "O próximo passo é começar pelos materiais. Cadastre os insumos em **Meus Materiais** e depois use a aba **Calcular Preço** para montar o produto.",
+    targetTabs: ["inventory", "calculator"],
+  } satisfies BotReply;
+}
+
+function getTopicFromReply(
+  normalizedPrompt: string,
+  botReply: BotReply,
+): ConversationTopic | null {
+  if (botReply.targetTab === "inventory" || isMaterialHelpQuestion(normalizedPrompt)) {
+    return "materials";
+  }
+
+  return null;
+}
+
 function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   const normalizedPrompt = normalizeText(userPrompt);
 
@@ -695,51 +793,15 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
     } satisfies BotReply;
   }
 
-  if (
-    includesAny(normalizedPrompt, [
-      "como funciona a calculadora",
-      "como comeco",
-      "por onde comeco",
-      "primeiro passo",
-      "me ajuda a criar meu primeiro produto",
-      "nao entendo como usar isso",
-      "sou iniciante",
-      "nao sei por onde comecar",
-      "começar",
-      "comecar",
-    ])
-  ) {
+  if (isGettingStartedQuestion(normalizedPrompt)) {
     return {
       text:
-        "Ótimo! Vou te guiar passo-a-passo. A calculadora tem 3 passos simples:\n\n1️⃣ **Selecione seus insumos** - Escolha os materiais que você usa\n2️⃣ **Configure os custos** - Adicione tempo, energia, acabamento\n3️⃣ **Veja o preço sugerido** - O app calcula automaticamente\n\nQual é o seu tipo de artesanato? (ex: bijuteria, cerâmica, costura)\nIsso me ajuda a dar dicas mais precisas.",
-      targetTab: "calculator" as const,
+        "Olá! 👋 Bem-vindo!\n\nA calculadora ajuda você a descobrir o preço certo para seus produtos.\n\nFunciona assim:\n1. Você adiciona seus materiais (insumos)\n2. Você cria um produto e seleciona os materiais\n3. A calculadora mostra o custo e o preço sugerido\n\nPara começar, cadastre seu primeiro material em Meus Materiais.",
+      targetTabs: ["inventory", "calculator"],
     } satisfies BotReply;
   }
 
-  if (
-    includesAny(normalizedPrompt, [
-      "material",
-      "estoque",
-      "insumo",
-      "meus materiais",
-      "aba meus materiais",
-      "como uso a aba meus materiais",
-      "como usar meus materiais",
-      "como adiciono um material",
-      "adicionar um material",
-      "adiciono um material",
-      "qual informacao preciso do insumo",
-      "qual informação preciso do insumo",
-      "nao sei quanto custa o material",
-      "não sei quanto custa o material",
-      "material e vendido por metro",
-      "material é vendido por metro",
-      "vendido por metro",
-      "cadastrar insumo",
-      "cadastrar material",
-      "materiais",
-    ])
-  ) {
+  if (isMaterialHelpQuestion(normalizedPrompt)) {
     return {
       text:
         "Perfeito! Para adicionar um material, você precisa de:\n\n📌 **Nome** - Ex: \"Fio de Nylon\"\n💰 **Custo** - Quanto você paga por unidade\n📏 **Medida** - A unidade (kg, metro, peça, etc)\n📦 **Estoque** - Quanto você tem agora\n⚠️ **Estoque Mínimo** - Quando reabastecer\n\n**Dica:** Se você compra 1kg por R$50, o custo é R$50/kg.\nSe compra 10 metros por R$100, o custo é R$10/metro.\n\nQual é o seu material? Vou te ajudar a configurar.",
@@ -1219,6 +1281,8 @@ export default function AppHelpAssistant({
   const [inputValue, setInputValue] = useState("");
   const [conversationFlow, setConversationFlow] =
     useState<ConversationFlowState | null>(null);
+  const [conversationTopic, setConversationTopic] =
+    useState<ConversationTopic | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "bot-initial",
@@ -1283,6 +1347,9 @@ export default function AppHelpAssistant({
           assistantContext,
         )
       : null;
+    const followUpReply = conversationFlow
+      ? null
+      : buildFollowUpReply(conversationTopic, normalizedPrompt);
     const shouldStartOnboardingFlow = shouldStartOnboarding(normalizedPrompt);
     const shouldStartPriceCalculationFlow =
       shouldStartPriceCalculation(normalizedPrompt);
@@ -1291,6 +1358,7 @@ export default function AppHelpAssistant({
       shouldStartOptimization(normalizedPrompt);
     const botReply: BotReply =
       flowReply?.reply ??
+      followUpReply ??
       (shouldStartOnboardingFlow
         ? buildOnboardingStartReply()
         : shouldStartPriceCalculationFlow
@@ -1337,6 +1405,7 @@ export default function AppHelpAssistant({
                   }
           : null),
     );
+    setConversationTopic(getTopicFromReply(normalizedPrompt, botReply));
     setInputValue("");
   }
 
