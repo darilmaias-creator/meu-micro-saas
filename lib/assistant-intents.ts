@@ -65,7 +65,19 @@ export const INTENTS = {
     response: "help_best_practices",
   },
   HELP_OPTIMIZE_PRICE: {
-    patterns: ["otimizar", "ganhar mais", "aumentar lucro", "melhorar margem"],
+    patterns: [
+      "otimizar",
+      "ganhar mais",
+      "aumentar lucro",
+      "melhorar margem",
+      "vendendo muito barato",
+      "muito barato",
+      "preço baixo",
+      "preco baixo",
+      "perder dinheiro",
+      "preço mínimo",
+      "preco minimo",
+    ],
     response: "help_optimize_price",
   },
 } as const;

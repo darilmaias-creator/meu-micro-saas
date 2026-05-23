@@ -121,6 +121,14 @@ type BotReply = {
   targetLabel?: string;
 };
 
+type GeminiAssistantReply = {
+  response?: string;
+  targetHref?: string;
+  targetLabel?: string;
+  targetTab?: ActiveTab;
+  targetTabs?: ActiveTab[];
+};
+
 type OnboardingFlowState = {
   type: "onboarding";
   step: 1 | 2 | 3;
@@ -1381,6 +1389,53 @@ function normalizeStoredChatMessages(value: unknown) {
   return storedMessages.length > 0 ? storedMessages : [INITIAL_BOT_MESSAGE];
 }
 
+async function requestGeminiAssistantReply({
+  activeTab,
+  assistantContext,
+  conversationHistory,
+  message,
+}: {
+  activeTab: ActiveTab;
+  assistantContext: AssistantContext;
+  conversationHistory: ConversationContext["conversationHistory"];
+  message: string;
+}) {
+  const response = await fetch("/api/ai-assistant/gemini", {
+    body: JSON.stringify({
+      activeTab,
+      assistantContext,
+      conversationHistory,
+      message,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json().catch(() => null)) as
+    | GeminiAssistantReply
+    | null;
+
+  if (!payload?.response) {
+    return null;
+  }
+
+  return {
+    targetHref: payload.targetHref,
+    targetLabel: payload.targetLabel,
+    targetTab: isActiveTab(payload.targetTab) ? payload.targetTab : undefined,
+    targetTabs: Array.isArray(payload.targetTabs)
+      ? payload.targetTabs.filter(isActiveTab)
+      : undefined,
+    text: payload.response,
+  } satisfies BotReply;
+}
+
 export default function AppHelpAssistant({
   activeTab,
   assistantContext,
@@ -1402,6 +1457,7 @@ export default function AppHelpAssistant({
     }
   });
   const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [conversationFlow, setConversationFlow] =
     useState<ConversationFlowState | null>(null);
   const [conversationTopic, setConversationTopic] =
@@ -1715,10 +1771,10 @@ export default function AppHelpAssistant({
     };
   }, []);
 
-  function submitPrompt(prompt: string) {
+  async function submitPrompt(prompt: string) {
     const trimmedPrompt = prompt.trim();
 
-    if (!trimmedPrompt) {
+    if (!trimmedPrompt || isLoading) {
       return;
     }
 
@@ -1747,7 +1803,7 @@ export default function AppHelpAssistant({
           targetTab: "dashboard" as const,
         } satisfies BotReply)
       : null;
-    const botReply: BotReply =
+    const localBotReply: BotReply =
       flowReply?.reply ??
       followUpReply ??
       metricsReply ??
@@ -1762,6 +1818,35 @@ export default function AppHelpAssistant({
                   assistantContext.appData.savedProducts.length,
                 )
               : buildBotReply(trimmedPrompt, activeTab));
+    const shouldUseGemini =
+      !flowReply &&
+      !followUpReply &&
+      !metricsReply &&
+      !shouldStartOnboardingFlow &&
+      !shouldStartPriceCalculationFlow &&
+      !shouldStartPriceDoubtFlow &&
+      !shouldStartOptimizationFlow;
+
+    setMessages((currentMessages) => [...currentMessages, userMessage]);
+    setInputValue("");
+    setIsLoading(true);
+
+    let geminiBotReply: BotReply | null = null;
+
+    try {
+      geminiBotReply = shouldUseGemini
+        ? await requestGeminiAssistantReply({
+            activeTab,
+            assistantContext,
+            conversationHistory: persistentContext.conversationHistory,
+            message: trimmedPrompt,
+          })
+        : null;
+    } catch {
+      geminiBotReply = null;
+    }
+
+    const botReply = geminiBotReply ?? localBotReply;
     const botMessage = createBotMessage(botReply.text, {
       targetHref: botReply.targetHref,
       targetLabel: botReply.targetLabel,
@@ -1769,11 +1854,7 @@ export default function AppHelpAssistant({
       targetTabs: botReply.targetTabs,
     });
 
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      userMessage,
-      botMessage,
-    ]);
+    setMessages((currentMessages) => [...currentMessages, botMessage]);
     setConversationFlow(
       flowReply?.nextFlowState ??
         (shouldStartOnboardingFlow
@@ -1840,7 +1921,7 @@ export default function AppHelpAssistant({
           ? currentMetrics.priceOptimizationAttempts + 1
           : currentMetrics.priceOptimizationAttempts,
     }));
-    setInputValue("");
+    setIsLoading(false);
   }
 
   function goToTab(tab: ActiveTab) {
@@ -1970,6 +2051,12 @@ export default function AppHelpAssistant({
                 )}
               </div>
             ))}
+
+            {isLoading && (
+              <div className="rounded-2xl border border-amber-100 bg-amber-50/70 px-3 py-2 text-sm text-slate-600">
+                Pensando com seus dados...
+              </div>
+            )}
           </div>
 
           <div className="border-t border-slate-100 px-4 py-3">
@@ -1979,7 +2066,8 @@ export default function AppHelpAssistant({
                   key={quickAction.id}
                   type="button"
                   onClick={() => submitPrompt(quickAction.prompt)}
-                  className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-100"
+                  disabled={isLoading}
+                  className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {quickAction.label}
                 </button>
@@ -1997,11 +2085,13 @@ export default function AppHelpAssistant({
                 value={inputValue}
                 onChange={(event) => setInputValue(event.target.value)}
                 placeholder="Ex: Como faço meu primeiro orçamento?"
+                disabled={isLoading}
                 className="h-10 flex-1 rounded-xl border border-slate-200 px-3 text-sm text-black outline-none transition-colors focus:border-amber-500"
               />
               <button
                 type="submit"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600 text-white transition-colors hover:bg-amber-700"
+                disabled={isLoading || !inputValue.trim()}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600 text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label="Enviar dúvida"
               >
                 <Send size={16} />
