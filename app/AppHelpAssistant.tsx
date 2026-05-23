@@ -43,6 +43,11 @@ const TAB_LABELS: Record<ActiveTab, string> = {
 
 const QUICK_ACTIONS: QuickAction[] = [
   {
+    id: "onboarding",
+    label: "Primeiro uso",
+    prompt: "quero fazer o primeiro uso guiado",
+  },
+  {
     id: "start",
     label: "Como eu começo?",
     prompt: "como começo a usar a calculadora",
@@ -77,6 +82,13 @@ type BotReply = {
   targetLabel?: string;
 };
 
+type OnboardingFlowState = {
+  type: "onboarding";
+  step: 1 | 2 | 3;
+  craftType?: string;
+  hasMaterials?: string;
+};
+
 function normalizeText(value: string) {
   return value
     .normalize("NFD")
@@ -87,6 +99,151 @@ function normalizeText(value: string) {
 
 function includesAny(text: string, terms: string[]) {
   return terms.some((term) => text.includes(term));
+}
+
+function shouldStartOnboarding(normalizedPrompt: string) {
+  return includesAny(normalizedPrompt, [
+    "primeiro uso",
+    "onboarding",
+    "uso guiado",
+    "comecar guiado",
+    "começar guiado",
+    "me guia passo",
+    "me guie passo",
+    "vamos comecar",
+    "vamos começar",
+  ]);
+}
+
+function getCraftOnboardingReply(craftType: string) {
+  const normalizedCraftType = normalizeText(craftType);
+
+  if (
+    includesAny(normalizedCraftType, [
+      "bijuteria",
+      "joia",
+      "joias",
+      "joalheiro",
+      "joalheira",
+    ])
+  ) {
+    return "Ótimo! Bijuteria é um ótimo negócio. Margem ideal é 50-60%.";
+  }
+
+  if (includesAny(normalizedCraftType, ["costura", "costureira", "costureiro"])) {
+    return "Ótimo! Costura exige valorizar bem sua mão de obra. Margem ideal é 40-50%.";
+  }
+
+  if (includesAny(normalizedCraftType, ["ceramica", "cerâmica"])) {
+    return "Ótimo! Cerâmica tem muito valor artesanal. Margem ideal é 60-70%.";
+  }
+
+  if (
+    includesAny(normalizedCraftType, [
+      "madeira",
+      "marcenaria",
+      "marceneiro",
+      "marceneira",
+    ])
+  ) {
+    return "Ótimo! Marcenaria costuma ter material e acabamento importantes. Margem ideal é 50-60%.";
+  }
+
+  if (includesAny(normalizedCraftType, ["pintura", "arte", "quadros", "tela"])) {
+    return "Ótimo! Arte autoral precisa valorizar técnica, tempo e exclusividade. Margem ideal é 70-80%.";
+  }
+
+  return `Ótimo! ${craftType} pode ser precificado com segurança quando você separa material, tempo e margem.`;
+}
+
+function getMaterialsOnboardingReply(answer: string) {
+  const normalizedAnswer = normalizeText(answer);
+
+  if (
+    includesAny(normalizedAnswer, [
+      "nao",
+      "não",
+      "ainda nao",
+      "ainda não",
+      "nenhum",
+      "primeiro produto",
+      "primeira vez",
+      "nao tenho",
+      "não tenho",
+    ])
+  ) {
+    return "Perfeito! Vou te guiar passo-a-passo.";
+  }
+
+  if (
+    includesAny(normalizedAnswer, [
+      "sim",
+      "ja tenho",
+      "já tenho",
+      "tenho",
+      "cadastrei",
+      "cadastrados",
+    ])
+  ) {
+    return "Ótimo! Então vamos usar seus insumos cadastrados como base para calcular melhor.";
+  }
+
+  return "Perfeito! Vou considerar isso e te guiar pelo próximo passo.";
+}
+
+function buildOnboardingStartReply() {
+  return {
+    text:
+      "Olá! 👋 Bem-vindo ao Calcula Artesão!\n\nSou seu assistente de IA e estou aqui para ajudar você a calcular o preço certo para seus produtos.\n\nVamos começar com 3 perguntas:\n\n1️⃣ Qual é o seu tipo de artesanato?",
+    targetTab: "calculator" as const,
+  } satisfies BotReply;
+}
+
+function buildOnboardingStepReply(
+  userPrompt: string,
+  flowState: OnboardingFlowState,
+) {
+  if (flowState.step === 1) {
+    const craftType = userPrompt.trim();
+
+    return {
+      nextFlowState: {
+        type: "onboarding",
+        step: 2,
+        craftType,
+      } satisfies OnboardingFlowState,
+      reply: {
+        text: `${getCraftOnboardingReply(craftType)}\n\n2️⃣ Você já tem insumos cadastrados?`,
+        targetTab: "inventory" as const,
+      } satisfies BotReply,
+    };
+  }
+
+  if (flowState.step === 2) {
+    const hasMaterials = userPrompt.trim();
+
+    return {
+      nextFlowState: {
+        type: "onboarding",
+        step: 3,
+        craftType: flowState.craftType,
+        hasMaterials,
+      } satisfies OnboardingFlowState,
+      reply: {
+        text: `${getMaterialsOnboardingReply(hasMaterials)}\n\n3️⃣ Qual é o seu maior desafio?`,
+        targetTabs: ["inventory", "calculator"],
+      } satisfies BotReply,
+    };
+  }
+
+  return {
+    nextFlowState: null,
+    reply: {
+      text:
+        "Entendo. Vou te ajudar a calcular o preço certo.\n\nVamos começar? Clique em “Adicionar Insumo” e me diga qual é o seu primeiro material.",
+      targetTab: "inventory" as const,
+    } satisfies BotReply,
+  };
 }
 
 function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
@@ -704,6 +861,8 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [conversationFlow, setConversationFlow] =
+    useState<OnboardingFlowState | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "bot-initial",
@@ -725,7 +884,15 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
     }
 
     const userMessage = createUserMessage(trimmedPrompt);
-    const botReply = buildBotReply(trimmedPrompt, activeTab);
+    const normalizedPrompt = normalizeText(trimmedPrompt);
+    const flowReply = conversationFlow
+      ? buildOnboardingStepReply(trimmedPrompt, conversationFlow)
+      : null;
+    const botReply: BotReply =
+      flowReply?.reply ??
+      (shouldStartOnboarding(normalizedPrompt)
+        ? buildOnboardingStartReply()
+        : buildBotReply(trimmedPrompt, activeTab));
 
     setMessages((currentMessages) => [
       ...currentMessages,
@@ -737,6 +904,15 @@ export default function AppHelpAssistant({ activeTab }: AppHelpAssistantProps) {
         targetTabs: botReply.targetTabs,
       }),
     ]);
+    setConversationFlow(
+      flowReply?.nextFlowState ??
+        (shouldStartOnboarding(normalizedPrompt)
+          ? {
+              type: "onboarding",
+              step: 1,
+            }
+          : null),
+    );
     setInputValue("");
   }
 
