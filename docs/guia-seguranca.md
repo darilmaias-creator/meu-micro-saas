@@ -447,6 +447,7 @@ Esse monitoramento mede o tempo gasto no `proxy.ts`, incluindo checagens de HTTP
 | Exclusão pelo app | Implementado | `app/api/account/route.ts` já permite exclusão confirmada com `EXCLUIR` |
 | Auditoria LGPD | Implementado | Exportação e exclusão registram eventos `lgpd.data_export.downloaded` e `lgpd.account_erasure.requested` |
 | Política de privacidade | Implementado | `app/politicas/privacidade/page.tsx` descreve dados coletados, finalidades, proteção, direitos e contato |
+| Termos de serviço | Implementado | `app/politicas/termos-de-uso/page.tsx` cobre responsabilidade, uso aceitável, limitação e rescisão |
 
 ### Direitos Disponíveis
 
@@ -461,3 +462,17 @@ Contato: privacidade@calculaartesao.com.br
 ### Observação Sobre Exclusão
 
 A exclusão remove a conta e os dados sincronizados principais do usuário. Logs de auditoria podem ser mantidos sem vínculo direto ao usuário quando necessário para segurança, prevenção de fraude, cumprimento legal ou defesa de direitos, respeitando minimização e retenção documentada.
+
+### 8.2 Termos de Serviço
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Responsabilidade do usuário | Implementado | Termos indicam responsabilidade por credenciais, dados cadastrados, validação de cálculos e backup próprio |
+| Uso aceitável | Implementado | Termos proíbem atividade ilegal, spam, abuso, compartilhamento inseguro de credenciais e tentativa de explorar falhas |
+| Limitação de responsabilidade | Implementado | Termos informam serviço como ferramenta de apoio, sem garantia de recuperação total e com limite de responsabilidade |
+| Rescisão/cancelamento | Implementado | Termos indicam cancelamento pelo usuário e possibilidade de suspensão por violação, fraude, abuso ou risco de segurança |
+| Relação com LGPD | Implementado | Exclusão de conta e retenção seguem política de privacidade, LGPD e obrigações legais aplicáveis |
+
+### Observação Legal
+
+O texto foi escrito em linguagem simples para comunicação pública. Uma revisão jurídica profissional ainda é recomendada antes de escalar comercialmente, especialmente para ajustar limite de responsabilidade, jurisdição, retenção de dados e regras de assinatura conforme o modelo final de cobrança.

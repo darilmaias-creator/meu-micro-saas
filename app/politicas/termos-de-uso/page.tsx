@@ -100,6 +100,12 @@ export default function TermsOfUsePage() {
                   informa ao app antes de usar esses numeros para decidir preco,
                   margem, orcamento ou estrategia de venda.
                 </p>
+                <ul className="list-disc space-y-2 pl-5">
+                  <li>manter suas credenciais em seguranca;</li>
+                  <li>nao compartilhar acesso com terceiros sem controle;</li>
+                  <li>revisar dados, custos, precos e margens antes de usar comercialmente;</li>
+                  <li>manter backup proprio quando considerar necessario.</li>
+                </ul>
                 <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-slate-700">
                   <p className="font-bold text-sky-900">Importante</p>
                   <p className="mt-2">
@@ -148,7 +154,10 @@ export default function TermsOfUsePage() {
                 <p>Espera-se que o uso da plataforma seja feito de forma licita e adequada.</p>
                 <ul className="list-disc space-y-2 pl-5">
                   <li>nao usar o sistema para atividade ilegal;</li>
+                  <li>nao enviar spam, automacoes abusivas ou uso que prejudique a plataforma;</li>
+                  <li>nao compartilhar credenciais de forma insegura;</li>
                   <li>nao tentar acessar contas de terceiros sem permissao;</li>
+                  <li>nao tentar explorar falhas, burlar limites ou hackear o sistema;</li>
                   <li>nao tentar prejudicar a disponibilidade ou a seguranca do app;</li>
                   <li>nao usar o sistema de forma contraria a estas regras publicas.</li>
                 </ul>
@@ -156,6 +165,63 @@ export default function TermsOfUsePage() {
                   O servico pode ser ajustado, corrigido, ampliado ou revisado
                   ao longo do tempo para melhorar seguranca, estabilidade,
                   desempenho e experiencia do usuario.
+                </p>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={18} className="text-red-600" />
+                <h2 className="text-xl font-black text-slate-900">
+                  Limitação de responsabilidade
+                </h2>
+              </div>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
+                <p>
+                  A Calcula Artesão e fornecida como ferramenta de apoio, no
+                  estado em que se encontra, com melhorias e correcoes ao longo
+                  do tempo.
+                </p>
+                <p>
+                  Fazemos esforcos para manter backup, seguranca e estabilidade,
+                  mas nenhum sistema digital garante recuperacao de 100% dos
+                  dados em todo cenario possivel.
+                </p>
+                <p>
+                  A plataforma nao se responsabiliza por perdas decorrentes de
+                  negligencia do usuario, uso incorreto, informacoes cadastradas
+                  de forma errada, compartilhamento de credenciais ou decisoes
+                  comerciais tomadas sem validacao propria.
+                </p>
+                <p>
+                  Na maxima extensao permitida pela lei, a responsabilidade
+                  total da plataforma fica limitada ao valor pago pelo usuario
+                  nos 12 meses anteriores ao evento que gerou a reclamacao.
+                </p>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2">
+                <FileText size={18} className="text-slate-600" />
+                <h2 className="text-xl font-black text-slate-900">
+                  Cancelamento, suspensão e rescisão
+                </h2>
+              </div>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
+                <p>
+                  O usuario pode cancelar a assinatura Premium quando desejar,
+                  conforme as regras da pagina de cancelamento e reembolso.
+                </p>
+                <p>
+                  A plataforma pode suspender ou encerrar acesso em caso de
+                  violacao destes termos, tentativa de abuso, fraude, risco de
+                  seguranca ou uso ilegal.
+                </p>
+                <p>
+                  Quando uma conta for excluida, os dados serao tratados
+                  conforme a politica de privacidade e a LGPD, respeitando
+                  obrigacoes legais, seguranca e prazos de retencao aplicaveis.
                 </p>
               </div>
             </section>
@@ -172,6 +238,7 @@ export default function TermsOfUsePage() {
                 <li>Plano Premium pode liberar recursos extras conforme a conta.</li>
                 <li>Valores e recursos podem evoluir com o tempo.</li>
                 <li>Uso inadequado do sistema nao e permitido.</li>
+                <li>Cancelamento e exclusao seguem as politicas publicas e a LGPD.</li>
               </ul>
             </section>
 
