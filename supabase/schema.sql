@@ -117,6 +117,22 @@ create table if not exists public.auth_rate_limits (
 create index if not exists auth_rate_limits_action_idx
   on public.auth_rate_limits (action);
 
+create table if not exists public.access_logs (
+  id bigserial primary key,
+  user_id text null references public.auth_users (id) on delete set null,
+  action text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  ip_hash text null,
+  user_agent_hash text null,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists access_logs_created_at_idx
+  on public.access_logs (created_at);
+
+create index if not exists access_logs_user_id_idx
+  on public.access_logs (user_id);
+
 create table if not exists public.user_app_data (
   user_id text primary key,
   config jsonb not null default '{}'::jsonb,
@@ -263,6 +279,7 @@ execute function public.set_global_announcements_updated_at();
 
 alter table public.auth_users enable row level security;
 alter table public.auth_rate_limits enable row level security;
+alter table public.access_logs enable row level security;
 alter table public.user_app_data enable row level security;
 alter table public.user_testimonials enable row level security;
 alter table public.global_announcements enable row level security;

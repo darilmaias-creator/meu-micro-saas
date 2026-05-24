@@ -33,6 +33,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 - Rate limit para login, cadastro, esqueci senha e redefinição de senha.
 - Validação de e-mail, nome e senha.
 - Hash de senha no fluxo de credenciais.
+- Criptografia utilitária para dados sensíveis em repouso com AES-256-GCM.
 - Recuperação de conta com link seguro, token com hash e validade de 1 hora.
 - Envio e confirmação de e-mail com token assinado e validade de 24 horas.
 - Validação de assinatura do webhook Stripe.
@@ -51,6 +52,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
   - `Strict-Transport-Security` em HTTPS
 - Remoção do header `X-Powered-By`.
 - Redirecionamento obrigatório de HTTP para HTTPS em produção via `proxy.ts`.
+- Limpeza automática de logs temporários e rate limits antigos.
 
 ### Parcialmente Implementado
 
@@ -119,3 +121,19 @@ Essa implementação deve entrar em uma etapa própria.
 ### Observação Sobre CSP
 
 A CSP foi configurada de forma compatível com o checkout embutido da Stripe e com recursos reais do app. Uma política mais rígida com nonce por request pode ser aplicada em uma etapa futura, mas precisa de testes específicos para não bloquear scripts internos do Next ou o checkout.
+
+### 3.2 Dados em Repouso
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Hashing de senhas | Implementado | `lib/auth/password.ts` usa `scrypt`, salt aleatório e `timingSafeEqual` |
+| Criptografia de dados sensíveis | Implementado | `lib/crypto.ts` com AES-256-GCM e chave `ENCRYPTION_KEY` |
+| Retenção de logs | Implementado | `app/api/cron/cleanup-old-logs/route.ts` remove registros com mais de 90 dias |
+| Agendamento da limpeza | Implementado | `vercel.json` agenda `/api/cron/cleanup-old-logs` diariamente |
+| Estrutura para logs de acesso | Implementado | `public.access_logs` em `supabase/schema.sql` |
+
+### Observação Sobre Criptografia
+
+A função de criptografia está pronta para campos sensíveis como telefone de cliente, CPF, dados bancários ou informações confidenciais de negócio. Ela não deve ser usada em senha, porque senha precisa de hash irreversível, não criptografia reversível.
+
+Para ativar a criptografia em produção, configure `ENCRYPTION_KEY` na Vercel com 32 bytes em hexadecimal. Um valor válido tem 64 caracteres.
