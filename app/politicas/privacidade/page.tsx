@@ -68,8 +68,9 @@ export default function PrivacyPolicyPage() {
               <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
                 <p>
                   Para o funcionamento da conta, o app pode tratar dados como
-                  nome, e-mail, foto de perfil, metodo de acesso usado na conta
-                  e informacoes tecnicas ligadas ao plano.
+                  nome, e-mail, foto de perfil, metodo de acesso usado na conta,
+                  confirmacao de e-mail, logs de seguranca e informacoes
+                  tecnicas ligadas ao plano.
                 </p>
                 <p>
                   Para o funcionamento do sistema em si, o app tambem pode
@@ -82,7 +83,8 @@ export default function PrivacyPolicyPage() {
                   Se voce usar recursos opcionais, o app tambem pode tratar
                   dados relacionados a envio de backup por e-mail, recuperacao
                   de senha, depoimento enviado por voce e historico da
-                  assinatura Premium.
+                  assinatura Premium. Dados de pagamento sao processados pela
+                  Stripe e o app nao armazena o numero completo do cartao.
                 </p>
               </div>
             </section>
@@ -101,8 +103,10 @@ export default function PrivacyPolicyPage() {
                   <li>salvar materiais, produtos, vendas e configuracoes;</li>
                   <li>sincronizar o uso da conta entre dispositivos;</li>
                   <li>enviar recuperacao de senha e e-mails ligados ao app;</li>
+                  <li>enviar alertas de seguranca quando houver atividade incomum;</li>
                   <li>processar cobranca, assinatura, cancelamento e reembolso do Premium;</li>
                   <li>gerar, exportar e enviar backups quando voce pedir ou configurar;</li>
+                  <li>cumprir obrigacoes legais e proteger a conta contra abuso;</li>
                   <li>publicar depoimentos apenas quando voce enviar esse conteudo de forma voluntaria.</li>
                 </ul>
                 <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-slate-700">
@@ -144,6 +148,54 @@ export default function PrivacyPolicyPage() {
               </div>
             </section>
 
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={18} className="text-emerald-600" />
+                <h2 className="text-xl font-black text-slate-900">
+                  Seus direitos
+                </h2>
+              </div>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
+                <p>
+                  Conforme a LGPD, voce pode solicitar acesso, correcao,
+                  exportacao ou exclusao dos seus dados pessoais, quando
+                  aplicavel.
+                </p>
+                <ul className="list-disc space-y-2 pl-5">
+                  <li>acessar e exportar os dados da conta;</li>
+                  <li>corrigir dados incorretos no perfil;</li>
+                  <li>excluir a conta e os dados sincronizados;</li>
+                  <li>solicitar informacoes sobre o uso dos dados;</li>
+                  <li>revogar consentimentos opcionais, quando houver.</li>
+                </ul>
+                <p>
+                  Dentro do app, a area de perfil permite exportar backup e
+                  excluir a conta. Tambem existem rotas tecnicas para esses
+                  direitos: <code>/api/user/export-data</code> e{" "}
+                  <code>/api/user/delete-account</code>.
+                </p>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2">
+                <FileLock2 size={18} className="text-sky-600" />
+                <h2 className="text-xl font-black text-slate-900">
+                  Como protegemos os dados
+                </h2>
+              </div>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
+                <ul className="list-disc space-y-2 pl-5">
+                  <li>uso de HTTPS em producao;</li>
+                  <li>senhas armazenadas com hash, quando usadas;</li>
+                  <li>backups criptografados quando gerados pelo sistema;</li>
+                  <li>logs de seguranca com IP e user-agent em formato de hash;</li>
+                  <li>controle de acesso por sessao autenticada;</li>
+                  <li>pagamentos processados em ambiente seguro da Stripe.</li>
+                </ul>
+              </div>
+            </section>
+
             <section className="rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
               <div className="flex items-center gap-2">
                 <Mail size={18} className="text-amber-700" />
@@ -161,6 +213,10 @@ export default function PrivacyPolicyPage() {
                   Esta politica pode ser atualizada quando o app ganhar novos
                   recursos, novas integracoes ou mudancas relevantes na forma de
                   operar a conta.
+                </p>
+                <p>
+                  Para pedidos ligados a privacidade e protecao de dados, use o
+                  contato: <strong>privacidade@calculaartesao.com.br</strong>.
                 </p>
                 <p>
                   Sempre que houver uma alteracao importante no texto publico,

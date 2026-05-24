@@ -434,3 +434,30 @@ Esse monitoramento mede o tempo gasto no `proxy.ts`, incluindo checagens de HTTP
 - Registrar APIs lentas com wrapper compartilhado para Route Handlers.
 - Enviar métricas de performance para Sentry ou provedor dedicado.
 - Criar alertas para aumento de latência em checkout, login e IA.
+
+## Parte 8: Conformidade Legal
+
+### 8.1 LGPD
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Direito de acesso/exportação | Implementado | `app/api/user/export-data/route.ts` retorna JSON com `Content-Disposition` para download |
+| Exportação pelo app | Implementado | `app/api/account/route.ts` já fornece os dados usados pelo backup/exportação no perfil |
+| Direito ao esquecimento | Implementado | `app/api/user/delete-account/route.ts` remove dados sincronizados e conta autenticada |
+| Exclusão pelo app | Implementado | `app/api/account/route.ts` já permite exclusão confirmada com `EXCLUIR` |
+| Auditoria LGPD | Implementado | Exportação e exclusão registram eventos `lgpd.data_export.downloaded` e `lgpd.account_erasure.requested` |
+| Política de privacidade | Implementado | `app/politicas/privacidade/page.tsx` descreve dados coletados, finalidades, proteção, direitos e contato |
+
+### Direitos Disponíveis
+
+```text
+Acessar dados: GET /api/user/export-data
+Excluir conta: POST /api/user/delete-account com confirmationText="EXCLUIR"
+Corrigir dados: área de perfil do app
+Exportar backup: área de perfil do app
+Contato: privacidade@calculaartesao.com.br
+```
+
+### Observação Sobre Exclusão
+
+A exclusão remove a conta e os dados sincronizados principais do usuário. Logs de auditoria podem ser mantidos sem vínculo direto ao usuário quando necessário para segurança, prevenção de fraude, cumprimento legal ou defesa de direitos, respeitando minimização e retenção documentada.
