@@ -4,23 +4,30 @@ export const TESTIMONIAL_MAX_LENGTH = 320;
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-function toTimestamp(value: string | Date) {
-  return typeof value === "string" ? new Date(value).getTime() : value.getTime();
+function toTimestamp(value: string | Date | null | undefined) {
+  if (!value) {
+    return Date.now();
+  }
+
+  const timestamp =
+    typeof value === "string" ? new Date(value).getTime() : value.getTime();
+
+  return Number.isFinite(timestamp) ? timestamp : Date.now();
 }
 
 export function normalizeTestimonialMessage(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
-export function getTestimonialEligibleAt(value: string | Date) {
+export function getTestimonialEligibleAt(value: string | Date | null | undefined) {
   return new Date(
     toTimestamp(value) + TESTIMONIAL_MINIMUM_ACCOUNT_AGE_DAYS * MS_PER_DAY,
   );
 }
 
 export function getTestimonialRemainingDays(
-  createdAt: string | Date,
-  now: string | Date = new Date(),
+  createdAt: string | Date | null | undefined,
+  now: string | Date | null | undefined = new Date(),
 ) {
   const eligibleAt = getTestimonialEligibleAt(createdAt).getTime();
   const nowTimestamp = toTimestamp(now);
@@ -33,8 +40,8 @@ export function getTestimonialRemainingDays(
 }
 
 export function canSubmitTestimonial(
-  createdAt: string | Date,
-  now: string | Date = new Date(),
+  createdAt: string | Date | null | undefined,
+  now: string | Date | null | undefined = new Date(),
 ) {
   return getTestimonialRemainingDays(createdAt, now) === 0;
 }

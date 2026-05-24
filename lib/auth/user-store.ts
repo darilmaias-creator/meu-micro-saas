@@ -128,8 +128,24 @@ function logUserStoreWarning(context: string, error: unknown) {
   console.warn(`[user-store:${context}]`, error);
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (error && typeof error === "object") {
+    const candidate = error as { message?: unknown };
+
+    if (typeof candidate.message === "string") {
+      return candidate.message;
+    }
+  }
+
+  return String(error);
+}
+
 function isMissingOptionalAuthColumnError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = getErrorMessage(error);
 
   return (
     message.includes("password_changed_at") ||
