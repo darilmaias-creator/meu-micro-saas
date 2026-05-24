@@ -8,6 +8,12 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const RETENTION_DAYS = 90;
+const CLEANUP_TARGETS = {
+  access_logs: "created_at",
+  auth_rate_limits: "updated_at",
+} as const;
+
+type CleanupTable = keyof typeof CLEANUP_TARGETS;
 
 function isAuthorizedCronRequest(request: Request) {
   const cronSecret = process.env.CRON_SECRET?.trim();
@@ -32,15 +38,15 @@ function isMissingTableError(error: unknown) {
 }
 
 async function deleteOlderThan(input: {
-  column: string;
   cutoffIso: string;
-  table: string;
+  table: CleanupTable;
 }) {
+  const column = CLEANUP_TARGETS[input.table];
   const supabase = createSupabaseServerClient();
   const { error } = await supabase
     .from(input.table)
     .delete()
-    .lt(input.column, input.cutoffIso);
+    .lt(column, input.cutoffIso);
 
   if (error) {
     if (isMissingTableError(error)) {
@@ -71,12 +77,10 @@ export async function GET(request: Request) {
   try {
     const results = await Promise.all([
       deleteOlderThan({
-        column: "created_at",
         cutoffIso,
         table: "access_logs",
       }),
       deleteOlderThan({
-        column: "updated_at",
         cutoffIso,
         table: "auth_rate_limits",
       }),

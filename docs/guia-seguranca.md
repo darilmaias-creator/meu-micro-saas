@@ -34,6 +34,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 - Validação de e-mail, nome e senha.
 - Validação central do payload de dados do app antes de salvar no Supabase.
 - Sanitização de output para avisos globais, e-mails e URLs exibidas ao usuário.
+- Proteção contra SQL injection por uso de Supabase query builder e ausência de SQL bruto com entrada do usuário.
 - Hash de senha no fluxo de credenciais.
 - Criptografia utilitária para dados sensíveis em repouso com AES-256-GCM.
 - Recuperação de conta com link seguro, token com hash e validade de 1 hora.
@@ -170,3 +171,16 @@ O projeto ainda não usa `zod`, então a validação desta etapa foi implementad
 ### Observação Sobre React
 
 Textos renderizados com `{valor}` em componentes React já são escapados pelo React por padrão. A sanitização desta etapa protege principalmente os pontos onde o app interpreta links/imagens de avisos e monta HTML de e-mail.
+
+### 4.3 Proteção Contra SQL Injection
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Query builder Supabase | Implementado | Consultas usam `.from(...).select(...).eq(...)`, `.insert(...)`, `.update(...)`, `.delete(...)` e `.upsert(...)` |
+| SQL bruto com interpolação | Verificado | Não foi encontrado `db.query`, template SQL ou concatenação de `SELECT/INSERT/UPDATE/DELETE` com input do usuário |
+| Nome de tabela variável | Protegido | `app/api/cron/cleanup-old-logs/route.ts` usa allowlist tipada para tabelas/colunas permitidas |
+| Filtros com input do usuário | Implementado | Filtros usam métodos Supabase como `.eq(...)`, sem montar SQL manual |
+
+### Observação Sobre Supabase
+
+O Supabase client envia filtros e valores pela API do PostgREST, sem concatenar SQL manual dentro do app. A regra continua sendo: se no futuro entrar SQL bruto, ele deve usar função segura, RPC validada ou prepared statement, nunca template string com valor vindo do usuário.
