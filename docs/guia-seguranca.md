@@ -28,10 +28,13 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 ### Já Implementado
 
 - Autenticação com NextAuth e sessão JWT.
+- Login por credenciais e Google OAuth.
 - Proteção de rotas sensíveis por sessão em APIs como app data, billing, perfil, anúncios e IA.
 - Rate limit para login, cadastro, esqueci senha e redefinição de senha.
 - Validação de e-mail, nome e senha.
 - Hash de senha no fluxo de credenciais.
+- Recuperação de conta com link seguro, token com hash e validade de 1 hora.
+- Envio e confirmação de e-mail com token assinado e validade de 24 horas.
 - Validação de assinatura do webhook Stripe.
 - Checkout Stripe sem manipular cartão diretamente no app.
 - Sincronização de assinatura por webhook e confirmação de checkout.
@@ -48,6 +51,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 
 ### Parcialmente Implementado
 
+- Verificação de e-mail já possui rotas de envio/confirmação, mas ainda não bloqueia acesso antes da confirmação.
 - Proteção contra abuso existe em autenticação, mas ainda precisa ser ampliada para outras APIs públicas ou caras, como IA e marketing.
 - Validação de payload existe em vários endpoints, mas ainda deve ser padronizada em todos os fluxos.
 - Observabilidade existe, mas ainda precisa de alertas operacionais mais claros para falhas críticas.
@@ -55,6 +59,8 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 ### Ainda Pendente
 
 - Política de Content Security Policy calibrada para Next, Stripe, Sentry, Google e imagens externas.
+- Autenticação de dois fatores real para Premium com TOTP ou provedor dedicado.
+- Bloqueio ou limitação de acesso a dados enquanto e-mail não estiver verificado.
 - Rate limit para endpoints de IA, marketing, checkout e anúncios.
 - Checklist de permissões por papel, especialmente admin.
 - Auditoria de exposição de dados em logs.
@@ -74,3 +80,31 @@ A CSP completa ficou pendente de propósito, porque uma política rígida sem in
 - Imagens externas usadas em banners e perfil.
 
 Ela deve entrar em uma etapa própria, com testes em produção/staging.
+
+## Parte 2: Autenticação e Autorização
+
+### 2.1 Autenticação Segura
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| NextAuth com JWT | Implementado | `lib/auth/options.ts` |
+| OAuth Google | Implementado | `lib/auth/options.ts` |
+| Login por senha com hash | Implementado | `lib/auth/password.ts` e `app/api/auth/register/route.ts` |
+| Rate limit em autenticação | Implementado | `lib/auth/rate-limit.ts` |
+| Recuperação de senha com token de 1 hora | Implementado | `app/api/auth/forgot-password/route.ts` e `app/api/auth/reset-password/route.ts` |
+| Envio de verificação de e-mail | Implementado | `app/api/auth/send-verification-email/route.ts` |
+| Confirmação de e-mail | Implementado | `app/api/auth/verify-email/route.ts` |
+| 2FA Premium | Pendente | Requer segredo TOTP, tela de setup, desafio no login e recovery codes |
+
+### Observação Sobre 2FA
+
+2FA não deve ser criado apenas como endpoint vazio. Para ficar seguro de verdade, precisa:
+
+- Gerar segredo TOTP por usuário Premium.
+- Mostrar QR Code para Google Authenticator/Authy.
+- Validar código antes de ativar.
+- Exigir desafio no login quando 2FA estiver ativo.
+- Criar códigos de recuperação.
+- Registrar eventos de ativação/desativação.
+
+Essa implementação deve entrar em uma etapa própria.
