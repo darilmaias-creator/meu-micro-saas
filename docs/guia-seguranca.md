@@ -92,8 +92,9 @@ Ela deve entrar em uma etapa própria, com testes em produção/staging.
 | Login por senha com hash | Implementado | `lib/auth/password.ts` e `app/api/auth/register/route.ts` |
 | Rate limit em autenticação | Implementado | `lib/auth/rate-limit.ts` |
 | Recuperação de senha com token de 1 hora | Implementado | `app/api/auth/forgot-password/route.ts` e `app/api/auth/reset-password/route.ts` |
-| Envio de verificação de e-mail | Implementado | `app/api/auth/send-verification-email/route.ts` |
+| Envio de verificação de e-mail | Implementado | Automático no cadastro e manual em `app/api/auth/send-verification-email/route.ts` |
 | Confirmação de e-mail | Implementado | `app/api/auth/verify-email/route.ts` |
+| Aviso de e-mail não confirmado | Implementado | `app/components/EmailVerificationNotice.tsx` |
 | 2FA Premium | Pendente | Requer segredo TOTP, tela de setup, desafio no login e recovery codes |
 
 ### Observação Sobre 2FA

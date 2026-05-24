@@ -43,6 +43,8 @@ export type StoredUser = {
   passwordResetTokenHash?: string | null;
   passwordResetExpiresAt?: string | null;
   passwordResetRequestedAt?: string | null;
+  emailVerifiedAt?: string | null;
+  emailVerificationTokenSentAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -72,6 +74,8 @@ export type SessionUser = {
   premiumTrialStartedAt?: string | null;
   premiumTrialExpiresAt?: string | null;
   premiumTrialUsed: boolean;
+  emailVerifiedAt?: string | null;
+  emailVerificationTokenSentAt?: string | null;
 };
 
 type AuthUserRow = {
@@ -100,6 +104,8 @@ type AuthUserRow = {
   password_reset_token_hash: string | null;
   password_reset_expires_at: string | null;
   password_reset_requested_at: string | null;
+  email_verified_at: string | null;
+  email_verification_token_sent_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -107,7 +113,7 @@ type AuthUserRow = {
 const dataDirectory = path.join(process.cwd(), "data");
 const usersFilePath = path.join(dataDirectory, "users.json");
 const AUTH_USER_SELECT_COLUMNS =
-  "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, premium_activated_at, founder_offer_applied, founder_offer_revoked_at, premium_trial_started_at, premium_trial_expires_at, premium_trial_used, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at";
+  "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, premium_activated_at, founder_offer_applied, founder_offer_revoked_at, premium_trial_started_at, premium_trial_expires_at, premium_trial_used, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, email_verified_at, email_verification_token_sent_at, created_at, updated_at";
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -159,6 +165,9 @@ function mapAuthUserRow(row: AuthUserRow | null | undefined) {
     passwordResetTokenHash: row.password_reset_token_hash ?? null,
     passwordResetExpiresAt: row.password_reset_expires_at ?? null,
     passwordResetRequestedAt: row.password_reset_requested_at ?? null,
+    emailVerifiedAt: row.email_verified_at ?? null,
+    emailVerificationTokenSentAt:
+      row.email_verification_token_sent_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -191,6 +200,9 @@ function buildAuthUserRow(user: StoredUser) {
     password_reset_token_hash: user.passwordResetTokenHash ?? null,
     password_reset_expires_at: user.passwordResetExpiresAt ?? null,
     password_reset_requested_at: user.passwordResetRequestedAt ?? null,
+    email_verified_at: user.emailVerifiedAt ?? null,
+    email_verification_token_sent_at:
+      user.emailVerificationTokenSentAt ?? null,
     created_at: user.createdAt,
     updated_at: user.updatedAt,
   };
@@ -696,6 +708,8 @@ export function getSessionUserFromStoredUser(user: StoredUser): SessionUser {
     premiumTrialStartedAt: user.premiumTrialStartedAt ?? null,
     premiumTrialExpiresAt: user.premiumTrialExpiresAt ?? null,
     premiumTrialUsed: user.premiumTrialUsed,
+    emailVerifiedAt: user.emailVerifiedAt ?? null,
+    emailVerificationTokenSentAt: user.emailVerificationTokenSentAt ?? null,
   };
 }
 
@@ -738,6 +752,8 @@ export async function createCredentialsUser(input: {
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
+    emailVerifiedAt: null,
+    emailVerificationTokenSentAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -774,6 +790,7 @@ export async function upsertOAuthUser(input: {
           ? input.name.trim()
           : existingUser.name,
       image: !existingUser.image && input.image ? input.image : existingUser.image,
+      emailVerifiedAt: existingUser.emailVerifiedAt ?? now,
       updatedAt: now,
     };
 
@@ -815,6 +832,8 @@ export async function upsertOAuthUser(input: {
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
+    emailVerifiedAt: now,
+    emailVerificationTokenSentAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -998,6 +1017,10 @@ function normalizeStoredUser(rawUser: unknown): StoredUser | null {
       typeof candidate.passwordResetRequestedAt === "string"
         ? candidate.passwordResetRequestedAt
         : null,
+    emailVerifiedAt: normalizeNullableString(candidate.emailVerifiedAt),
+    emailVerificationTokenSentAt: normalizeNullableString(
+      candidate.emailVerificationTokenSentAt,
+    ),
     createdAt,
     updatedAt,
   };

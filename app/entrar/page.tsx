@@ -239,7 +239,9 @@ export default function MainApp() {
 
         setAuthFeedback({
           tone: "success",
-          message: "Conta criada com sucesso. Entrando na sua area...",
+          message:
+            registerResult?.message ??
+            "Conta criada com sucesso. Entrando na sua area...",
         });
       }
 

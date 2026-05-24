@@ -24,6 +24,7 @@ import OperationCostsTab from "./OperationCostsTab";
 import ProfileModal from "./ProfileModal";
 import SalesTab from "./SalesTab";
 import AppHelpAssistant from "./AppHelpAssistant";
+import EmailVerificationNotice from "./components/EmailVerificationNotice";
 import OnboardingGuide from "./onboarding/OnboardingGuide";
 import { useAppData } from "./hooks/useAppData";
 import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
@@ -77,6 +78,9 @@ export default function AuthenticatedAppShell({
 
   const activeTab = initialTab;
   const isPremium = session.user.isPremium;
+  const shouldShowEmailVerificationNotice = Boolean(
+    session.user.email && !session.user.emailVerifiedAt,
+  );
   const displayHeaderAvatar = isPremium ? session.user?.image : null;
   const assistantContext = buildAssistantContext(session, {
     config: appData.config,
@@ -204,6 +208,9 @@ export default function AuthenticatedAppShell({
       </div>
 
       <GlobalAnnouncementBanner userId={session.user.id} />
+      {shouldShowEmailVerificationNotice && session.user.email && (
+        <EmailVerificationNotice email={session.user.email} />
+      )}
 
       <main className="mx-auto max-w-6xl px-4 py-5 md:py-6">
         {activeTab === "inventory" && (

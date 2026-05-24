@@ -25,6 +25,8 @@ declare module "next-auth" {
       premiumTrialStartedAt?: string | null;
       premiumTrialExpiresAt?: string | null;
       premiumTrialUsed?: boolean;
+      emailVerifiedAt?: string | null;
+      emailVerificationTokenSentAt?: string | null;
       founderOfferApplied: boolean;
       founderOfferRevokedAt?: string | null;
     };

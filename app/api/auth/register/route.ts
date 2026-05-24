@@ -10,6 +10,16 @@ import {
 import { hashPassword } from "@/lib/auth/password";
 import { consumeAuthRateLimit } from "@/lib/auth/rate-limit";
 import { createCredentialsUser } from "@/lib/auth/user-store";
+import {
+  buildEmailVerificationUrl,
+  createEmailVerificationToken,
+} from "@/lib/auth/email-verification";
+import { sendEmailVerificationEmail } from "@/lib/auth/email-verification-email";
+import { markEmailVerificationSent } from "@/lib/auth/email-verification-store";
+
+function getBaseUrl(request: Request) {
+  return process.env.NEXTAUTH_URL?.trim() || new URL(request.url).origin;
+}
 
 type RegisterPayload = {
   name?: string;
@@ -112,9 +122,31 @@ export async function POST(request: Request) {
       );
     }
 
+    let verificationEmailSent = false;
+
+    try {
+      const token = createEmailVerificationToken({
+        email: user.email,
+        userId: user.id,
+      });
+
+      await sendEmailVerificationEmail({
+        to: user.email,
+        name: user.name,
+        verificationUrl: buildEmailVerificationUrl(getBaseUrl(request), token),
+      });
+      await markEmailVerificationSent(user.id);
+      verificationEmailSent = true;
+    } catch (verificationError) {
+      console.warn("[auth:register:email-verification]", verificationError);
+    }
+
     return NextResponse.json(
       {
-        message: "Conta criada com sucesso.",
+        message: verificationEmailSent
+          ? "Conta criada com sucesso. Enviamos um e-mail de confirmacao."
+          : "Conta criada com sucesso. Entre na sua area e reenvie o e-mail de confirmacao.",
+        verificationEmailSent,
       },
       { status: 201 },
     );
