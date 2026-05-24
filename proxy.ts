@@ -5,6 +5,7 @@ import { getToken } from "next-auth/jwt";
 const AUTH_REQUIRED_QUERY_KEY = "auth";
 const AUTH_REQUIRED_QUERY_VALUE = "required";
 const NEXT_PATH_QUERY_KEY = "next";
+const SLOW_REQUEST_THRESHOLD_MS = 3000;
 
 const protectedExactPaths = new Set([
   "/dashboard",
@@ -35,16 +36,44 @@ function shouldRedirectToHttps(request: NextRequest) {
   return forwardedProto !== "https" && request.nextUrl.protocol !== "https:";
 }
 
+function withResponseTimeHeader(input: {
+  request: NextRequest;
+  response: NextResponse;
+  start: number;
+}) {
+  const duration = Date.now() - input.start;
+
+  input.response.headers.set("X-Response-Time", `${duration}ms`);
+
+  if (duration > SLOW_REQUEST_THRESHOLD_MS) {
+    console.warn(
+      `[performance:slow-proxy-request] ${input.request.nextUrl.pathname} (${duration}ms)`,
+    );
+  }
+
+  return input.response;
+}
+
 export async function proxy(request: NextRequest) {
+  const start = Date.now();
+
   if (shouldRedirectToHttps(request)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.protocol = "https:";
 
-    return NextResponse.redirect(redirectUrl, { status: 301 });
+    return withResponseTimeHeader({
+      request,
+      response: NextResponse.redirect(redirectUrl, { status: 301 }),
+      start,
+    });
   }
 
   if (!isProtectedPath(request.nextUrl.pathname)) {
-    return NextResponse.next();
+    return withResponseTimeHeader({
+      request,
+      response: NextResponse.next(),
+      start,
+    });
   }
 
   const token = await getToken({
@@ -53,7 +82,11 @@ export async function proxy(request: NextRequest) {
   });
 
   if (token) {
-    return NextResponse.next();
+    return withResponseTimeHeader({
+      request,
+      response: NextResponse.next(),
+      start,
+    });
   }
 
   const loginUrl = new URL("/", request.url);
@@ -63,7 +96,11 @@ export async function proxy(request: NextRequest) {
     `${request.nextUrl.pathname}${request.nextUrl.search}`,
   );
 
-  return NextResponse.redirect(loginUrl);
+  return withResponseTimeHeader({
+    request,
+    response: NextResponse.redirect(loginUrl),
+    start,
+  });
 }
 
 export const config = {

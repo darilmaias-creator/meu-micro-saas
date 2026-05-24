@@ -415,3 +415,22 @@ Como o audit log salva apenas `ip_hash`, a detecção compara hashes de IP, não
 - Adicionar bloqueio temporário com mensagem clara e canal de recuperação.
 - Criar painel admin para ver alertas recentes por severidade.
 - Enviar alerta interno para eventos críticos além do e-mail ao usuário.
+
+### 7.3 Monitoramento de Performance
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Tempo de resposta no proxy | Implementado | `proxy.ts` mede a duração do processamento do proxy em cada request coberta pelo matcher |
+| Header de resposta | Implementado | Adiciona `X-Response-Time` com a duração em milissegundos |
+| Log de requisição lenta | Implementado | Registra `console.warn` quando o proxy leva mais de 3000ms |
+| Compatibilidade com redirects | Implementado | O header também é aplicado em redirects de HTTPS e autenticação |
+
+### Observação Sobre Escopo
+
+Esse monitoramento mede o tempo gasto no `proxy.ts`, incluindo checagens de HTTPS, autenticação por token e redirects. Ele não mede todo o tempo de renderização da página nem o tempo interno de cada API. Para isso, a próxima etapa deve instrumentar handlers de API críticos ou usar métricas da Vercel/Sentry.
+
+### Próximas Melhorias
+
+- Registrar APIs lentas com wrapper compartilhado para Route Handlers.
+- Enviar métricas de performance para Sentry ou provedor dedicado.
+- Criar alertas para aumento de latência em checkout, login e IA.
