@@ -1,31 +1,30 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 declare global {
   interface Window {
     grecaptcha?: {
-      render: (
-        container: HTMLElement,
+      execute: (
+        siteKey: string,
         options: {
-          callback: (token: string) => void;
-          "expired-callback": () => void;
-          sitekey: string;
+          action: string;
         },
-      ) => number;
-      reset: (widgetId?: number) => void;
+      ) => Promise<string>;
+      ready: (callback: () => void) => void;
     };
   }
 }
 
 type RecaptchaFieldProps = {
+  action: string;
   onTokenChange: (token: string | null) => void;
   siteKey?: string;
 };
 
-const RECAPTCHA_SCRIPT_ID = "google-recaptcha-script";
+const RECAPTCHA_SCRIPT_ID = "google-recaptcha-v3-script";
 
-function loadRecaptchaScript() {
+function loadRecaptchaScript(siteKey: string) {
   const existingScript = document.getElementById(RECAPTCHA_SCRIPT_ID);
 
   if (existingScript) {
@@ -35,74 +34,86 @@ function loadRecaptchaScript() {
   const script = document.createElement("script");
   script.id = RECAPTCHA_SCRIPT_ID;
   script.async = true;
-  script.defer = true;
-  script.src = "https://www.google.com/recaptcha/api.js?render=explicit";
+  script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
   document.head.appendChild(script);
 }
 
 export function RecaptchaField({
+  action,
   onTokenChange,
   siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
 }: RecaptchaFieldProps) {
-  const fallbackId = useId();
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const widgetIdRef = useRef<number | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    siteKey ? "loading" : "ready",
+  );
 
   useEffect(() => {
+    let isMounted = true;
+
     onTokenChange(null);
 
     if (!siteKey) {
+      setStatus("ready");
       return undefined;
     }
 
-    loadRecaptchaScript();
+    loadRecaptchaScript(siteKey);
+
+    const timeout = window.setTimeout(() => {
+      if (isMounted) {
+        setStatus("error");
+      }
+    }, 10_000);
 
     const interval = window.setInterval(() => {
-      if (window.grecaptcha && containerRef.current) {
-        window.clearInterval(interval);
-        setIsReady(true);
+      if (!window.grecaptcha) {
+        return;
       }
+
+      window.clearInterval(interval);
+      window.clearTimeout(timeout);
+
+      window.grecaptcha.ready(() => {
+        window.grecaptcha
+          ?.execute(siteKey, { action })
+          .then((token) => {
+            if (!isMounted) {
+              return;
+            }
+
+            onTokenChange(token);
+            setStatus("ready");
+          })
+          .catch(() => {
+            if (!isMounted) {
+              return;
+            }
+
+            onTokenChange(null);
+            setStatus("error");
+          });
+      });
     }, 250);
 
     return () => {
+      isMounted = false;
       window.clearInterval(interval);
+      window.clearTimeout(timeout);
       onTokenChange(null);
     };
-  }, [onTokenChange, siteKey]);
-
-  useEffect(() => {
-    if (!isReady || !siteKey || !containerRef.current) {
-      return;
-    }
-
-    containerRef.current.innerHTML = "";
-    widgetIdRef.current = window.grecaptcha!.render(containerRef.current, {
-      callback: (token) => onTokenChange(token),
-      "expired-callback": () => onTokenChange(null),
-      sitekey: siteKey,
-    });
-  }, [isReady, onTokenChange, siteKey]);
-
-  useEffect(() => {
-    return () => {
-      if (widgetIdRef.current !== null) {
-        window.grecaptcha?.reset(widgetIdRef.current);
-      }
-    };
-  }, []);
+  }, [action, onTokenChange, siteKey]);
 
   if (!siteKey) {
     return null;
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
-      <div
-        id={`recaptcha-${fallbackId}`}
-        ref={containerRef}
-        className="min-h-[78px]"
-      />
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
+      {status === "loading"
+        ? "Verificando segurança do formulário..."
+        : status === "error"
+          ? "Não foi possível validar o reCAPTCHA agora. Atualize a página e tente novamente."
+          : "Formulário protegido por reCAPTCHA."}
     </div>
   );
 }

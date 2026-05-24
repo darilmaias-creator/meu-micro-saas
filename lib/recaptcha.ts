@@ -56,7 +56,9 @@ export async function verifyRecaptchaToken(token: unknown) {
     };
   }
 
-  if (typeof result.score === "number" && result.score < 0.5) {
+  const minimumScore = Number(process.env.RECAPTCHA_MIN_SCORE ?? "0.5");
+
+  if (typeof result.score === "number" && result.score < minimumScore) {
     return {
       message: "Nao foi possivel validar a seguranca do envio agora.",
       ok: false as const,

@@ -225,7 +225,7 @@ O exemplo do guia usava `Map` em memória. No app, a proteção está mais adequ
 
 | Item | Status | Implementação |
 | --- | --- | --- |
-| Widget reCAPTCHA | Implementado | `app/components/RecaptchaField.tsx` carrega o script oficial do Google sem nova dependência |
+| Widget reCAPTCHA v3 | Implementado | `app/components/RecaptchaField.tsx` carrega o script oficial do Google sem nova dependência |
 | Cadastro com CAPTCHA | Implementado | `app/entrar/page.tsx` envia `recaptchaToken` para `/api/auth/register` |
 | Recuperação de senha com CAPTCHA | Implementado | `app/entrar/page.tsx` envia `recaptchaToken` para `/api/auth/forgot-password` |
 | Validação no servidor | Implementado | `lib/recaptcha.ts` chama `https://www.google.com/recaptcha/api/siteverify` |
@@ -239,6 +239,9 @@ Para ativar em produção, configure:
 ```env
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=sua_site_key_publica
 RECAPTCHA_SECRET_KEY=sua_secret_key_privada
+RECAPTCHA_MIN_SCORE=0.5
 ```
 
 Sem essas variáveis, o app continua funcionando sem exibir CAPTCHA. Isso evita quebrar desenvolvimento local ou deploy antes da configuração das chaves.
+
+No reCAPTCHA v3 não aparece a caixinha "Não sou um robô". Ele roda invisível, calcula um score de risco e o servidor bloqueia quando o score fica abaixo do mínimo configurado.

@@ -478,6 +478,7 @@ export default function MainApp() {
 
             {shouldShowRecaptcha && (
               <RecaptchaField
+                action={authMode === "register" ? "register" : "forgot_password"}
                 key={`${authMode}-${recaptchaResetKey}`}
                 onTokenChange={setRecaptchaToken}
                 siteKey={RECAPTCHA_SITE_KEY}
