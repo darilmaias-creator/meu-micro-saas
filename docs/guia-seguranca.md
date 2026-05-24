@@ -548,3 +548,83 @@ O texto foi escrito em linguagem simples para comunicação pública. Uma revis�
 - Executar e registrar um teste de restauração de backup.
 - Decidir se vale migrar validação customizada para Zod.
 - Criar painel admin para auditoria, anomalias e eventos críticos.
+
+### Implementação Média (Semana 2-4)
+
+#### Autenticação Avançada
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Autenticação de Dois Fatores (2FA) | Pendente | Precisa de etapa própria com TOTP, QR Code, desafio no login e códigos de recuperação |
+| Biometria para mobile | Pendente | Em app web/PWA, o caminho mais seguro é avaliar passkeys/WebAuthn em etapa futura |
+| Detecção de dispositivo novo | Implementado inicial | `lib/anomaly-detection.ts` detecta login com `user_agent_hash` novo comparando os últimos 90 dias |
+
+#### Dados
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Criptografia de ponta a ponta (E2E) | Pendente | Exige arquitetura própria de chaves por usuário; não deve ser adicionada sem desenho de recuperação |
+| Mascaramento de dados sensíveis em logs | Implementado | `lib/audit-log.ts` remove campos sensíveis e salva IP/user-agent apenas como hash |
+| Segregação de dados por tenant | Implementado inicial | APIs usam sessão do usuário e `user_id`; revisar políticas RLS antes de escalar multi-tenant |
+
+#### Proteção Contra Abuso
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| CAPTCHA em formulários públicos | Implementado | Cadastro e recuperação de senha usam reCAPTCHA v2 quando as chaves estão configuradas |
+| Detecção de bot | Parcial | Rate limit, CAPTCHA e anomalias reduzem automação; detecção dedicada ainda é futura |
+| Proteção contra DDoS | Parcial | Vercel/CDN, rate limit de APIs caras e CAPTCHA ajudam; WAF/regras avançadas dependem do plano/infra |
+
+#### Conformidade
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Certificação SOC 2 | Pendente operacional | Exige processo formal, controles internos, evidências e auditor independente |
+| Auditoria de segurança externa | Pendente operacional | Deve ser contratada antes de escalar base paga ou dados mais sensíveis |
+| Plano de resposta a incidentes | Implementado | Procedimento documentado abaixo para classificar, conter, comunicar e corrigir incidentes |
+
+### Plano de Resposta a Incidentes
+
+#### Objetivo
+
+Responder rapidamente a eventos como vazamento de dados, acesso indevido, falha de autenticação, abuso de APIs, indisponibilidade crítica ou alteração indevida de dados.
+
+#### Severidade
+
+| Nível | Exemplo | Ação |
+| --- | --- | --- |
+| Baixa | Erro isolado sem dados expostos | Registrar, corrigir e acompanhar |
+| Média | Tentativas de abuso, bot ou falha recorrente sem vazamento | Ativar mitigação, revisar logs e comunicar internamente |
+| Alta | Acesso indevido a conta, perda parcial de dados ou indisponibilidade relevante | Conter, acionar backup, avisar afetados quando necessário |
+| Crítica | Vazamento confirmado, comprometimento de chaves ou impacto amplo | Rotacionar segredos, pausar fluxos afetados, comunicar usuários e avaliar obrigação legal |
+
+#### Procedimento
+
+1. Detectar o incidente por logs, alerta, usuário, Vercel, Supabase, Stripe ou Sentry.
+2. Classificar severidade e registrar horário, escopo e responsável.
+3. Conter o problema: desativar rota, rotacionar segredo, pausar checkout, bloquear abuso ou limitar acesso.
+4. Preservar evidências: logs, commits, deploys, eventos Stripe/Supabase e horário dos sintomas.
+5. Avaliar impacto em usuários, dados, pagamentos, disponibilidade e obrigações LGPD.
+6. Corrigir a causa raiz com revisão de código e validação em produção.
+7. Comunicar usuários afetados quando houver risco real, indisponibilidade relevante ou obrigação legal.
+8. Fazer pós-incidente com causa, impacto, tempo de resposta, ação preventiva e responsável pela conclusão.
+
+#### Ações Imediatas por Tipo
+
+| Incidente | Primeira ação |
+| --- | --- |
+| Chave vazada | Revogar/rotacionar chave na Vercel e no provedor, depois redeploy |
+| Abuso de API | Aumentar rate limit/regras de bloqueio e revisar logs por IP hash/user-agent hash |
+| Falha de checkout | Pausar campanha, verificar Stripe, logs da rota e status de assinatura |
+| Perda/corrupção de dados | Congelar escritas se possível e iniciar plano de recuperação da Parte 6 |
+| Conta invadida | Invalidar sessão, orientar troca de senha e revisar `audit_logs` do usuário |
+
+#### Evidências a Guardar
+
+- Commit/deploy afetado.
+- Horário de início e fim.
+- Rotas impactadas.
+- Usuários afetados, quando identificável.
+- Eventos `audit_logs` relacionados.
+- Prints/logs de Vercel, Supabase, Stripe ou Sentry.
+- Correção aplicada e validação feita.

@@ -10,6 +10,7 @@ import { sendSecurityAlertEmail } from "@/lib/security-alert-email";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const LOGIN_IP_WINDOW_MS = 60 * 60 * 1000;
+const KNOWN_DEVICE_LOOKBACK_MS = 90 * 24 * 60 * 60 * 1000;
 const REQUEST_BURST_WINDOW_MS = 5 * 60 * 1000;
 const ALERT_DEDUP_WINDOW_MS = 60 * 60 * 1000;
 const LOGIN_IP_THRESHOLD = 3;
@@ -20,10 +21,11 @@ type AuditLogRow = {
   created_at: string;
   details: Record<string, unknown> | null;
   ip_hash: string | null;
+  user_agent_hash: string | null;
   user_id: string | null;
 };
 
-type AnomalyKind = "multiple_login_ips" | "request_burst";
+type AnomalyKind = "multiple_login_ips" | "new_device_login" | "request_burst";
 
 type DetectedAnomaly = {
   description: string;
@@ -81,7 +83,7 @@ async function fetchUserAuditRows(input: {
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from("audit_logs")
-    .select("action, created_at, details, ip_hash, user_id")
+    .select("action, created_at, details, ip_hash, user_agent_hash, user_id")
     .eq("user_id", input.userId)
     .gte("created_at", input.sinceIso)
     .order("created_at", { ascending: false })
@@ -97,6 +99,36 @@ async function fetchUserAuditRows(input: {
 
   return ((data as AuditLogRow[] | null) ?? []).filter(
     (row) => row.user_id === input.userId,
+  );
+}
+
+async function fetchKnownLoginDeviceHashes(input: {
+  beforeIso: string;
+  sinceIso: string;
+  userId: string;
+}) {
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("user_agent_hash")
+    .eq("user_id", input.userId)
+    .eq("action", "auth.login.success")
+    .gte("created_at", input.sinceIso)
+    .lt("created_at", input.beforeIso)
+    .limit(500);
+
+  if (error) {
+    if (isMissingAuditTableError(error)) {
+      return new Set<string>();
+    }
+
+    throw error;
+  }
+
+  return new Set(
+    ((data as Pick<AuditLogRow, "user_agent_hash">[] | null) ?? [])
+      .map((row) => row.user_agent_hash)
+      .filter((hash): hash is string => Boolean(hash)),
   );
 }
 
@@ -165,6 +197,7 @@ export async function detectAnomalies(userId: string) {
     userId,
   });
   const loginRows = rows.filter((row) => row.action === "auth.login.success");
+  const newestLoginRow = loginRows[0] ?? null;
   const uniqueLoginIpHashes = new Set(
     loginRows.map((row) => row.ip_hash).filter(Boolean),
   );
@@ -186,6 +219,31 @@ export async function detectAnomalies(userId: string) {
         windowMinutes: 60,
       },
     });
+  }
+
+  if (newestLoginRow?.user_agent_hash) {
+    const knownDeviceHashes = await fetchKnownLoginDeviceHashes({
+      beforeIso: newestLoginRow.created_at,
+      sinceIso: getIsoDate(KNOWN_DEVICE_LOOKBACK_MS),
+      userId,
+    });
+
+    if (
+      knownDeviceHashes.size > 0 &&
+      !knownDeviceHashes.has(newestLoginRow.user_agent_hash)
+    ) {
+      anomalies.push({
+        kind: "new_device_login",
+        severity: "warn",
+        description:
+          "Detectamos um login em um navegador ou dispositivo que nao apareceu antes nesta conta.",
+        details: {
+          knownDeviceCount: knownDeviceHashes.size,
+          lookbackDays: 90,
+          loginAt: newestLoginRow.created_at,
+        },
+      });
+    }
   }
 
   if (recentRows.length > REQUEST_BURST_THRESHOLD) {
