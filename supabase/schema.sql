@@ -117,6 +117,21 @@ create table if not exists public.auth_rate_limits (
 create index if not exists auth_rate_limits_action_idx
   on public.auth_rate_limits (action);
 
+create table if not exists public.api_rate_limits (
+  key text primary key,
+  action text not null check (
+    action in ('ai_assistant_gemini', 'billing_checkout', 'marketing_generate')
+  ),
+  attempts integer not null default 0,
+  window_started_at timestamptz not null,
+  blocked_until timestamptz null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists api_rate_limits_action_idx
+  on public.api_rate_limits (action);
+
 create table if not exists public.access_logs (
   id bigserial primary key,
   user_id text null references public.auth_users (id) on delete set null,
@@ -222,6 +237,16 @@ begin
 end;
 $$;
 
+create or replace function public.set_api_rate_limits_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = timezone('utc', now());
+  return new;
+end;
+$$;
+
 create or replace function public.set_user_testimonials_updated_at()
 returns trigger
 language plpgsql
@@ -256,6 +281,13 @@ before update on public.auth_rate_limits
 for each row
 execute function public.set_auth_rate_limits_updated_at();
 
+drop trigger if exists trg_api_rate_limits_updated_at on public.api_rate_limits;
+
+create trigger trg_api_rate_limits_updated_at
+before update on public.api_rate_limits
+for each row
+execute function public.set_api_rate_limits_updated_at();
+
 drop trigger if exists trg_user_app_data_updated_at on public.user_app_data;
 
 create trigger trg_user_app_data_updated_at
@@ -279,6 +311,7 @@ execute function public.set_global_announcements_updated_at();
 
 alter table public.auth_users enable row level security;
 alter table public.auth_rate_limits enable row level security;
+alter table public.api_rate_limits enable row level security;
 alter table public.access_logs enable row level security;
 alter table public.user_app_data enable row level security;
 alter table public.user_testimonials enable row level security;

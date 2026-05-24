@@ -22,6 +22,7 @@ import {
   captureServerException,
   logServerEvent,
 } from "@/lib/observability/server-monitoring";
+import { consumeApiRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,6 +110,23 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { message: "Voce precisa estar logado para assinar o Premium." },
       { status: 401 },
+    );
+  }
+
+  const rateLimit = await consumeApiRateLimit({
+    action: "billing_checkout",
+    headers: request.headers,
+  });
+
+  if (!rateLimit.ok) {
+    return NextResponse.json(
+      { message: rateLimit.message },
+      {
+        headers: {
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+        status: 429,
+      },
     );
   }
 

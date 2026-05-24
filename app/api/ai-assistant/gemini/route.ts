@@ -8,6 +8,7 @@ import {
   detectAssistantIntent,
   type AssistantIntent,
 } from "@/lib/assistant-intents";
+import { consumeApiRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -195,6 +196,23 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { message: "Voce precisa estar logado para usar o assistente IA." },
       { status: 401 },
+    );
+  }
+
+  const rateLimit = await consumeApiRateLimit({
+    action: "ai_assistant_gemini",
+    headers: request.headers,
+  });
+
+  if (!rateLimit.ok) {
+    return NextResponse.json(
+      { message: rateLimit.message },
+      {
+        headers: {
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+        status: 429,
+      },
     );
   }
 

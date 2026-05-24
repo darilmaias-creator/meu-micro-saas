@@ -10,6 +10,7 @@ export const revalidate = 0;
 const RETENTION_DAYS = 90;
 const CLEANUP_TARGETS = {
   access_logs: "created_at",
+  api_rate_limits: "updated_at",
   auth_rate_limits: "updated_at",
 } as const;
 
@@ -79,6 +80,10 @@ export async function GET(request: Request) {
       deleteOlderThan({
         cutoffIso,
         table: "access_logs",
+      }),
+      deleteOlderThan({
+        cutoffIso,
+        table: "api_rate_limits",
       }),
       deleteOlderThan({
         cutoffIso,

@@ -31,6 +31,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 - Login por credenciais e Google OAuth.
 - Proteção de rotas sensíveis por sessão em APIs como app data, billing, perfil, anúncios e IA.
 - Rate limit para login, cadastro, esqueci senha e redefinição de senha.
+- Rate limit por IP para APIs sensíveis como IA, marketing e checkout.
 - Validação de e-mail, nome e senha.
 - Validação central do payload de dados do app antes de salvar no Supabase.
 - Sanitização de output para avisos globais, e-mails e URLs exibidas ao usuário.
@@ -60,7 +61,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 ### Parcialmente Implementado
 
 - Verificação de e-mail já possui rotas de envio/confirmação, mas ainda não bloqueia acesso antes da confirmação.
-- Proteção contra abuso existe em autenticação, mas ainda precisa ser ampliada para outras APIs públicas ou caras, como IA e marketing.
+- Proteção contra abuso existe em autenticação e APIs caras; ainda pode ser ampliada para outras APIs conforme uso real.
 - Validação de payload existe em vários endpoints, mas ainda deve ser padronizada em todos os fluxos.
 - Observabilidade existe, mas ainda precisa de alertas operacionais mais claros para falhas críticas.
 
@@ -68,7 +69,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 
 - Autenticação de dois fatores real para Premium com TOTP ou provedor dedicado.
 - Bloqueio ou limitação de acesso a dados enquanto e-mail não estiver verificado.
-- Rate limit para endpoints de IA, marketing, checkout e anúncios.
+- Rate limit para anúncios e demais endpoints administrativos conforme volume real.
 - Checklist de permissões por papel, especialmente admin.
 - Auditoria de exposição de dados em logs.
 - Revisão das regras Supabase/RLS ou equivalente de isolamento por usuário.
@@ -184,3 +185,21 @@ Textos renderizados com `{valor}` em componentes React já são escapados pelo R
 ### Observação Sobre Supabase
 
 O Supabase client envia filtros e valores pela API do PostgREST, sem concatenar SQL manual dentro do app. A regra continua sendo: se no futuro entrar SQL bruto, ele deve usar função segura, RPC validada ou prepared statement, nunca template string com valor vindo do usuário.
+
+## Parte 5: Rate Limiting e Proteção Contra Abuso
+
+### 5.1 Rate Limiting por IP
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Rate limit geral por IP | Implementado | `lib/rate-limit.ts` usa IP dos headers, hash SHA-256 e janela por ação |
+| Persistência | Implementado | `public.api_rate_limits` em `supabase/schema.sql` |
+| Assistente IA Gemini | Implementado | `app/api/ai-assistant/gemini/route.ts` limita chamadas ao Gemini |
+| IA de marketing | Implementado | `app/api/marketing/generate/route.ts` limita geração de texto |
+| Checkout Stripe | Implementado | `app/api/billing/checkout/route.ts` limita criação de sessões de checkout |
+| Resposta de bloqueio | Implementado | Retorna `429` com header `Retry-After` |
+| Retenção | Implementado | `app/api/cron/cleanup-old-logs/route.ts` limpa rate limits antigos |
+
+### Observação Sobre Redis/Upstash
+
+O guia sugeria Upstash Redis. Nesta implementação, usei Supabase para evitar adicionar uma nova dependência e uma nova conta de infraestrutura. Se o volume crescer muito, a camada `lib/rate-limit.ts` pode ser trocada por Upstash mantendo a mesma chamada nos endpoints.
