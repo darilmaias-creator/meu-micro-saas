@@ -526,13 +526,14 @@ O texto foi escrito em linguagem simples para comunicação pública. Uma revis�
 | Logging de eventos de segurança | Implementado | `lib/audit-log.ts` e `audit_logs` |
 | Alertas de anomalias | Implementado | `lib/anomaly-detection.ts` e cron diário compatível com Vercel Hobby |
 | Monitoramento de performance | Implementado | `proxy.ts` adiciona `X-Response-Time` e loga proxy lento |
+| Dashboard de logs | Implementado | `/admin/seguranca` mostra resumo e últimos 100 eventos para e-mails em `ADMIN_EMAILS` |
 
 #### Backup
 
 | Item | Status | Implementação |
 | --- | --- | --- |
 | Backup diário do banco | Implementado | `app/api/cron/backup-database/route.ts` |
-| Teste de restauração | Pendente operacional | Precisa ser executado manualmente em ambiente seguro antes de marcar como concluído |
+| Teste de restauração | Implementado inicial | `/api/admin/backup-restore-test` baixa, descriptografa e valida o backup mais recente sem restaurar em produção |
 | Documentar plano de recuperação | Implementado | Parte 6.2 deste guia |
 
 #### Conformidade
@@ -545,9 +546,9 @@ O texto foi escrito em linguagem simples para comunicação pública. Uma revis�
 
 ### Pendências Reais
 
-- Executar e registrar um teste de restauração de backup.
 - Decidir se vale migrar validação customizada para Zod.
-- Criar painel admin para auditoria, anomalias e eventos críticos.
+- Executar o endpoint `/api/admin/backup-restore-test` em produção depois que houver ao menos um backup salvo.
+- Evoluir o painel admin para filtros, paginação e visão de anomalias por usuário.
 
 ### Implementação Média (Semana 2-4)
 
