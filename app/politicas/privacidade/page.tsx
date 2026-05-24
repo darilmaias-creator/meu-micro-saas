@@ -219,6 +219,11 @@ export default function PrivacyPolicyPage() {
                   contato: <strong>privacidade@calculaartesao.com.br</strong>.
                 </p>
                 <p>
+                  O app usa cookies essenciais para manter login, seguranca e
+                  funcionamento da conta. O aviso de cookies aparece no primeiro
+                  acesso e registra o aceite no proprio navegador.
+                </p>
+                <p>
                   Sempre que houver uma alteracao importante no texto publico,
                   esta pagina passara a mostrar a data da ultima atualizacao.
                 </p>

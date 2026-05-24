@@ -53,6 +53,17 @@ function buildMinimalJwt(token: JWT, user?: { id?: string; email?: string | null
   };
 }
 
+function isTokenOlderThanPasswordChange(input: {
+  passwordChangedAt?: string | null;
+  tokenIssuedAt?: number;
+}) {
+  if (!input.passwordChangedAt || !input.tokenIssuedAt) {
+    return false;
+  }
+
+  return new Date(input.passwordChangedAt).getTime() > input.tokenIssuedAt * 1000;
+}
+
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
     name: "Email e senha",
@@ -226,12 +237,55 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async jwt({ token, user }) {
-      return buildMinimalJwt(token, user);
+      const minimalToken = buildMinimalJwt(token, user);
+
+      try {
+        if (!minimalToken.sub) {
+          return minimalToken;
+        }
+
+        const storedUser = await findUserById(minimalToken.sub);
+
+        if (
+          isTokenOlderThanPasswordChange({
+            passwordChangedAt: storedUser?.passwordChangedAt,
+            tokenIssuedAt:
+              typeof minimalToken.iat === "number" ? minimalToken.iat : undefined,
+          })
+        ) {
+          await logSecurityEvent({
+            action: "auth.session.invalidated_after_password_change",
+            userId: minimalToken.sub,
+          });
+
+          return {
+            iat: minimalToken.iat,
+            exp: minimalToken.exp,
+            jti: minimalToken.jti,
+            sessionInvalidated: true,
+          };
+        }
+      } catch (error) {
+        logAuthError("jwt-session-invalidation", error);
+      }
+
+      return minimalToken;
     },
     async session({ session, token }) {
       try {
         if (!session.user) {
           return session;
+        }
+
+        if ((token as JWT & { sessionInvalidated?: boolean }).sessionInvalidated) {
+          return {
+            ...session,
+            user: {
+              ...session.user,
+              email: undefined,
+              id: undefined,
+            },
+          };
         }
 
         const storedUser = token.sub

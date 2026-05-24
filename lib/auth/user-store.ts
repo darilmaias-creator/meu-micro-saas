@@ -40,6 +40,7 @@ export type StoredUser = {
   premiumTrialStartedAt?: string | null;
   premiumTrialExpiresAt?: string | null;
   premiumTrialUsed: boolean;
+  passwordChangedAt?: string | null;
   passwordResetTokenHash?: string | null;
   passwordResetExpiresAt?: string | null;
   passwordResetRequestedAt?: string | null;
@@ -74,6 +75,7 @@ export type SessionUser = {
   premiumTrialStartedAt?: string | null;
   premiumTrialExpiresAt?: string | null;
   premiumTrialUsed: boolean;
+  passwordChangedAt?: string | null;
   emailVerifiedAt?: string | null;
   emailVerificationTokenSentAt?: string | null;
 };
@@ -101,6 +103,7 @@ type AuthUserRow = {
   premium_trial_started_at: string | null;
   premium_trial_expires_at: string | null;
   premium_trial_used: boolean | null;
+  password_changed_at: string | null;
   password_reset_token_hash: string | null;
   password_reset_expires_at: string | null;
   password_reset_requested_at: string | null;
@@ -115,7 +118,7 @@ const usersFilePath = path.join(dataDirectory, "users.json");
 const AUTH_USER_BASE_SELECT_COLUMNS =
   "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, premium_activated_at, founder_offer_applied, founder_offer_revoked_at, premium_trial_started_at, premium_trial_expires_at, premium_trial_used, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at";
 const AUTH_USER_SELECT_COLUMNS =
-  "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, premium_activated_at, founder_offer_applied, founder_offer_revoked_at, premium_trial_started_at, premium_trial_expires_at, premium_trial_used, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, email_verified_at, email_verification_token_sent_at, created_at, updated_at";
+  "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, premium_activated_at, founder_offer_applied, founder_offer_revoked_at, premium_trial_started_at, premium_trial_expires_at, premium_trial_used, password_changed_at, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, email_verified_at, email_verification_token_sent_at, created_at, updated_at";
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -125,10 +128,11 @@ function logUserStoreWarning(context: string, error: unknown) {
   console.warn(`[user-store:${context}]`, error);
 }
 
-function isMissingEmailVerificationColumnError(error: unknown) {
+function isMissingOptionalAuthColumnError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
 
   return (
+    message.includes("password_changed_at") ||
     message.includes("email_verified_at") ||
     message.includes("email_verification_token_sent_at")
   );
@@ -173,6 +177,7 @@ function mapAuthUserRow(row: AuthUserRow | null | undefined) {
     premiumTrialStartedAt: row.premium_trial_started_at ?? null,
     premiumTrialExpiresAt: row.premium_trial_expires_at ?? null,
     premiumTrialUsed: row.premium_trial_used ?? false,
+    passwordChangedAt: row.password_changed_at ?? null,
     passwordResetTokenHash: row.password_reset_token_hash ?? null,
     passwordResetExpiresAt: row.password_reset_expires_at ?? null,
     passwordResetRequestedAt: row.password_reset_requested_at ?? null,
@@ -221,6 +226,7 @@ function buildAuthUserRow(user: StoredUser, includeEmailVerification = true) {
 
   return {
     ...row,
+    password_changed_at: user.passwordChangedAt ?? null,
     email_verified_at: user.emailVerifiedAt ?? null,
     email_verification_token_sent_at:
       user.emailVerificationTokenSentAt ?? null,
@@ -289,7 +295,7 @@ async function findSupabaseUserByEmail(email: string) {
     .maybeSingle();
 
   if (response.error) {
-    if (!isMissingEmailVerificationColumnError(response.error)) {
+    if (!isMissingOptionalAuthColumnError(response.error)) {
       throw response.error;
     }
 
@@ -318,7 +324,7 @@ async function findSupabaseUserById(userId: string) {
     .maybeSingle();
 
   if (response.error) {
-    if (!isMissingEmailVerificationColumnError(response.error)) {
+    if (!isMissingOptionalAuthColumnError(response.error)) {
       throw response.error;
     }
 
@@ -347,7 +353,7 @@ async function findSupabaseUserByStripeCustomerId(customerId: string) {
     .maybeSingle();
 
   if (response.error) {
-    if (!isMissingEmailVerificationColumnError(response.error)) {
+    if (!isMissingOptionalAuthColumnError(response.error)) {
       throw response.error;
     }
 
@@ -376,7 +382,7 @@ async function findSupabaseUserByStripeSubscriptionId(subscriptionId: string) {
     .maybeSingle();
 
   if (response.error) {
-    if (!isMissingEmailVerificationColumnError(response.error)) {
+    if (!isMissingOptionalAuthColumnError(response.error)) {
       throw response.error;
     }
 
@@ -405,7 +411,7 @@ async function upsertSupabaseUser(user: StoredUser) {
     });
 
   if (error) {
-    if (isMissingEmailVerificationColumnError(error)) {
+    if (isMissingOptionalAuthColumnError(error)) {
       const fallbackResponse = await supabase
         .from("auth_users")
         .upsert(buildAuthUserRow(user, false), {
@@ -728,6 +734,7 @@ export async function updateUserPasswordFromReset(input: {
     authProviders: user.authProviders.includes("credentials")
       ? user.authProviders
       : [...user.authProviders, "credentials"],
+    passwordChangedAt: new Date().toISOString(),
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
@@ -840,6 +847,7 @@ export async function createCredentialsUser(input: {
     premiumTrialStartedAt: null,
     premiumTrialExpiresAt: null,
     premiumTrialUsed: false,
+    passwordChangedAt: null,
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
@@ -920,6 +928,7 @@ export async function upsertOAuthUser(input: {
     premiumTrialStartedAt: null,
     premiumTrialExpiresAt: null,
     premiumTrialUsed: false,
+    passwordChangedAt: null,
     passwordResetTokenHash: null,
     passwordResetExpiresAt: null,
     passwordResetRequestedAt: null,
@@ -1096,6 +1105,7 @@ function normalizeStoredUser(rawUser: unknown): StoredUser | null {
     premiumTrialStartedAt: normalizeNullableString(candidate.premiumTrialStartedAt),
     premiumTrialExpiresAt: normalizeNullableString(candidate.premiumTrialExpiresAt),
     premiumTrialUsed: Boolean(candidate.premiumTrialUsed),
+    passwordChangedAt: normalizeNullableString(candidate.passwordChangedAt),
     passwordResetTokenHash:
       typeof candidate.passwordResetTokenHash === "string"
         ? candidate.passwordResetTokenHash

@@ -28,12 +28,15 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 ### Já Implementado
 
 - Autenticação com NextAuth e sessão JWT.
+- Logout automático após 30 minutos de inatividade no cliente.
+- Invalidação de sessões antigas após redefinição de senha.
 - Login por credenciais e Google OAuth.
 - Proteção de rotas sensíveis por sessão em APIs como app data, billing, perfil, anúncios e IA.
 - Rate limit para login, cadastro, esqueci senha e redefinição de senha.
 - Rate limit por IP para APIs sensíveis como IA, marketing e checkout.
 - Proteção contra brute force no login por e-mail e IP, com limpeza no login bem-sucedido.
 - CAPTCHA v2 opcional para cadastro e recuperação de senha.
+- Aviso de consentimento para cookies essenciais.
 - Validação de e-mail, nome e senha.
 - Validação central do payload de dados do app antes de salvar no Supabase.
 - Sanitização de output para avisos globais, e-mails e URLs exibidas ao usuário.
@@ -477,3 +480,71 @@ A exclusão remove a conta e os dados sincronizados principais do usuário. Logs
 ### Observação Legal
 
 O texto foi escrito em linguagem simples para comunicação pública. Uma revisão jurídica profissional ainda é recomendada antes de escalar comercialmente, especialmente para ajustar limite de responsabilidade, jurisdição, retenção de dados e regras de assinatura conforme o modelo final de cobrança.
+
+## Parte 9: Checklist de Segurança
+
+### Implementação Imediata
+
+#### Autenticação
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Verificação de email após cadastro | Implementado | Cadastro envia confirmação e `EmailVerificationNotice` permite reenviar |
+| Recuperação de senha segura | Implementado | Token com hash, validade de 1 hora, rate limit e CAPTCHA |
+| Logout automático após inatividade | Implementado | `app/components/InactivityLogout.tsx` encerra sessão após 30 minutos sem atividade |
+| Invalidar sessões ao mudar senha | Implementado | `password_changed_at` em `auth_users`; tokens antigos perdem `user.id` e o cliente sai da conta |
+
+#### Dados em Trânsito
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| HTTPS obrigatório em produção | Implementado | `proxy.ts` redireciona HTTP para HTTPS |
+| Headers de segurança | Implementado | `next.config.ts` aplica HSTS, CSP, X-Frame-Options, nosniff e Permissions-Policy |
+| Cookies com flags seguras | Implementado | NextAuth usa cookies HttpOnly por padrão e `useSecureCookies` em produção/HTTPS |
+
+#### Dados em Repouso
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Criptografia de dados sensíveis | Implementado | `lib/crypto.ts` com AES-256-GCM e `ENCRYPTION_KEY` |
+| Hashing de senhas | Implementado | `lib/auth/password.ts` usa `scrypt` com salt e comparação segura |
+| Política de retenção de logs | Implementado | `cleanup-old-logs` remove logs temporários e retém auditoria por 365 dias |
+
+#### Validação
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Validar todos os inputs com Zod | Parcial | O app usa validação customizada central em `lib/validation.ts`; Zod pode ser adotado futuramente |
+| Sanitizar outputs | Implementado | `lib/sanitize.ts` e uso nos avisos/e-mails |
+| Proteção contra SQL injection | Implementado | Supabase query builder e allowlists para tabela dinâmica |
+| Rate limiting em APIs | Implementado | Auth, Gemini, marketing e checkout usam rate limit persistente |
+
+#### Monitoramento
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Logging de eventos de segurança | Implementado | `lib/audit-log.ts` e `audit_logs` |
+| Alertas de anomalias | Implementado | `lib/anomaly-detection.ts` e cron diário compatível com Vercel Hobby |
+| Monitoramento de performance | Implementado | `proxy.ts` adiciona `X-Response-Time` e loga proxy lento |
+
+#### Backup
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Backup diário do banco | Implementado | `app/api/cron/backup-database/route.ts` |
+| Teste de restauração | Pendente operacional | Precisa ser executado manualmente em ambiente seguro antes de marcar como concluído |
+| Documentar plano de recuperação | Implementado | Parte 6.2 deste guia |
+
+#### Conformidade
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Política de Privacidade publicada | Implementado | `/politicas/privacidade` |
+| Termos de Serviço publicados | Implementado | `/politicas/termos-de-uso` |
+| Consentimento de cookies | Implementado | `app/components/CookieConsentBanner.tsx` para cookies essenciais |
+
+### Pendências Reais
+
+- Executar e registrar um teste de restauração de backup.
+- Decidir se vale migrar validação customizada para Zod.
+- Criar painel admin para auditoria, anomalias e eventos críticos.
