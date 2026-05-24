@@ -44,10 +44,13 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 - Headers globais de proteção:
   - `X-Content-Type-Options: nosniff`
   - `X-Frame-Options: DENY`
+  - `X-XSS-Protection: 1; mode=block`
   - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Content-Security-Policy` calibrada para Next, Stripe, Sentry, Supabase, Gemini e imagens externas usadas pelo app
   - `Permissions-Policy`
   - `Strict-Transport-Security` em HTTPS
 - Remoção do header `X-Powered-By`.
+- Redirecionamento obrigatório de HTTP para HTTPS em produção via `proxy.ts`.
 
 ### Parcialmente Implementado
 
@@ -58,7 +61,6 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 
 ### Ainda Pendente
 
-- Política de Content Security Policy calibrada para Next, Stripe, Sentry, Google e imagens externas.
 - Autenticação de dois fatores real para Premium com TOTP ou provedor dedicado.
 - Bloqueio ou limitação de acesso a dados enquanto e-mail não estiver verificado.
 - Rate limit para endpoints de IA, marketing, checkout e anúncios.
@@ -70,16 +72,6 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 ## Decisão Técnica Desta Etapa
 
 Nesta etapa foi aplicada uma camada inicial de headers de segurança no `next.config.ts`.
-
-A CSP completa ficou pendente de propósito, porque uma política rígida sem inventário de domínios pode quebrar:
-
-- Checkout embutido da Stripe.
-- Login Google.
-- Sentry.
-- Scripts internos do Next.
-- Imagens externas usadas em banners e perfil.
-
-Ela deve entrar em uma etapa própria, com testes em produção/staging.
 
 ## Parte 2: Autenticação e Autorização
 
@@ -109,3 +101,21 @@ Ela deve entrar em uma etapa própria, com testes em produção/staging.
 - Registrar eventos de ativação/desativação.
 
 Essa implementação deve entrar em uma etapa própria.
+
+## Parte 3: Proteção de Dados
+
+### 3.1 Dados em Trânsito
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| HTTPS obrigatório em produção | Implementado | `proxy.ts` redireciona HTTP para HTTPS com status 301 |
+| HSTS | Implementado | `Strict-Transport-Security` em `next.config.ts` |
+| Anti MIME sniffing | Implementado | `X-Content-Type-Options: nosniff` |
+| Proteção contra clickjacking | Implementado | `X-Frame-Options: DENY` e `frame-ancestors 'none'` na CSP |
+| Referrer Policy | Implementado | `Referrer-Policy: strict-origin-when-cross-origin` |
+| Permissions Policy | Implementado | Bloqueia camera, microfone e geolocalização por padrão |
+| Content Security Policy | Implementado | Permite apenas origens necessárias para Next, Stripe, Sentry, Supabase, Gemini e imagens externas do app |
+
+### Observação Sobre CSP
+
+A CSP foi configurada de forma compatível com o checkout embutido da Stripe e com recursos reais do app. Uma política mais rígida com nonce por request pode ser aplicada em uma etapa futura, mas precisa de testes específicos para não bloquear scripts internos do Next ou o checkout.

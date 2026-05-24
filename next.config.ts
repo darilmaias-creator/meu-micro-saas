@@ -2,30 +2,58 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 import path from "path";
 
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.stripe.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://i.postimg.cc https://*.stripe.com https://*.googleusercontent.com",
+  "font-src 'self' data:",
+  "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://*.stripe.com https://*.sentry.io https://*.supabase.co https://generativelanguage.googleapis.com",
+  "frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://*.stripe.com",
+  "form-action 'self' https://checkout.stripe.com",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const nextConfig: NextConfig = {
   async headers() {
+    const securityHeaders = [
+      {
+        key: "X-Content-Type-Options",
+        value: "nosniff",
+      },
+      {
+        key: "X-Frame-Options",
+        value: "DENY",
+      },
+      {
+        key: "X-XSS-Protection",
+        value: "1; mode=block",
+      },
+      {
+        key: "Referrer-Policy",
+        value: "strict-origin-when-cross-origin",
+      },
+      ...(process.env.NODE_ENV === "production"
+        ? [
+            {
+              key: "Content-Security-Policy",
+              value: contentSecurityPolicy,
+            },
+          ]
+        : []),
+      {
+        key: "Permissions-Policy",
+        value: "camera=(), microphone=(), geolocation=(), payment=(self)",
+      },
+    ];
+
     return [
       {
         source: "/:path*",
-        headers: [
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
-          {
-            key: "Permissions-Policy",
-            value:
-              "camera=(), microphone=(), geolocation=(), payment=(self)",
-          },
-        ],
+        headers: securityHeaders,
       },
       {
         source: "/:path*",
