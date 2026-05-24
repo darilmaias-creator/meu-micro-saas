@@ -112,6 +112,8 @@ type AuthUserRow = {
 
 const dataDirectory = path.join(process.cwd(), "data");
 const usersFilePath = path.join(dataDirectory, "users.json");
+const AUTH_USER_BASE_SELECT_COLUMNS =
+  "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, premium_activated_at, founder_offer_applied, founder_offer_revoked_at, premium_trial_started_at, premium_trial_expires_at, premium_trial_used, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, created_at, updated_at";
 const AUTH_USER_SELECT_COLUMNS =
   "id, name, email, password_hash, image, plan, free_name_changes_used, auth_providers, backup_email, backup_frequency, backup_last_sent_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, stripe_price_id, stripe_current_period_end, premium_activated_at, founder_offer_applied, founder_offer_revoked_at, premium_trial_started_at, premium_trial_expires_at, premium_trial_used, password_reset_token_hash, password_reset_expires_at, password_reset_requested_at, email_verified_at, email_verification_token_sent_at, created_at, updated_at";
 
@@ -121,6 +123,15 @@ function normalizeEmail(email: string) {
 
 function logUserStoreWarning(context: string, error: unknown) {
   console.warn(`[user-store:${context}]`, error);
+}
+
+function isMissingEmailVerificationColumnError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return (
+    message.includes("email_verified_at") ||
+    message.includes("email_verification_token_sent_at")
+  );
 }
 
 function isSupabaseUserStoreEnabled() {
@@ -173,8 +184,8 @@ function mapAuthUserRow(row: AuthUserRow | null | undefined) {
   });
 }
 
-function buildAuthUserRow(user: StoredUser) {
-  return {
+function buildAuthUserRow(user: StoredUser, includeEmailVerification = true) {
+  const row = {
     id: user.id,
     name: user.name,
     email: user.email,
@@ -200,11 +211,19 @@ function buildAuthUserRow(user: StoredUser) {
     password_reset_token_hash: user.passwordResetTokenHash ?? null,
     password_reset_expires_at: user.passwordResetExpiresAt ?? null,
     password_reset_requested_at: user.passwordResetRequestedAt ?? null,
+    created_at: user.createdAt,
+    updated_at: user.updatedAt,
+  };
+
+  if (!includeEmailVerification) {
+    return row;
+  }
+
+  return {
+    ...row,
     email_verified_at: user.emailVerifiedAt ?? null,
     email_verification_token_sent_at:
       user.emailVerificationTokenSentAt ?? null,
-    created_at: user.createdAt,
-    updated_at: user.updatedAt,
   };
 }
 
@@ -263,71 +282,143 @@ async function writeUsersToFile(users: StoredUser[]) {
 
 async function findSupabaseUserByEmail(email: string) {
   const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase
+  const response = await supabase
     .from("auth_users")
     .select(AUTH_USER_SELECT_COLUMNS)
     .eq("email", email)
     .maybeSingle();
 
-  if (error) {
-    throw error;
+  if (response.error) {
+    if (!isMissingEmailVerificationColumnError(response.error)) {
+      throw response.error;
+    }
+
+    const fallbackResponse = await supabase
+      .from("auth_users")
+      .select(AUTH_USER_BASE_SELECT_COLUMNS)
+      .eq("email", email)
+      .maybeSingle();
+
+    if (fallbackResponse.error) {
+      throw fallbackResponse.error;
+    }
+
+    return mapAuthUserRow(fallbackResponse.data as AuthUserRow | null);
   }
 
-  return mapAuthUserRow(data as AuthUserRow | null);
+  return mapAuthUserRow(response.data as AuthUserRow | null);
 }
 
 async function findSupabaseUserById(userId: string) {
   const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase
+  const response = await supabase
     .from("auth_users")
     .select(AUTH_USER_SELECT_COLUMNS)
     .eq("id", userId)
     .maybeSingle();
 
-  if (error) {
-    throw error;
+  if (response.error) {
+    if (!isMissingEmailVerificationColumnError(response.error)) {
+      throw response.error;
+    }
+
+    const fallbackResponse = await supabase
+      .from("auth_users")
+      .select(AUTH_USER_BASE_SELECT_COLUMNS)
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (fallbackResponse.error) {
+      throw fallbackResponse.error;
+    }
+
+    return mapAuthUserRow(fallbackResponse.data as AuthUserRow | null);
   }
 
-  return mapAuthUserRow(data as AuthUserRow | null);
+  return mapAuthUserRow(response.data as AuthUserRow | null);
 }
 
 async function findSupabaseUserByStripeCustomerId(customerId: string) {
   const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase
+  const response = await supabase
     .from("auth_users")
     .select(AUTH_USER_SELECT_COLUMNS)
     .eq("stripe_customer_id", customerId)
     .maybeSingle();
 
-  if (error) {
-    throw error;
+  if (response.error) {
+    if (!isMissingEmailVerificationColumnError(response.error)) {
+      throw response.error;
+    }
+
+    const fallbackResponse = await supabase
+      .from("auth_users")
+      .select(AUTH_USER_BASE_SELECT_COLUMNS)
+      .eq("stripe_customer_id", customerId)
+      .maybeSingle();
+
+    if (fallbackResponse.error) {
+      throw fallbackResponse.error;
+    }
+
+    return mapAuthUserRow(fallbackResponse.data as AuthUserRow | null);
   }
 
-  return mapAuthUserRow(data as AuthUserRow | null);
+  return mapAuthUserRow(response.data as AuthUserRow | null);
 }
 
 async function findSupabaseUserByStripeSubscriptionId(subscriptionId: string) {
   const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase
+  const response = await supabase
     .from("auth_users")
     .select(AUTH_USER_SELECT_COLUMNS)
     .eq("stripe_subscription_id", subscriptionId)
     .maybeSingle();
 
-  if (error) {
-    throw error;
+  if (response.error) {
+    if (!isMissingEmailVerificationColumnError(response.error)) {
+      throw response.error;
+    }
+
+    const fallbackResponse = await supabase
+      .from("auth_users")
+      .select(AUTH_USER_BASE_SELECT_COLUMNS)
+      .eq("stripe_subscription_id", subscriptionId)
+      .maybeSingle();
+
+    if (fallbackResponse.error) {
+      throw fallbackResponse.error;
+    }
+
+    return mapAuthUserRow(fallbackResponse.data as AuthUserRow | null);
   }
 
-  return mapAuthUserRow(data as AuthUserRow | null);
+  return mapAuthUserRow(response.data as AuthUserRow | null);
 }
 
 async function upsertSupabaseUser(user: StoredUser) {
   const supabase = createSupabaseServerClient();
-  const { error } = await supabase.from("auth_users").upsert(buildAuthUserRow(user), {
-    onConflict: "id",
-  });
+  const { error } = await supabase
+    .from("auth_users")
+    .upsert(buildAuthUserRow(user), {
+      onConflict: "id",
+    });
 
   if (error) {
+    if (isMissingEmailVerificationColumnError(error)) {
+      const fallbackResponse = await supabase
+        .from("auth_users")
+        .upsert(buildAuthUserRow(user, false), {
+          onConflict: "id",
+        });
+
+      if (fallbackResponse.error) {
+        throw fallbackResponse.error;
+      }
+
+      return;
+    }
+
     throw error;
   }
 }
