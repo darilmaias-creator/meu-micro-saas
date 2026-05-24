@@ -13,16 +13,22 @@ type RouteHandlerContext = {
   }>;
 };
 
+function getRequestOrigin(req: NextRequest) {
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const host = forwardedHost ?? req.headers.get("host") ?? req.nextUrl.host;
+  const protocol =
+    forwardedProto ?? req.nextUrl.protocol.replace(/:$/, "") ?? "http";
+
+  return `${protocol}://${host}`;
+}
+
 async function handler(req: NextRequest, context: RouteHandlerContext) {
-  const previousVercel = process.env.VERCEL;
-  const previousTrustHost = process.env.AUTH_TRUST_HOST;
-  const canonicalOrigin =
-    process.env.NEXTAUTH_URL?.trim() || new URL(req.url).origin;
+  const previousNextAuthUrl = process.env.NEXTAUTH_URL;
+  const canonicalOrigin = getRequestOrigin(req);
 
   try {
-    // Force NextAuth to honor NEXTAUTH_URL as the canonical host.
-    delete process.env.VERCEL;
-    delete process.env.AUTH_TRUST_HOST;
+    process.env.NEXTAUTH_URL = canonicalOrigin;
 
     return await NextAuth(req, context, authOptions);
   } catch (error) {
@@ -46,16 +52,10 @@ async function handler(req: NextRequest, context: RouteHandlerContext) {
       { status: 500 },
     );
   } finally {
-    if (previousVercel === undefined) {
-      delete process.env.VERCEL;
+    if (previousNextAuthUrl === undefined) {
+      delete process.env.NEXTAUTH_URL;
     } else {
-      process.env.VERCEL = previousVercel;
-    }
-
-    if (previousTrustHost === undefined) {
-      delete process.env.AUTH_TRUST_HOST;
-    } else {
-      process.env.AUTH_TRUST_HOST = previousTrustHost;
+      process.env.NEXTAUTH_URL = previousNextAuthUrl;
     }
   }
 }
