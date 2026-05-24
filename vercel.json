@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/anomaly-detection",
-      "schedule": "*/15 * * * *"
+      "schedule": "15 3 * * *"
     },
     {
       "path": "/api/cron/backup-email",

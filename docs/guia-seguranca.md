@@ -390,7 +390,7 @@ account.deleted
 | Item | Status | Implementação |
 | --- | --- | --- |
 | Detector central | Implementado | `lib/anomaly-detection.ts` analisa eventos recentes em `audit_logs` |
-| Cron automático | Implementado | `app/api/cron/anomaly-detection/route.ts` roda pelo `vercel.json` a cada 15 minutos |
+| Cron automático | Implementado | `app/api/cron/anomaly-detection/route.ts` roda pelo `vercel.json` diariamente às 03:15 UTC |
 | Múltiplos IPs no login | Implementado | Alerta quando há mais de 3 hashes de IP em logins bem-sucedidos no período de 1 hora |
 | Muitas ações em pouco tempo | Implementado | Alerta quando há mais de 100 eventos auditados em 5 minutos para o mesmo usuário |
 | E-mail de alerta ao usuário | Implementado | `lib/security-alert-email.ts` envia aviso de atividade incomum via Resend |
@@ -412,6 +412,7 @@ Como o audit log salva apenas `ip_hash`, a detecção compara hashes de IP, não
 ### Próximas Melhorias
 
 - Criar lista de permissões para administradores/testes internos.
+- Em plano Pro da Vercel, aumentar a frequência do cron para 15 minutos se fizer sentido operacional.
 - Adicionar bloqueio temporário com mensagem clara e canal de recuperação.
 - Criar painel admin para ver alertas recentes por severidade.
 - Enviar alerta interno para eventos críticos além do e-mail ao usuário.
