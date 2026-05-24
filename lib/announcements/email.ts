@@ -2,6 +2,7 @@ import "server-only";
 
 import { sendResendEmail } from "@/lib/email/resend";
 import { parseAnnouncementMessageContent } from "@/lib/announcements/message-content";
+import { escapeHTML } from "@/lib/sanitize";
 
 import type { AnnouncementRecord } from "./types";
 
@@ -22,15 +23,6 @@ export type AnnouncementEmailDispatchSummary = {
   sampleErrors: string[];
 };
 
-function sanitizeText(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 function createAnnouncementEmailBody(input: {
   announcement: AnnouncementRecord;
   recipientName?: string | null;
@@ -44,19 +36,19 @@ function createAnnouncementEmailBody(input: {
   const ctaUrl = input.announcement.ctaUrl?.trim() || "";
   const hasCta = Boolean(ctaLabel && ctaUrl);
 
-  const safeRecipientName = sanitizeText(recipientName);
-  const safeTitle = sanitizeText(title);
-  const safeMessage = sanitizeText(parsedMessage.text).replace(/\n/g, "<br />");
-  const safeCtaLabel = sanitizeText(ctaLabel);
-  const safeCtaUrl = sanitizeText(ctaUrl);
+  const safeRecipientName = escapeHTML(recipientName);
+  const safeTitle = escapeHTML(title);
+  const safeMessage = escapeHTML(parsedMessage.text).replace(/\n/g, "<br />");
+  const safeCtaLabel = escapeHTML(ctaLabel);
+  const safeCtaUrl = escapeHTML(ctaUrl);
   const safeImageSrc = parsedMessage.image?.src
-    ? sanitizeText(parsedMessage.image.src)
+    ? escapeHTML(parsedMessage.image.src)
     : null;
   const safeImageHref = parsedMessage.image?.href
-    ? sanitizeText(parsedMessage.image.href)
+    ? escapeHTML(parsedMessage.image.href)
     : null;
   const safeImageAlt = parsedMessage.image?.alt
-    ? sanitizeText(parsedMessage.image.alt)
+    ? escapeHTML(parsedMessage.image.alt)
     : "Banner do aviso";
   const imageFallbackUrl = parsedMessage.image?.href ?? parsedMessage.image?.src ?? "";
 

@@ -4,6 +4,7 @@ import type {
   AnnouncementRow,
   AnnouncementRecord,
 } from "./types";
+import { sanitizePlainText, sanitizeUrl } from "@/lib/sanitize";
 
 export const ANNOUNCEMENT_TITLE_MAX_LENGTH = 90;
 export const ANNOUNCEMENT_MESSAGE_MAX_LENGTH = 420;
@@ -54,7 +55,7 @@ function normalizeOptionalText(value: unknown, maxLength: number) {
     return null;
   }
 
-  return trimmedValue.slice(0, maxLength);
+  return sanitizePlainText(trimmedValue, maxLength);
 }
 
 function normalizeRequiredText(value: unknown, maxLength: number) {
@@ -68,7 +69,7 @@ function normalizeRequiredText(value: unknown, maxLength: number) {
     return null;
   }
 
-  return trimmedValue.slice(0, maxLength);
+  return sanitizePlainText(trimmedValue, maxLength);
 }
 
 function normalizeKind(value: unknown): AnnouncementKind {
@@ -134,16 +135,7 @@ function normalizeBoolean(value: unknown, defaultValue = false) {
 }
 
 function isValidAnnouncementCtaUrl(url: string) {
-  if (url.startsWith("/")) {
-    return true;
-  }
-
-  try {
-    const parsedUrl = new URL(url);
-    return parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:";
-  } catch {
-    return false;
-  }
+  return Boolean(sanitizeUrl(url));
 }
 
 export function validateAnnouncementPayload(
@@ -177,7 +169,11 @@ export function validateAnnouncementPayload(
     payload.ctaLabel,
     ANNOUNCEMENT_CTA_LABEL_MAX_LENGTH,
   );
-  const ctaUrl = normalizeOptionalText(payload.ctaUrl, ANNOUNCEMENT_CTA_URL_MAX_LENGTH);
+  const rawCtaUrl = normalizeOptionalText(
+    payload.ctaUrl,
+    ANNOUNCEMENT_CTA_URL_MAX_LENGTH,
+  );
+  const ctaUrl = rawCtaUrl ? sanitizeUrl(rawCtaUrl) : null;
   const endsAt = normalizeIsoDateString(payload.endsAt);
   const sendEmailUsers = normalizeBoolean(payload.sendEmailUsers, false);
 
@@ -188,7 +184,7 @@ export function validateAnnouncementPayload(
     };
   }
 
-  if (ctaUrl && !isValidAnnouncementCtaUrl(ctaUrl)) {
+  if (rawCtaUrl && !isValidAnnouncementCtaUrl(rawCtaUrl)) {
     return {
       ok: false,
       message:
@@ -251,13 +247,15 @@ export function mapAnnouncementRow(row: AnnouncementRow): AnnouncementRecord {
 
   return {
     id: row.id,
-    title: row.title,
-    message: row.message,
+    title: sanitizePlainText(row.title, ANNOUNCEMENT_TITLE_MAX_LENGTH),
+    message: sanitizePlainText(row.message, ANNOUNCEMENT_MESSAGE_MAX_LENGTH),
     kind: row.kind,
     audience,
     targetEmails: audience === "selected" ? targetEmails : [],
-    ctaLabel: row.cta_label,
-    ctaUrl: row.cta_url,
+    ctaLabel: row.cta_label
+      ? sanitizePlainText(row.cta_label, ANNOUNCEMENT_CTA_LABEL_MAX_LENGTH)
+      : null,
+    ctaUrl: row.cta_url ? sanitizeUrl(row.cta_url) : null,
     startsAt: row.starts_at,
     endsAt: row.ends_at,
     isActive: row.is_active,

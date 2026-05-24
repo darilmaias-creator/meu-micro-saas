@@ -33,6 +33,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 - Rate limit para login, cadastro, esqueci senha e redefinição de senha.
 - Validação de e-mail, nome e senha.
 - Validação central do payload de dados do app antes de salvar no Supabase.
+- Sanitização de output para avisos globais, e-mails e URLs exibidas ao usuário.
 - Hash de senha no fluxo de credenciais.
 - Criptografia utilitária para dados sensíveis em repouso com AES-256-GCM.
 - Recuperação de conta com link seguro, token com hash e validade de 1 hora.
@@ -154,3 +155,18 @@ Para ativar a criptografia em produção, configure `ENCRYPTION_KEY` na Vercel c
 ### Observação Sobre Biblioteca
 
 O projeto ainda não usa `zod`, então a validação desta etapa foi implementada sem adicionar dependência nova. Se o app passar a usar schemas compartilhados no frontend e backend, `zod` pode entrar em uma etapa futura.
+
+### 4.2 Sanitização de Output
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Escape de HTML | Implementado | `lib/sanitize.ts` expõe `escapeHTML` para e-mails e HTML gerado no servidor |
+| Sanitização de HTML simples | Implementado | `sanitizeHTML` remove scripts, estilos, handlers `on*` e URLs `javascript:`/`data:` |
+| Sanitização de texto | Implementado | `sanitizePlainText` remove caracteres de controle e limita tamanho quando informado |
+| Sanitização de URL | Implementado | `sanitizeUrl` permite apenas caminhos internos seguros, `http` e `https` |
+| Avisos globais | Implementado | `lib/announcements/rules.ts` e `lib/announcements/message-content.ts` sanitizam texto, imagem e CTA |
+| E-mails de aviso | Implementado | `lib/announcements/email.ts` escapa dados antes de montar HTML |
+
+### Observação Sobre React
+
+Textos renderizados com `{valor}` em componentes React já são escapados pelo React por padrão. A sanitização desta etapa protege principalmente os pontos onde o app interpreta links/imagens de avisos e monta HTML de e-mail.
