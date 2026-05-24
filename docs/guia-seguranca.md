@@ -384,3 +384,34 @@ account.deleted
 - Enviar alerta para eventos `critical`, como exclusão de conta em massa.
 - Registrar alterações de plano Premium e ações administrativas.
 - Criar política de revisão mensal dos eventos de auditoria.
+
+### 7.2 Alertas de Anomalias
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Detector central | Implementado | `lib/anomaly-detection.ts` analisa eventos recentes em `audit_logs` |
+| Cron automático | Implementado | `app/api/cron/anomaly-detection/route.ts` roda pelo `vercel.json` a cada 15 minutos |
+| Múltiplos IPs no login | Implementado | Alerta quando há mais de 3 hashes de IP em logins bem-sucedidos no período de 1 hora |
+| Muitas ações em pouco tempo | Implementado | Alerta quando há mais de 100 eventos auditados em 5 minutos para o mesmo usuário |
+| E-mail de alerta ao usuário | Implementado | `lib/security-alert-email.ts` envia aviso de atividade incomum via Resend |
+| Deduplicação de alertas | Implementado | Evita reenviar o mesmo tipo de alerta para o mesmo usuário por 1 hora |
+| Registro de alerta | Implementado | Grava `security.anomaly_detected` e `security.anomaly_alert.sent` em `audit_logs` |
+| Bloqueio temporário automático | Pendente | Não foi ativado para evitar bloquear usuários legítimos sem tela de desbloqueio/suporte |
+
+### Eventos de Anomalia
+
+```text
+security.anomaly_detected
+security.anomaly_alert.sent
+```
+
+### Observação Sobre IP
+
+Como o audit log salva apenas `ip_hash`, a detecção compara hashes de IP, não o IP real. Isso preserva privacidade e ainda permite identificar logins de múltiplas origens.
+
+### Próximas Melhorias
+
+- Criar lista de permissões para administradores/testes internos.
+- Adicionar bloqueio temporário com mensagem clara e canal de recuperação.
+- Criar painel admin para ver alertas recentes por severidade.
+- Enviar alerta interno para eventos críticos além do e-mail ao usuário.
