@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/backup-database",
+      "schedule": "0 2 * * *"
+    },
+    {
       "path": "/api/cron/backup-email",
       "schedule": "0 9 * * *"
     },

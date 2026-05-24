@@ -33,7 +33,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 - Rate limit para login, cadastro, esqueci senha e redefinição de senha.
 - Rate limit por IP para APIs sensíveis como IA, marketing e checkout.
 - Proteção contra brute force no login por e-mail e IP, com limpeza no login bem-sucedido.
-- CAPTCHA opcional para cadastro e recuperação de senha.
+- CAPTCHA v2 opcional para cadastro e recuperação de senha.
 - Validação de e-mail, nome e senha.
 - Validação central do payload de dados do app antes de salvar no Supabase.
 - Sanitização de output para avisos globais, e-mails e URLs exibidas ao usuário.
@@ -225,7 +225,7 @@ O exemplo do guia usava `Map` em memória. No app, a proteção está mais adequ
 
 | Item | Status | Implementação |
 | --- | --- | --- |
-| Widget reCAPTCHA v3 | Implementado | `app/components/RecaptchaField.tsx` carrega o script oficial do Google sem nova dependência |
+| Widget reCAPTCHA v2 checkbox | Implementado | `app/components/RecaptchaField.tsx` carrega o script oficial do Google sem nova dependência |
 | Cadastro com CAPTCHA | Implementado | `app/entrar/page.tsx` envia `recaptchaToken` para `/api/auth/register` |
 | Recuperação de senha com CAPTCHA | Implementado | `app/entrar/page.tsx` envia `recaptchaToken` para `/api/auth/forgot-password` |
 | Validação no servidor | Implementado | `lib/recaptcha.ts` chama `https://www.google.com/recaptcha/api/siteverify` |
@@ -239,9 +239,97 @@ Para ativar em produção, configure:
 ```env
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=sua_site_key_publica
 RECAPTCHA_SECRET_KEY=sua_secret_key_privada
-RECAPTCHA_MIN_SCORE=0.5
 ```
 
 Sem essas variáveis, o app continua funcionando sem exibir CAPTCHA. Isso evita quebrar desenvolvimento local ou deploy antes da configuração das chaves.
 
-No reCAPTCHA v3 não aparece a caixinha "Não sou um robô". Ele roda invisível, calcula um score de risco e o servidor bloqueia quando o score fica abaixo do mínimo configurado.
+O projeto usa reCAPTCHA v2 checkbox. Por isso o usuário vê a caixa "Não sou um robô" no cadastro e na recuperação de senha.
+
+## Parte 6: Backup e Recuperação
+
+### 6.1 Backup Automático
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Backup diário do banco | Implementado | `app/api/cron/backup-database/route.ts` exporta tabelas críticas |
+| Agendamento do backup | Implementado | `vercel.json` agenda `/api/cron/backup-database` diariamente às 02:00 UTC |
+| Proteção do cron | Implementado | A rota exige `Authorization: Bearer CRON_SECRET` quando `CRON_SECRET` está configurado |
+| Criptografia do backup | Implementado | O payload é criptografado com `ENCRYPTION_KEY` via AES-256-GCM antes de salvar |
+| Storage privado | Implementado | Salva no bucket privado `DATABASE_BACKUP_BUCKET` ou `database-backups` no Supabase Storage |
+| Tabelas exportadas | Implementado | `auth_users`, `user_app_data`, `user_testimonials` e `global_announcements` |
+
+### Variáveis Necessárias
+
+Configure na Vercel:
+
+```env
+CRON_SECRET=um_token_forte_para_cron
+DATABASE_BACKUP_BUCKET=database-backups
+ENCRYPTION_KEY=chave_hexadecimal_de_64_caracteres
+```
+
+O app também precisa das variáveis Supabase já usadas pelo servidor:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=sua_url_supabase
+SUPABASE_SECRET_KEY=sua_service_role_ou_chave_servidor
+```
+
+### Observação Sobre Recuperação
+
+Esta etapa cria o arquivo de backup criptografado. A restauração ainda deve ser feita de forma controlada por alguém técnico: baixar o arquivo do Storage, descriptografar com `ENCRYPTION_KEY`, validar o conteúdo e reimportar no Supabase. Uma rota automática de restore não foi criada para evitar risco de sobrescrever dados em produção por engano.
+
+### 6.2 Plano de Recuperação de Desastres
+
+| Métrica | Alvo | Situação atual |
+| --- | --- | --- |
+| RTO | 4 horas | Recuperação manual a partir do backup criptografado no Supabase Storage |
+| RPO | 24 horas com backup diário | Para RPO de 1 hora, ativar Point-in-Time Recovery/logs de transação no Supabase |
+| Frequência de backup | Diário | `vercel.json` executa `/api/cron/backup-database` às 02:00 UTC |
+| Local do backup | Supabase Storage privado | Bucket `DATABASE_BACKUP_BUCKET` ou `database-backups` |
+| Criptografia | Obrigatória | Backup salvo com AES-256-GCM usando `ENCRYPTION_KEY` |
+
+#### Definições
+
+```text
+RTO (Recovery Time Objective): tempo máximo aceitável para restaurar o serviço.
+Alvo: 4 horas.
+
+RPO (Recovery Point Objective): volume máximo aceitável de dados perdidos.
+Alvo atual: até 24 horas com backup diário.
+Alvo futuro: até 1 hora com PITR/logs de transação.
+```
+
+#### Procedimento de Recuperação
+
+1. Detectar falha por monitoramento, erro crítico, alerta da Vercel, Sentry ou Supabase.
+2. Confirmar impacto: indisponibilidade, corrupção de dados, exclusão indevida ou falha de autenticação.
+3. Notificar responsáveis internos e registrar horário de início do incidente.
+4. Pausar ações de escrita quando houver risco de sobrescrever dados válidos.
+5. Localizar o backup mais recente no Supabase Storage privado.
+6. Baixar o arquivo de backup e descriptografar com a mesma `ENCRYPTION_KEY` usada na produção.
+7. Validar estrutura e amostra dos dados antes de restaurar.
+8. Restaurar primeiro em ambiente seguro de validação, quando possível.
+9. Comparar contagens de usuários, dados do app, avisos e depoimentos.
+10. Restaurar em produção somente após validação mínima.
+11. Comunicar usuários caso exista impacto visível, perda de dados ou janela de instabilidade.
+12. Registrar pós-incidente com causa, impacto, duração, dados restaurados e ação preventiva.
+
+#### Checklist de Validação Após Restauração
+
+- Login e cadastro funcionando.
+- Dados de `auth_users` disponíveis.
+- Dados de calculadora em `user_app_data` restaurados.
+- Checkout e status Premium preservados.
+- Avisos globais carregando corretamente.
+- Amostra de usuários consegue abrir materiais, produtos, vendas e orçamentos.
+- Nenhum endpoint crítico retornando erro 500.
+- Logs do Sentry/Vercel sem nova falha recorrente.
+
+#### Melhorias Futuras Para RPO de 1 Hora
+
+- Ativar Point-in-Time Recovery no Supabase, se disponível no plano usado.
+- Configurar retenção de logs de transação.
+- Criar rotina de teste de restauração mensal.
+- Documentar responsável primário e secundário pela recuperação.
+- Criar alerta explícito para falha do cron `/api/cron/backup-database`.
