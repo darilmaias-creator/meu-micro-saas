@@ -8,10 +8,12 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const RETENTION_DAYS = 90;
+const AUDIT_RETENTION_DAYS = 365;
 const CLEANUP_TARGETS = {
   access_logs: "created_at",
   api_rate_limits: "updated_at",
   auth_rate_limits: "updated_at",
+  audit_logs: "created_at",
 } as const;
 
 type CleanupTable = keyof typeof CLEANUP_TARGETS;
@@ -74,6 +76,9 @@ export async function GET(request: Request) {
   const cutoffIso = new Date(
     Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000,
   ).toISOString();
+  const auditCutoffIso = new Date(
+    Date.now() - AUDIT_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
 
   try {
     const results = await Promise.all([
@@ -89,6 +94,10 @@ export async function GET(request: Request) {
         cutoffIso,
         table: "auth_rate_limits",
       }),
+      deleteOlderThan({
+        cutoffIso: auditCutoffIso,
+        table: "audit_logs",
+      }),
     ]);
 
     logServerEvent({
@@ -96,6 +105,8 @@ export async function GET(request: Request) {
       message: "old temporary logs cleanup finished",
       context: {
         cutoffIso,
+        auditCutoffIso,
+        auditRetentionDays: AUDIT_RETENTION_DAYS,
         retentionDays: RETENTION_DAYS,
         results,
       },
@@ -104,6 +115,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       ok: true,
       cutoffIso,
+      auditCutoffIso,
+      auditRetentionDays: AUDIT_RETENTION_DAYS,
       retentionDays: RETENTION_DAYS,
       results,
     });
@@ -113,6 +126,8 @@ export async function GET(request: Request) {
       error,
       context: {
         cutoffIso,
+        auditCutoffIso,
+        auditRetentionDays: AUDIT_RETENTION_DAYS,
         retentionDays: RETENTION_DAYS,
       },
     });

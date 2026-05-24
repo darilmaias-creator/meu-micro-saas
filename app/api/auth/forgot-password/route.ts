@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logSecurityEvent } from "@/lib/audit-log";
 import {
   normalizeEmailInput,
   validateEmailAddress,
@@ -86,6 +87,15 @@ export async function POST(request: Request) {
   });
 
   if (!rateLimitResult.ok) {
+    await logSecurityEvent({
+      action: "auth.forgot_password.rate_limited",
+      details: {
+        email,
+        retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+      },
+      headers: request.headers,
+      severity: "warn",
+    });
     return NextResponse.json(
       { message: rateLimitResult.message },
       { status: 429 },
@@ -95,6 +105,14 @@ export async function POST(request: Request) {
   const recaptchaResult = await verifyRecaptchaToken(body.recaptchaToken);
 
   if (!recaptchaResult.ok) {
+    await logSecurityEvent({
+      action: "auth.forgot_password.captcha_failed",
+      details: {
+        email,
+      },
+      headers: request.headers,
+      severity: "warn",
+    });
     return NextResponse.json(
       { message: recaptchaResult.message },
       { status: 400 },
@@ -114,6 +132,15 @@ export async function POST(request: Request) {
     const user = await findUserByEmail(email);
 
     if (!user || !user.passwordHash) {
+      await logSecurityEvent({
+        action: "auth.forgot_password.requested",
+        details: {
+          email,
+          matchedAccount: false,
+        },
+        headers: request.headers,
+        severity: "warn",
+      });
       return NextResponse.json({
         message:
           "Se existir uma conta com este e-mail, enviaremos um link de recuperacao em instantes.",
@@ -143,6 +170,15 @@ export async function POST(request: Request) {
         userId: user.id,
         email: user.email,
       },
+    });
+
+    await logSecurityEvent({
+      action: "auth.forgot_password.requested",
+      details: {
+        matchedAccount: true,
+      },
+      headers: request.headers,
+      userId: user.id,
     });
 
     return NextResponse.json({

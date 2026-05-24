@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
+import { logSecurityEvent } from "@/lib/audit-log";
 import {
   isValidBackupFrequency,
   normalizeBackupFrequency,
@@ -44,7 +45,7 @@ async function getAuthenticatedUserId() {
   return session?.user?.id ?? null;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const userId = await getAuthenticatedUserId();
 
   if (!userId) {
@@ -63,6 +64,12 @@ export async function GET() {
         { status: 404 },
       );
     }
+
+    await logSecurityEvent({
+      action: "account.data_export.requested",
+      headers: request.headers,
+      userId,
+    });
 
     return NextResponse.json(await getBackupPayloadForUser(user));
   } catch (error) {
@@ -148,6 +155,16 @@ export async function PATCH(request: Request) {
       );
     }
 
+    await logSecurityEvent({
+      action: "account.backup_settings.updated",
+      details: {
+        backupEmailEnabled: Boolean(backupEmail),
+        backupFrequency,
+      },
+      headers: request.headers,
+      userId,
+    });
+
     return NextResponse.json({
       message:
         backupFrequency === "off"
@@ -220,6 +237,16 @@ export async function DELETE(request: Request) {
     if (deleteAppDataError) {
       throw deleteAppDataError;
     }
+
+    await logSecurityEvent({
+      action: "account.deleted",
+      details: {
+        email: user.email,
+      },
+      headers: request.headers,
+      severity: "critical",
+      userId,
+    });
 
     await deleteUserById(userId);
 

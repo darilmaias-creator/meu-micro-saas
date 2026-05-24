@@ -47,6 +47,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 - Sincronização de assinatura por webhook e confirmação de checkout.
 - Separação de chaves sensíveis em variáveis de ambiente.
 - Logs e captura de exceções com Sentry/monitoramento.
+- Registro persistente de eventos de segurança em `audit_logs`.
 - Política de privacidade, termos de uso e política de cancelamento/reembolso.
 - Headers globais de proteção:
   - `X-Content-Type-Options: nosniff`
@@ -256,7 +257,7 @@ O projeto usa reCAPTCHA v2 checkbox. Por isso o usuário vê a caixa "Não sou u
 | Proteção do cron | Implementado | A rota exige `Authorization: Bearer CRON_SECRET` quando `CRON_SECRET` está configurado |
 | Criptografia do backup | Implementado | O payload é criptografado com `ENCRYPTION_KEY` via AES-256-GCM antes de salvar |
 | Storage privado | Implementado | Salva no bucket privado `DATABASE_BACKUP_BUCKET` ou `database-backups` no Supabase Storage |
-| Tabelas exportadas | Implementado | `auth_users`, `user_app_data`, `user_testimonials` e `global_announcements` |
+| Tabelas exportadas | Implementado | `auth_users`, `audit_logs`, `user_app_data`, `user_testimonials` e `global_announcements` |
 
 ### Variáveis Necessárias
 
@@ -333,3 +334,53 @@ Alvo futuro: até 1 hora com PITR/logs de transação.
 - Criar rotina de teste de restauração mensal.
 - Documentar responsável primário e secundário pela recuperação.
 - Criar alerta explícito para falha do cron `/api/cron/backup-database`.
+
+## Parte 7: Monitoramento e Logging
+
+### 7.1 Logging de Segurança
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Tabela de auditoria | Implementado | `public.audit_logs` em `supabase/schema.sql` |
+| Helper central | Implementado | `lib/audit-log.ts` registra eventos com ação, severidade, detalhes e hashes de IP/user-agent |
+| Login bem-sucedido | Implementado | `lib/auth/options.ts` registra `auth.login.success` |
+| Falha de login | Implementado | `lib/auth/options.ts` registra `auth.login.failed` |
+| Rate limit de login | Implementado | `lib/auth/options.ts` registra `auth.login.rate_limited` |
+| Cadastro | Implementado | `app/api/auth/register/route.ts` registra sucesso, e-mail duplicado, CAPTCHA falho e rate limit |
+| Recuperação de senha | Implementado | `app/api/auth/forgot-password/route.ts` e `app/api/auth/reset-password/route.ts` registram solicitação, conclusão e falhas |
+| Exportação de dados | Implementado | `app/api/account/route.ts` registra `account.data_export.requested` |
+| Alteração de backup | Implementado | `app/api/account/route.ts` registra `account.backup_settings.updated` |
+| Exclusão de conta | Implementado | `app/api/account/route.ts` registra `account.deleted` com severidade crítica |
+| Retenção | Implementado | `app/api/cron/cleanup-old-logs/route.ts` remove logs de auditoria com mais de 365 dias |
+
+### Observação Sobre Privacidade
+
+O audit log não grava IP ou user-agent em texto puro. Esses valores são salvos como hash SHA-256 para permitir correlação de abuso sem expor dados diretamente. O helper também remove campos sensíveis como senha, token, segredo, cookie e authorization antes de persistir `details`.
+
+### Eventos Registrados
+
+```text
+auth.login.success
+auth.login.failed
+auth.login.rate_limited
+auth.register.success
+auth.register.duplicate_email
+auth.register.captcha_failed
+auth.register.rate_limited
+auth.forgot_password.requested
+auth.forgot_password.captcha_failed
+auth.forgot_password.rate_limited
+auth.password_reset.success
+auth.password_reset.failed
+auth.password_reset.rate_limited
+account.data_export.requested
+account.backup_settings.updated
+account.deleted
+```
+
+### Próximas Melhorias
+
+- Criar tela administrativa para consultar eventos críticos.
+- Enviar alerta para eventos `critical`, como exclusão de conta em massa.
+- Registrar alterações de plano Premium e ações administrativas.
+- Criar política de revisão mensal dos eventos de auditoria.

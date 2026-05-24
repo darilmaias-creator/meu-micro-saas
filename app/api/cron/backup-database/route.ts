@@ -15,6 +15,7 @@ const BACKUP_BUCKET = process.env.DATABASE_BACKUP_BUCKET ?? "database-backups";
 const BACKUP_PAGE_SIZE = 1000;
 const BACKUP_TABLES = [
   "auth_users",
+  "audit_logs",
   "user_app_data",
   "user_testimonials",
   "global_announcements",

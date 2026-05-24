@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logSecurityEvent } from "@/lib/audit-log";
 import {
   normalizeEmailInput,
   normalizeNameInput,
@@ -97,6 +98,15 @@ export async function POST(request: Request) {
   });
 
   if (!rateLimitResult.ok) {
+    await logSecurityEvent({
+      action: "auth.register.rate_limited",
+      details: {
+        email: normalizeEmailInput(body.email),
+        retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+      },
+      headers: request.headers,
+      severity: "warn",
+    });
     return NextResponse.json(
       { message: rateLimitResult.message },
       { status: 429 },
@@ -106,6 +116,14 @@ export async function POST(request: Request) {
   const recaptchaResult = await verifyRecaptchaToken(body.recaptchaToken);
 
   if (!recaptchaResult.ok) {
+    await logSecurityEvent({
+      action: "auth.register.captcha_failed",
+      details: {
+        email: normalizeEmailInput(body.email),
+      },
+      headers: request.headers,
+      severity: "warn",
+    });
     return NextResponse.json(
       { message: recaptchaResult.message },
       { status: 400 },
@@ -127,6 +145,14 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
+      await logSecurityEvent({
+        action: "auth.register.duplicate_email",
+        details: {
+          email: normalizeEmailInput(body.email),
+        },
+        headers: request.headers,
+        severity: "warn",
+      });
       return NextResponse.json(
         { message: "Ja existe uma conta cadastrada com este e-mail." },
         { status: 409 },
@@ -151,6 +177,15 @@ export async function POST(request: Request) {
     } catch (verificationError) {
       console.warn("[auth:register:email-verification]", verificationError);
     }
+
+    await logSecurityEvent({
+      action: "auth.register.success",
+      details: {
+        verificationEmailSent,
+      },
+      headers: request.headers,
+      userId: user.id,
+    });
 
     return NextResponse.json(
       {

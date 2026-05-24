@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logSecurityEvent } from "@/lib/audit-log";
 import { validatePasswordForStorage } from "@/lib/auth/input-validation";
 import { hashPassword } from "@/lib/auth/password";
 import { consumeAuthRateLimit } from "@/lib/auth/rate-limit";
@@ -59,6 +60,14 @@ export async function POST(request: Request) {
   });
 
   if (!rateLimitResult.ok) {
+    await logSecurityEvent({
+      action: "auth.password_reset.rate_limited",
+      details: {
+        retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+      },
+      headers: request.headers,
+      severity: "warn",
+    });
     return NextResponse.json(
       { message: rateLimitResult.message },
       { status: 429 },
@@ -79,6 +88,14 @@ export async function POST(request: Request) {
     });
 
     if (!result.ok) {
+      await logSecurityEvent({
+        action: "auth.password_reset.failed",
+        details: {
+          code: result.code,
+        },
+        headers: request.headers,
+        severity: "warn",
+      });
       return NextResponse.json(
         {
           message:
@@ -96,6 +113,12 @@ export async function POST(request: Request) {
       context: {
         userId: result.user.id,
       },
+    });
+
+    await logSecurityEvent({
+      action: "auth.password_reset.success",
+      headers: request.headers,
+      userId: result.user.id,
     });
 
     return NextResponse.json({

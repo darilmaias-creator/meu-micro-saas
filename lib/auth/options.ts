@@ -5,6 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import type { JWT } from "next-auth/jwt";
 
+import { logSecurityEvent } from "@/lib/audit-log";
 import {
   normalizeEmailInput,
   validateEmailAddress,
@@ -96,18 +97,46 @@ export async function authorizeCredentials(
           retryAfterSeconds: rateLimitResult.retryAfterSeconds,
         },
       });
+      await logSecurityEvent({
+        action: "auth.login.rate_limited",
+        details: {
+          email,
+          retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+        },
+        headers: req.headers,
+        severity: "warn",
+      });
       return null;
     }
 
     const user = await findUserByEmail(email);
 
     if (!user?.passwordHash) {
+      await logSecurityEvent({
+        action: "auth.login.failed",
+        details: {
+          email,
+          reason: "user_not_found_or_no_password",
+        },
+        headers: req.headers,
+        severity: "warn",
+      });
       return null;
     }
 
     const passwordMatches = await verifyPassword(password, user.passwordHash);
 
     if (!passwordMatches) {
+      await logSecurityEvent({
+        action: "auth.login.failed",
+        details: {
+          email,
+          reason: "invalid_password",
+        },
+        headers: req.headers,
+        severity: "warn",
+        userId: user.id,
+      });
       return null;
     }
 
@@ -124,6 +153,14 @@ export async function authorizeCredentials(
         userId: user.id,
         email: user.email,
       },
+    });
+    await logSecurityEvent({
+      action: "auth.login.success",
+      details: {
+        provider: "credentials",
+      },
+      headers: req.headers,
+      userId: user.id,
     });
 
     return {
@@ -173,6 +210,13 @@ export const authOptions: NextAuthOptions = {
           });
 
           user.id = storedUser.id;
+          await logSecurityEvent({
+            action: "auth.login.success",
+            details: {
+              provider: "google",
+            },
+            userId: storedUser.id,
+          });
         }
 
         return true;

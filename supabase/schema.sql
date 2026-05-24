@@ -148,6 +148,26 @@ create index if not exists access_logs_created_at_idx
 create index if not exists access_logs_user_id_idx
   on public.access_logs (user_id);
 
+create table if not exists public.audit_logs (
+  id bigserial primary key,
+  user_id text null references public.auth_users (id) on delete set null,
+  action text not null,
+  severity text not null default 'info' check (severity in ('info', 'warn', 'critical')),
+  details jsonb not null default '{}'::jsonb,
+  ip_hash text null,
+  user_agent_hash text null,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists audit_logs_created_at_idx
+  on public.audit_logs (created_at);
+
+create index if not exists audit_logs_user_id_idx
+  on public.audit_logs (user_id);
+
+create index if not exists audit_logs_action_idx
+  on public.audit_logs (action);
+
 create table if not exists public.user_app_data (
   user_id text primary key,
   config jsonb not null default '{}'::jsonb,
@@ -313,6 +333,7 @@ alter table public.auth_users enable row level security;
 alter table public.auth_rate_limits enable row level security;
 alter table public.api_rate_limits enable row level security;
 alter table public.access_logs enable row level security;
+alter table public.audit_logs enable row level security;
 alter table public.user_app_data enable row level security;
 alter table public.user_testimonials enable row level security;
 alter table public.global_announcements enable row level security;
