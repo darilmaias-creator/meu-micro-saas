@@ -32,6 +32,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 - Proteção de rotas sensíveis por sessão em APIs como app data, billing, perfil, anúncios e IA.
 - Rate limit para login, cadastro, esqueci senha e redefinição de senha.
 - Rate limit por IP para APIs sensíveis como IA, marketing e checkout.
+- Proteção contra brute force no login por e-mail e IP, com limpeza no login bem-sucedido.
 - Validação de e-mail, nome e senha.
 - Validação central do payload de dados do app antes de salvar no Supabase.
 - Sanitização de output para avisos globais, e-mails e URLs exibidas ao usuário.
@@ -203,3 +204,18 @@ O Supabase client envia filtros e valores pela API do PostgREST, sem concatenar 
 ### Observação Sobre Redis/Upstash
 
 O guia sugeria Upstash Redis. Nesta implementação, usei Supabase para evitar adicionar uma nova dependência e uma nova conta de infraestrutura. Se o volume crescer muito, a camada `lib/rate-limit.ts` pode ser trocada por Upstash mantendo a mesma chamada nos endpoints.
+
+### 5.2 Proteção Contra Brute Force
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Limite por e-mail no login | Implementado | `lib/auth/rate-limit.ts` bloqueia após 5 tentativas em 15 minutos |
+| Limite por IP no login | Implementado | `lib/auth/rate-limit.ts` bloqueia após 15 tentativas em 15 minutos |
+| Bloqueio temporário | Implementado | Bloqueio de 15 minutos para tentativas excessivas |
+| Limpeza após sucesso | Implementado | `lib/auth/options.ts` chama `clearAuthRateLimit` depois de senha correta |
+| Persistência | Implementado | `public.auth_rate_limits` em `supabase/schema.sql` |
+| Cadastro e recuperação de senha | Implementado | Também usam `consumeAuthRateLimit` para reduzir abuso |
+
+### Observação Sobre Login
+
+O exemplo do guia usava `Map` em memória. No app, a proteção está mais adequada para produção porque persiste no Supabase quando as variáveis do banco estão configuradas. Assim o limite continua funcionando mesmo em ambiente serverless, onde memória local pode ser recriada entre requisições.
