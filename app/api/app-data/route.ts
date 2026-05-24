@@ -14,6 +14,7 @@ import {
   logServerEvent,
 } from "@/lib/observability/server-monitoring";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { validateAppDataInput } from "@/lib/validation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -141,7 +142,30 @@ export async function PUT(request: Request) {
     );
   }
 
-  const normalizedState = normalizeAppDataState(body);
+  const validationResult = validateAppDataInput(body);
+
+  if (!validationResult.ok) {
+    logServerEvent({
+      scope: "app-data:put",
+      level: "warn",
+      message: "app data save blocked by invalid payload",
+      context: {
+        userId: session.user.id,
+        path: validationResult.path ?? null,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        code: "INVALID_APP_DATA",
+        message: validationResult.message,
+        path: validationResult.path ?? null,
+      },
+      { status: 400 },
+    );
+  }
+
+  const normalizedState = normalizeAppDataState(validationResult.data);
   const baseUpdatedAtHeader = request.headers.get("x-app-data-base-updated-at");
   const baseUpdatedAt =
     baseUpdatedAtHeader && baseUpdatedAtHeader !== "null"

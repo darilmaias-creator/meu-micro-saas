@@ -32,6 +32,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 - Proteção de rotas sensíveis por sessão em APIs como app data, billing, perfil, anúncios e IA.
 - Rate limit para login, cadastro, esqueci senha e redefinição de senha.
 - Validação de e-mail, nome e senha.
+- Validação central do payload de dados do app antes de salvar no Supabase.
 - Hash de senha no fluxo de credenciais.
 - Criptografia utilitária para dados sensíveis em repouso com AES-256-GCM.
 - Recuperação de conta com link seguro, token com hash e validade de 1 hora.
@@ -137,3 +138,19 @@ A CSP foi configurada de forma compatível com o checkout embutido da Stripe e c
 A função de criptografia está pronta para campos sensíveis como telefone de cliente, CPF, dados bancários ou informações confidenciais de negócio. Ela não deve ser usada em senha, porque senha precisa de hash irreversível, não criptografia reversível.
 
 Para ativar a criptografia em produção, configure `ENCRYPTION_KEY` na Vercel com 32 bytes em hexadecimal. Um valor válido tem 64 caracteres.
+
+## Parte 4: Validação e Sanitização
+
+### 4.1 Validação de Input
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Validação de dados do app | Implementado | `lib/validation.ts` valida `config`, `insumos`, `savedProducts`, `sales` e `quotes` |
+| Bloqueio de payload inválido | Implementado | `app/api/app-data/route.ts` retorna `400 INVALID_APP_DATA` antes de salvar |
+| Limite contra payload abusivo | Implementado | Valida tamanho de arrays, quantidade de campos, profundidade e tamanho de textos |
+| Validação numérica | Implementado | Bloqueia `Infinity`, `NaN`, valores negativos indevidos e números acima do limite seguro |
+| Validação de tipos conhecidos | Implementado | Bloqueia tipos inválidos de insumo, modo de custo operacional e tipo de custo customizado |
+
+### Observação Sobre Biblioteca
+
+O projeto ainda não usa `zod`, então a validação desta etapa foi implementada sem adicionar dependência nova. Se o app passar a usar schemas compartilhados no frontend e backend, `zod` pode entrar em uma etapa futura.
