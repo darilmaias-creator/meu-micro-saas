@@ -6,6 +6,7 @@ import { Calculator } from "lucide-react";
 import { getProviders, signIn, useSession } from "next-auth/react";
 
 import AuthenticatedAppShell from "../AuthenticatedAppShell";
+import { RecaptchaField } from "@/app/components/RecaptchaField";
 import { ONBOARDING_GLOBAL_COMPLETED_KEY } from "../onboarding/storage";
 import type { ActiveTab } from "@/lib/app-tabs";
 import { getPathForActiveTab, resolveActiveTabFromParam } from "@/lib/app-tabs";
@@ -20,6 +21,7 @@ type AuthFeedback =
 
 const PASSWORD_RECOVERY_AVAILABLE =
   process.env.NEXT_PUBLIC_PASSWORD_RECOVERY_ENABLED === "true";
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
 function mapAuthErrorMessage(errorCode: string | null) {
   switch (errorCode) {
@@ -118,6 +120,9 @@ export default function MainApp() {
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
   const [isGoogleEnabled, setIsGoogleEnabled] = useState(false);
   const [providersLoaded, setProvidersLoaded] = useState(false);
+  const [recaptchaResetKey, setRecaptchaResetKey] = useState(0);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const shouldShowRecaptcha = Boolean(RECAPTCHA_SITE_KEY) && authMode !== "login";
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -172,11 +177,24 @@ export default function MainApp() {
     };
   }, []);
 
+  useEffect(() => {
+    setRecaptchaToken(null);
+    setRecaptchaResetKey((currentKey) => currentKey + 1);
+  }, [authMode]);
+
   async function handleCredentialsAuth() {
     setAuthFeedback(null);
     setIsSubmittingAuth(true);
 
     try {
+      if (shouldShowRecaptcha && !recaptchaToken) {
+        setAuthFeedback({
+          tone: "error",
+          message: "Confirme que voce nao e um robo para continuar.",
+        });
+        return;
+      }
+
       if (authMode === "forgotPassword") {
         const forgotPasswordResponse = await fetch("/api/auth/forgot-password", {
           method: "POST",
@@ -185,6 +203,7 @@ export default function MainApp() {
           },
           body: JSON.stringify({
             email,
+            recaptchaToken,
           }),
         });
 
@@ -222,6 +241,7 @@ export default function MainApp() {
             name,
             email,
             password,
+            recaptchaToken,
           }),
         });
 
@@ -280,6 +300,11 @@ export default function MainApp() {
             : "Nao foi possivel concluir a autenticacao agora.",
       });
     } finally {
+      if (shouldShowRecaptcha) {
+        setRecaptchaToken(null);
+        setRecaptchaResetKey((currentKey) => currentKey + 1);
+      }
+
       setIsSubmittingAuth(false);
     }
   }
@@ -451,9 +476,17 @@ export default function MainApp() {
               </div>
             )}
 
+            {shouldShowRecaptcha && (
+              <RecaptchaField
+                key={`${authMode}-${recaptchaResetKey}`}
+                onTokenChange={setRecaptchaToken}
+                siteKey={RECAPTCHA_SITE_KEY}
+              />
+            )}
+
             <button
               type="submit"
-              disabled={isSubmittingAuth}
+              disabled={isSubmittingAuth || (shouldShowRecaptcha && !recaptchaToken)}
               className="w-full rounded-xl bg-amber-600 px-4 py-3 text-base font-bold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-300"
             >
               {isSubmittingAuth

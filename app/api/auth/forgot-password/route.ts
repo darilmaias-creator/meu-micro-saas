@@ -18,12 +18,16 @@ import {
   captureServerException,
   logServerEvent,
 } from "@/lib/observability/server-monitoring";
+import { verifyRecaptchaToken } from "@/lib/recaptcha";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type ForgotPasswordPayload = { email?: string };
+type ForgotPasswordPayload = {
+  email?: string;
+  recaptchaToken?: string | null;
+};
 
 function getBaseUrl(request: Request) {
   return process.env.NEXTAUTH_URL?.trim() || new URL(request.url).origin;
@@ -85,6 +89,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { message: rateLimitResult.message },
       { status: 429 },
+    );
+  }
+
+  const recaptchaResult = await verifyRecaptchaToken(body.recaptchaToken);
+
+  if (!recaptchaResult.ok) {
+    return NextResponse.json(
+      { message: recaptchaResult.message },
+      { status: 400 },
     );
   }
 

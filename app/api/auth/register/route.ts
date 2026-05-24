@@ -16,6 +16,7 @@ import {
 } from "@/lib/auth/email-verification";
 import { sendEmailVerificationEmail } from "@/lib/auth/email-verification-email";
 import { markEmailVerificationSent } from "@/lib/auth/email-verification-store";
+import { verifyRecaptchaToken } from "@/lib/recaptcha";
 
 function getBaseUrl(request: Request) {
   return process.env.NEXTAUTH_URL?.trim() || new URL(request.url).origin;
@@ -25,6 +26,7 @@ type RegisterPayload = {
   name?: string;
   email?: string;
   password?: string;
+  recaptchaToken?: string | null;
 };
 
 function validateRegisterPayload(body: RegisterPayload) {
@@ -98,6 +100,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { message: rateLimitResult.message },
       { status: 429 },
+    );
+  }
+
+  const recaptchaResult = await verifyRecaptchaToken(body.recaptchaToken);
+
+  if (!recaptchaResult.ok) {
+    return NextResponse.json(
+      { message: recaptchaResult.message },
+      { status: 400 },
     );
   }
 

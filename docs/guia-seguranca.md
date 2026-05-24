@@ -33,6 +33,7 @@ DISPONIBILIDADE: o serviço continua acessível e resiliente.
 - Rate limit para login, cadastro, esqueci senha e redefinição de senha.
 - Rate limit por IP para APIs sensíveis como IA, marketing e checkout.
 - Proteção contra brute force no login por e-mail e IP, com limpeza no login bem-sucedido.
+- CAPTCHA opcional para cadastro e recuperação de senha.
 - Validação de e-mail, nome e senha.
 - Validação central do payload de dados do app antes de salvar no Supabase.
 - Sanitização de output para avisos globais, e-mails e URLs exibidas ao usuário.
@@ -219,3 +220,25 @@ O guia sugeria Upstash Redis. Nesta implementação, usei Supabase para evitar a
 ### Observação Sobre Login
 
 O exemplo do guia usava `Map` em memória. No app, a proteção está mais adequada para produção porque persiste no Supabase quando as variáveis do banco estão configuradas. Assim o limite continua funcionando mesmo em ambiente serverless, onde memória local pode ser recriada entre requisições.
+
+### 5.3 CAPTCHA para Formulários Públicos
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Widget reCAPTCHA | Implementado | `app/components/RecaptchaField.tsx` carrega o script oficial do Google sem nova dependência |
+| Cadastro com CAPTCHA | Implementado | `app/entrar/page.tsx` envia `recaptchaToken` para `/api/auth/register` |
+| Recuperação de senha com CAPTCHA | Implementado | `app/entrar/page.tsx` envia `recaptchaToken` para `/api/auth/forgot-password` |
+| Validação no servidor | Implementado | `lib/recaptcha.ts` chama `https://www.google.com/recaptcha/api/siteverify` |
+| CSP compatível | Implementado | `next.config.ts` permite scripts/frames/conexões necessários do Google reCAPTCHA |
+| Modo opcional | Implementado | CAPTCHA só é exigido quando `RECAPTCHA_SECRET_KEY` está configurada no servidor |
+
+### Variáveis Necessárias
+
+Para ativar em produção, configure:
+
+```env
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=sua_site_key_publica
+RECAPTCHA_SECRET_KEY=sua_secret_key_privada
+```
+
+Sem essas variáveis, o app continua funcionando sem exibir CAPTCHA. Isso evita quebrar desenvolvimento local ou deploy antes da configuração das chaves.
