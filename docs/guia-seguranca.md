@@ -628,3 +628,55 @@ Responder rapidamente a eventos como vazamento de dados, acesso indevido, falha 
 - Eventos `audit_logs` relacionados.
 - Prints/logs de Vercel, Supabase, Stripe ou Sentry.
 - Correção aplicada e validação feita.
+
+### Implementação Avançada (Mês 2+)
+
+Esta fase reúne controles que dependem mais de infraestrutura, operação, auditoria e governança do que de código de aplicação. Eles devem entrar quando o produto já tiver mais usuários, receita recorrente, dados sensíveis em maior volume ou exigência de clientes/parceiros.
+
+#### Infraestrutura
+
+| Item | Status | Caminho recomendado |
+| --- | --- | --- |
+| WAF (Web Application Firewall) | Pendente operacional | Avaliar Vercel Firewall/WAF, Cloudflare ou provedor equivalente para bloquear tráfego malicioso antes de chegar ao app |
+| IDS/IPS | Pendente operacional | Usar logs da Vercel/Supabase/Sentry como base inicial e evoluir para ferramenta dedicada quando houver volume |
+| Isolamento de rede | Parcial por plataforma | Vercel e Supabase já isolam infraestrutura gerenciada; isolamento avançado exige rede privada, regras de acesso e ambiente separado |
+
+#### Dados
+
+| Item | Status | Caminho recomendado |
+| --- | --- | --- |
+| Criptografia de chave dupla | Pendente | Exige desenho de chaves por aplicação/usuário, rotação, recuperação e possível KMS externo |
+| Auditoria de acesso a dados | Implementado inicial | `audit_logs` registra eventos sensíveis; próxima etapa é registrar leituras administrativas e criar painel de consulta |
+| Anonimização de dados | Parcial | Logs já usam hash para IP/user-agent; dados de analytics e exportações futuras devem remover identificadores diretos quando possível |
+
+#### Conformidade
+
+| Item | Status | Caminho recomendado |
+| --- | --- | --- |
+| Certificação ISO 27001 | Pendente operacional | Requer SGSI, políticas formais, gestão de risco, evidências, auditoria interna e certificadora externa |
+| Conformidade com GDPR | Parcial | LGPD já cobre direitos parecidos; revisar base legal, DPA, cookies, retenção, exportação e exclusão para usuários da UE |
+| Conformidade com CCPA | Pendente operacional | Necessária se houver usuários da Califórnia; exige avisos específicos, opt-out e processo de solicitação do consumidor |
+
+#### Resposta a Incidentes
+
+| Item | Status | Implementação |
+| --- | --- | --- |
+| Plano de resposta documentado | Implementado | Plano nesta seção e na Parte 6.2 para recuperação de desastre |
+| Simulações de ataque (red team) | Pendente operacional | Planejar simulações controladas após estabilizar 2FA, backups testados e painel de auditoria |
+| Seguro de cibersegurança | Pendente operacional | Avaliar quando houver receita suficiente, exigência contratual ou maior exposição de dados |
+
+#### Critérios Para Iniciar Esta Fase
+
+- Base ativa crescendo com usuários pagos.
+- Mais dados sensíveis ou dados de negócio críticos armazenados.
+- Primeiros clientes pedindo controles formais de segurança.
+- Necessidade de comprovar segurança para parceiros, investidores ou marketplaces.
+- Time com rotina operacional para responder alertas, revisar logs e executar restauração testada.
+
+#### Próximas Decisões
+
+1. Escolher provedor de WAF/firewall compatível com Vercel e domínio atual.
+2. Definir se o app precisa mirar apenas LGPD ou também GDPR/CCPA.
+3. Criar calendário trimestral de revisão de segurança.
+4. Priorizar painel admin de auditoria antes de SOC 2/ISO 27001.
+5. Executar o primeiro teste real de restauração de backup antes de contratar auditoria externa.
