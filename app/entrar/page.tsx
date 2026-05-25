@@ -78,6 +78,22 @@ function mapAuthStatusMessage(searchParams: URLSearchParams): AuthFeedback {
     };
   }
 
+  if (searchParams.get("emailVerified") === "success") {
+    return {
+      tone: "success",
+      message: "E-mail confirmado com sucesso.",
+    };
+  }
+
+  if (searchParams.get("emailVerified") === "error") {
+    return {
+      tone: "error",
+      message:
+        searchParams.get("message") ??
+        "Nao foi possivel confirmar o e-mail agora.",
+    };
+  }
+
   if (searchParams.get("auth") === "required") {
     return {
       tone: "error",
@@ -108,7 +124,7 @@ function resolvePostLoginPath(
 }
 
 export default function MainApp() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -143,7 +159,12 @@ export default function MainApp() {
     if (searchParams.get("auth") === "required") {
       setAuthMode("login");
     }
-  }, []);
+
+    if (searchParams.get("emailVerified") === "success") {
+      void update();
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [update]);
 
   useEffect(() => {
     let isMounted = true;

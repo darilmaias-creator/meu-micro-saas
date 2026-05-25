@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, MailWarning } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 type EmailVerificationNoticeProps = {
   email: string;
@@ -10,9 +11,10 @@ type EmailVerificationNoticeProps = {
 export default function EmailVerificationNotice({
   email,
 }: EmailVerificationNoticeProps) {
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle",
-  );
+  const { update } = useSession();
+  const [status, setStatus] = useState<
+    "idle" | "sending" | "sent" | "checking" | "error"
+  >("idle");
   const [message, setMessage] = useState<string | null>(null);
 
   async function handleSendVerificationEmail() {
@@ -47,6 +49,22 @@ export default function EmailVerificationNotice({
     }
   }
 
+  async function handleCheckVerification() {
+    setStatus("checking");
+    setMessage(null);
+
+    try {
+      await update();
+      setStatus("sent");
+      setMessage(
+        "Atualizamos sua sessao. Se o aviso continuar aparecendo, envie um novo link de confirmacao.",
+      );
+    } catch {
+      setStatus("error");
+      setMessage("Nao foi possivel atualizar sua sessao agora.");
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 pt-4">
       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950 shadow-sm">
@@ -76,14 +94,24 @@ export default function EmailVerificationNotice({
               )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleSendVerificationEmail}
-            disabled={status === "sending"}
-            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {status === "sending" ? "Enviando..." : "Enviar confirmação"}
-          </button>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleCheckVerification}
+              disabled={status === "checking" || status === "sending"}
+              className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-800 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {status === "checking" ? "Verificando..." : "Ja confirmei"}
+            </button>
+            <button
+              type="button"
+              onClick={handleSendVerificationEmail}
+              disabled={status === "sending" || status === "checking"}
+              className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {status === "sending" ? "Enviando..." : "Enviar confirmação"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
