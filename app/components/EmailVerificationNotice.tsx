@@ -12,6 +12,7 @@ export default function EmailVerificationNotice({
   email,
 }: EmailVerificationNoticeProps) {
   const { update } = useSession();
+  const [isHidden, setIsHidden] = useState(false);
   const [status, setStatus] = useState<
     "idle" | "sending" | "sent" | "checking" | "error"
   >("idle");
@@ -54,15 +55,38 @@ export default function EmailVerificationNotice({
     setMessage(null);
 
     try {
+      const response = await fetch("/api/auth/email-verification-status", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const result = (await response.json().catch(() => null)) as
+        | {
+            emailVerified?: boolean;
+            message?: string;
+            schemaMissing?: boolean;
+          }
+        | null;
+
+      if (!response.ok || !result?.emailVerified) {
+        setStatus("error");
+        setMessage(
+          result?.message ??
+            "Ainda nao identificamos a confirmacao. Confira se voce abriu o link mais recente enviado por e-mail.",
+        );
+        return;
+      }
+
       await update();
       setStatus("sent");
-      setMessage(
-        "Atualizamos sua sessao. Se o aviso continuar aparecendo, envie um novo link de confirmacao.",
-      );
+      setIsHidden(true);
     } catch {
       setStatus("error");
       setMessage("Nao foi possivel atualizar sua sessao agora.");
     }
+  }
+
+  if (isHidden) {
+    return null;
   }
 
   return (
