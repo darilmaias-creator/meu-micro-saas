@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from 'next/link';
 import React, { useState } from 'react';
-import { Settings, Package, Plus, Trash2, DollarSign, RefreshCw, Heart, Sparkles, Save, Copy, Download, Upload, CircleHelp } from 'lucide-react';
+import { Settings, Package, Plus, Trash2, DollarSign, RefreshCw, Heart, Sparkles, Save, Copy, Download, Upload, CircleHelp, ArrowRight, ChevronLeft } from 'lucide-react';
 import { Card, InputGroup, TimeInputGroup, Toggle, sanitizeDecimalInput, sanitizeIntegerInput } from './ui';
 import EmptyState from '@/components/ui/empty-state';
 import { FREE_TIER_PRODUCT_LIMIT } from '@/lib/app-data/plan-limits';
@@ -12,6 +12,8 @@ import { OperationCostsSummary } from './OperationCostsTab';
 
 export default function CalculatorTab({ appData, isPremium }: any) {
     const { config, insumos, savedProducts, setSavedProducts } = appData;
+    const [calculationMode, setCalculationMode] = useState<'guided' | 'advanced'>('guided');
+    const [guidedStep, setGuidedStep] = useState(0);
     
     const [recipeItems, setRecipeItems] = useState<any[]>([]);
     const [tempInsumoId, setTempInsumoId] = useState('');
@@ -136,6 +138,37 @@ export default function CalculatorTab({ appData, isPremium }: any) {
     const activeProfitMargin = unitCost > 0 ? (activeProfitValue / unitCost) * 100 : 0;
     const titheBaseValue = Math.max(0, activePrice - materialUnitCost);
     const titheValue = titheBaseValue * 0.10;
+    const guidedSteps = [
+        'Produto',
+        'Materiais',
+        'Tempo',
+        'Lucro',
+        'Resultado',
+    ];
+    const guidedExamples = [
+        { label: 'Pulseira', margin: '55', name: 'Pulseira artesanal', time: '25', yield: '1' },
+        { label: 'Croche', margin: '45', name: 'Peça de croche', time: '120', yield: '1' },
+        { label: 'Bolo artesanal', margin: '50', name: 'Bolo artesanal', time: '90', yield: '1' },
+        { label: 'Laço', margin: '50', name: 'Laço personalizado', time: '20', yield: '1' },
+        { label: 'MDF/laser', margin: '60', name: 'Peça em MDF', time: '30', yield: '1' },
+    ];
+    const canGoToNextGuidedStep =
+        guidedStep === 0
+            ? productName.trim().length > 0
+            : guidedStep === 1
+                ? recipeItems.length > 0
+                : guidedStep === 2
+                    ? Number(finishTime || 0) + Number(cutTime || 0) > 0
+                    : true;
+
+    const applyGuidedExample = (example: typeof guidedExamples[number]) => {
+        setProductName(example.name);
+        setFinishTime(example.time);
+        setYieldQty(example.yield);
+        config.setProfitMargin(example.margin);
+        setManualPrice('');
+        setGuidedStep(1);
+    };
 
     const saveProduct = () => {
         // Lógica FREEMIUM: Verifica limite antes de salvar
@@ -211,8 +244,273 @@ export default function CalculatorTab({ appData, isPremium }: any) {
         } catch (err) { setError(err instanceof Error ? err.message : "Erro na IA. Tente novamente."); } finally { setIsGenerating(false); }
     };
 
+    const modeSelector = (
+        <Card className="border-amber-200 bg-amber-50/70">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p className="text-xs font-black uppercase tracking-wide text-amber-700">Calcular preço</p>
+                    <h2 className="mt-1 text-xl font-black text-slate-900">Escolha como quer montar sua ficha</h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                        Use o modo guiado para ir passo a passo ou abra o modo avançado para ver todos os ajustes.
+                    </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white p-1 shadow-sm">
+                    <button
+                        type="button"
+                        onClick={() => setCalculationMode('guided')}
+                        className={`rounded-xl px-4 py-2 text-sm font-black transition ${calculationMode === 'guided' ? 'bg-amber-600 text-white shadow' : 'text-slate-600 hover:bg-amber-50'}`}
+                    >
+                        Modo guiado
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCalculationMode('advanced')}
+                        className={`rounded-xl px-4 py-2 text-sm font-black transition ${calculationMode === 'advanced' ? 'bg-slate-900 text-white shadow' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                        Avançado
+                    </button>
+                </div>
+            </div>
+        </Card>
+    );
+
+    if (calculationMode === 'guided') {
+        return (
+            <div className="animate-fadeIn space-y-6">
+                {modeSelector}
+
+                <Card className="border-t-4 border-amber-500">
+                    <div className="mb-5">
+                        <div className="flex flex-wrap gap-2">
+                            {guidedSteps.map((step, index) => (
+                                <button
+                                    key={step}
+                                    type="button"
+                                    onClick={() => setGuidedStep(index)}
+                                    className={`rounded-full px-3 py-1.5 text-xs font-black transition ${guidedStep === index ? 'bg-amber-600 text-white' : index < guidedStep ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
+                                >
+                                    {index + 1}. {step}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {guidedStep === 0 && (
+                        <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900">Qual produto você quer vender?</h2>
+                                <p className="mt-2 text-sm text-slate-600">Digite um nome simples. Depois você pode editar tudo no modo avançado.</p>
+                                <div className="mt-5">
+                                    <InputGroup label="Nome do produto" value={productName} onChange={setProductName} type="text" placeholder="Ex: Pulseira de miçanga" />
+                                </div>
+                                <p className="text-xs font-bold uppercase text-slate-500">Ou comece por um exemplo</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {guidedExamples.map((example) => (
+                                        <button
+                                            key={example.label}
+                                            type="button"
+                                            onClick={() => applyGuidedExample(example)}
+                                            className="rounded-full border border-amber-200 bg-white px-3 py-2 text-sm font-bold text-amber-800 transition hover:bg-amber-50"
+                                        >
+                                            {example.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="text-sm font-black text-slate-900">Dica rápida</p>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">Se você ainda não cadastrou materiais, vá primeiro em Meus Materiais. Aqui você monta a ficha usando os materiais já salvos.</p>
+                                <Link href="/estoque" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-black text-white hover:bg-slate-800">
+                                    Cadastrar materiais
+                                    <ArrowRight size={15} />
+                                </Link>
+                            </div>
+                        </div>
+                    )}
+
+                    {guidedStep === 1 && (
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-900">Quais materiais entram nesse produto?</h2>
+                            <p className="mt-2 text-sm text-slate-600">Escolha um material salvo e informe quanto usa. Repita para cada material do produto.</p>
+                            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                                <label className="mb-2 block text-xs font-black uppercase text-amber-800">Material usado</label>
+                                <select value={tempInsumoId} onChange={e => setTempInsumoId(e.target.value)} className="w-full rounded-xl border border-amber-300 bg-white p-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500">
+                                    <option value="">Selecione um material</option>
+                                    {insumos.map((i: any) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                                </select>
+                                {tempInsumoId && (() => {
+                                    const selIns = insumos.find((i: any) => String(i.id) === String(tempInsumoId));
+                                    if(!selIns) return null;
+                                    if (selIns.type === 'area' || selIns.mode === 'area') {
+                                        return (
+                                            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                                <InputGroup label="Quantidade" value={tempQty} onChange={setTempQty} placeholder="1" className="mb-0" />
+                                                <InputGroup label={`Largura usada (${config.unit})`} value={tempWidth} onChange={setTempWidth} placeholder="0" className="mb-0" />
+                                                <InputGroup label={`Altura usada (${config.unit})`} value={tempHeight} onChange={setTempHeight} placeholder="0" className="mb-0"/>
+                                            </div>
+                                        );
+                                    }
+
+                                    let labelGasto = 'Quantidade usada'; let suffixGasto = '';
+                                    if (selIns.type === 'weight') { labelGasto = 'Peso usado'; suffixGasto = 'g'; }
+                                    if (selIns.type === 'volume') { labelGasto = 'Volume usado'; suffixGasto = 'ml'; }
+                                    if (selIns.type === 'length') { labelGasto = 'Comprimento usado'; suffixGasto = config.unit; }
+                                    return (
+                                        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            <InputGroup label="Quantidade de vezes" value={tempQty} onChange={setTempQty} placeholder="1" className="mb-0" />
+                                            <InputGroup label={labelGasto} value={tempMeasure} onChange={setTempMeasure} suffix={suffixGasto} placeholder="0" className="mb-0" />
+                                        </div>
+                                    );
+                                })()}
+                                <button onClick={handleAddIngredient} disabled={!tempInsumoId} className="mt-4 w-full rounded-xl bg-amber-600 py-3 font-black text-white transition hover:bg-amber-700 disabled:bg-slate-300">
+                                    Adicionar material ao produto
+                                </button>
+                            </div>
+                            <div className="mt-5 space-y-2">
+                                <h3 className="text-sm font-black text-slate-700">Materiais adicionados</h3>
+                                {recipeItems.length === 0 ? (
+                                    <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500">Nenhum material adicionado ainda.</p>
+                                ) : (
+                                    recipeItems.map((item, idx) => (
+                                        <div key={idx} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3">
+                                            <div>
+                                                <p className="font-black text-slate-800">{item.name}</p>
+                                                <p className="text-xs text-slate-500">{item.display}</p>
+                                            </div>
+                                            <button type="button" onClick={() => removeRecipeItem(idx)} className="rounded-full bg-red-50 p-2 text-red-600 hover:bg-red-100">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {guidedStep === 2 && (
+                        <div className="grid gap-5 md:grid-cols-2">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900">Quanto tempo você leva para fazer?</h2>
+                                <p className="mt-2 text-sm text-slate-600">Informe o tempo manual. Se usa máquina, também pode informar o tempo dela.</p>
+                                <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                    <TimeInputGroup label="Tempo fazendo com as mãos" totalMinutes={finishTime} onChange={setFinishTime} />
+                                    <TimeInputGroup label="Tempo de máquina, se tiver" totalMinutes={cutTime} onChange={setCutTime} />
+                                    <InputGroup label="Esse lote rende quantas unidades?" value={yieldQty} onChange={setYieldQty} type="number" step="1" min="1" placeholder="1" />
+                                </div>
+                            </div>
+                            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                                <p className="text-sm font-black text-amber-900">Sua hora de trabalho</p>
+                                <p className="mt-2 text-sm text-amber-800">Esse valor entra no cálculo do tempo manual.</p>
+                                <div className="mt-4">
+                                    <InputGroup label="Quanto quer ganhar por hora?" value={config.hourlyRate} onChange={config.setHourlyRate} prefix="R$" />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {guidedStep === 3 && (
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-900">Quanto lucro você quer colocar?</h2>
+                            <p className="mt-2 text-sm text-slate-600">Comece com uma faixa simples. Depois você pode ajustar o preço manualmente.</p>
+                            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                                {[
+                                    { label: 'Popular', value: '40', hint: 'Para vender mais' },
+                                    { label: 'Equilibrado', value: '55', hint: 'Bom ponto inicial' },
+                                    { label: 'Premium', value: '70', hint: 'Produto especial' },
+                                ].map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        onClick={() => config.setProfitMargin(option.value)}
+                                        className={`rounded-2xl border p-4 text-left transition ${String(config.profitMargin) === option.value ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-200' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
+                                    >
+                                        <p className="text-lg font-black text-slate-900">{option.value}%</p>
+                                        <p className="mt-1 text-sm font-bold text-slate-700">{option.label}</p>
+                                        <p className="text-xs text-slate-500">{option.hint}</p>
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="mt-5 max-w-xs">
+                                <InputGroup label="Ou digite outro lucro desejado" value={config.profitMargin} onChange={config.setProfitMargin} suffix="%" />
+                            </div>
+                        </div>
+                    )}
+
+                    {guidedStep === 4 && (
+                        <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900">Preço sugerido pronto</h2>
+                                <p className="mt-2 text-sm text-slate-600">Confira o custo, o lucro e o preço de venda por unidade.</p>
+                                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                        <p className="text-xs font-black uppercase text-slate-500">Custo por unidade</p>
+                                        <p className="mt-2 text-2xl font-black text-slate-900">R$ {Number(unitCost || 0).toFixed(2)}</p>
+                                    </div>
+                                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                                        <p className="text-xs font-black uppercase text-emerald-700">Lucro por unidade</p>
+                                        <p className="mt-2 text-2xl font-black text-emerald-700">R$ {Number(activeProfitValue || 0).toFixed(2)}</p>
+                                    </div>
+                                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                                        <p className="text-xs font-black uppercase text-amber-700">Preço de venda</p>
+                                        <p className="mt-2 text-3xl font-black text-amber-700">R$ {Number(activePrice || 0).toFixed(2)}</p>
+                                    </div>
+                                </div>
+                                <div className="mt-5 max-w-sm">
+                                    <InputGroup label="Ajustar preço manual, se quiser" value={manualPrice} onChange={setManualPrice} prefix="R$" placeholder={Number(suggestedPrice || 0).toFixed(2)} />
+                                </div>
+                                <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+                                    <button onClick={saveProduct} disabled={isProductLimitReached} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-black text-white transition hover:bg-slate-800 disabled:bg-slate-300">
+                                        <Save size={17} />
+                                        Salvar produto
+                                    </button>
+                                    <Link href="/vendas" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 font-black text-slate-700 transition hover:bg-slate-50">
+                                        Criar orçamento
+                                        <ArrowRight size={17} />
+                                    </Link>
+                                </div>
+                            </div>
+                            <div className="rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white">
+                                <p className="text-xs font-black uppercase text-amber-300">Resumo</p>
+                                <h3 className="mt-2 text-xl font-black">{productName || 'Produto'}</h3>
+                                <div className="mt-4 space-y-3 text-sm">
+                                    <div className="flex justify-between"><span className="text-slate-300">Materiais</span><span>R$ {Number(materialUnitCost || 0).toFixed(2)}</span></div>
+                                    <div className="flex justify-between"><span className="text-slate-300">Tempo e mão de obra</span><span>R$ {Number((cutCost + laborCost) / safeYieldQty || 0).toFixed(2)}</span></div>
+                                    <div className="flex justify-between"><span className="text-slate-300">Gastos do negócio</span><span>R$ {Number(totalOperationCostPerUnit || 0).toFixed(2)}</span></div>
+                                    <div className="border-t border-slate-700 pt-3 flex justify-between font-black text-amber-300"><span>Preço final</span><span>R$ {Number(activePrice || 0).toFixed(2)}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="mt-8 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                        <button
+                            type="button"
+                            onClick={() => setGuidedStep((current) => Math.max(0, current - 1))}
+                            disabled={guidedStep === 0}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            <ChevronLeft size={16} />
+                            Voltar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setGuidedStep((current) => Math.min(guidedSteps.length - 1, current + 1))}
+                            disabled={guidedStep === guidedSteps.length - 1 || !canGoToNextGuidedStep}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-3 text-sm font-black text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                        >
+                            Próximo passo
+                            <ArrowRight size={16} />
+                        </button>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
+
     return (
-        <div className="animate-fadeIn grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="animate-fadeIn space-y-6">
+            {modeSelector}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* COLUNA ESQUERDA: CONFIGS E INSERÇÃO */}
             <div className="md:col-span-7 space-y-6">
                 <Card>
@@ -480,6 +778,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                     {savedProducts.filter((p: any)=>p).map((p: any) => (<tr key={p.id} className="hover:bg-slate-50 group"><td className="px-6 py-4">{p.date}</td><td className="px-6 py-4 font-bold text-slate-800">{p.name || 'Produto'}</td><td className="px-6 py-4 text-center font-medium bg-slate-50">{(p.yieldQty || 1)} un</td><td className="px-6 py-4 text-red-600 font-medium">R$ {Number(p.totalCost || 0).toFixed(2)}</td><td className="px-6 py-4 text-green-700 font-bold">R$ {Number(p.activePrice || 0).toFixed(2)}</td><td className="px-6 py-4 font-medium">R$ {Number(p.activeProfitValue || 0).toFixed(2)}</td><td className="px-6 py-4 text-center"><button onClick={() => loadProduct(p)} className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg font-bold text-xs inline-flex items-center gap-1 mr-2"><Upload size={14} /> Carregar</button><button onClick={() => deleteProduct(p.id)} className="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg font-bold text-xs inline-flex items-center gap-1"><Trash2 size={14} /> Excluir</button></td></tr>))}
                 </tbody></table></div>
             )}</div></div>
+        </div>
         </div>
     );
 }
