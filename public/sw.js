@@ -1,7 +1,9 @@
-const CACHE_NAME = "calculadora-do-produtor-pwa-v7-notification-router";
+const CACHE_NAME = "calculadora-do-produtor-pwa-v8-offline-app-shell";
 const NOTIFICATION_CLICK_MESSAGE_TYPE = "CALC_ARTESAO_NOTIFICATION_CLICK";
 const ICON_VERSION = "20260502-favicon-refresh";
 const STATIC_ASSETS = [
+  "/",
+  "/entrar",
   "/manifest.webmanifest",
   `/icon?v=${ICON_VERSION}`,
   `/apple-icon?v=${ICON_VERSION}`,
@@ -14,6 +16,11 @@ const STATIC_ASSETS = [
   `/apple-touch-icon.png?v=${ICON_VERSION}`,
   `/favicon-32x32.png?v=${ICON_VERSION}`,
   `/favicon-16x16.png?v=${ICON_VERSION}`,
+];
+
+const NAVIGATION_FALLBACKS = [
+  "/entrar",
+  "/",
 ];
 
 self.addEventListener("install", (event) => {
@@ -55,11 +62,79 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (url.origin !== self.location.origin) {
+    if (request.destination === "image") {
+      event.respondWith(
+        caches.open(CACHE_NAME).then(async (cache) => {
+          const cached = await cache.match(request);
+
+          if (cached) {
+            return cached;
+          }
+
+          const response = await fetch(request);
+          await cache.put(request, response.clone());
+
+          return response;
+        }),
+      );
+    }
+
     return;
   }
 
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request));
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        try {
+          const response = await fetch(request);
+
+          if (response.ok) {
+            await cache.put(request, response.clone());
+          }
+
+          return response;
+        } catch {
+          const cachedPage = await cache.match(request);
+
+          if (cachedPage) {
+            return cachedPage;
+          }
+
+          for (const fallbackPath of NAVIGATION_FALLBACKS) {
+            const fallback = await cache.match(fallbackPath);
+
+            if (fallback) {
+              return fallback;
+            }
+          }
+
+          throw new Error("Offline navigation fallback unavailable.");
+        }
+      }),
+    );
+    return;
+  }
+
+  const isNextStaticAsset = url.pathname.startsWith("/_next/static/");
+
+  if (isNextStaticAsset) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(request);
+
+        if (cached) {
+          return cached;
+        }
+
+        const response = await fetch(request);
+
+        if (response.ok) {
+          await cache.put(request, response.clone());
+        }
+
+        return response;
+      }),
+    );
     return;
   }
 
@@ -77,7 +152,13 @@ self.addEventListener("fetch", (event) => {
     url.pathname === "/favicon-32x32.png" ||
     url.pathname === "/favicon-16x16.png";
 
-  if (!isPwaAsset) {
+  const isFontOrImage =
+    request.destination === "font" ||
+    request.destination === "image" ||
+    request.destination === "style" ||
+    request.destination === "script";
+
+  if (!isPwaAsset && !isFontOrImage) {
     return;
   }
 

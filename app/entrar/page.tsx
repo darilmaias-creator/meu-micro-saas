@@ -3,6 +3,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { Calculator } from "lucide-react";
+import type { Session } from "next-auth";
 import { getProviders, signIn, useSession } from "next-auth/react";
 
 import AuthenticatedAppShell from "../AuthenticatedAppShell";
@@ -22,6 +23,7 @@ type AuthFeedback =
 const PASSWORD_RECOVERY_AVAILABLE =
   process.env.NEXT_PUBLIC_PASSWORD_RECOVERY_ENABLED === "true";
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+const OFFLINE_SESSION_STORAGE_KEY = "calcula-artesao:last-session";
 
 function mapAuthErrorMessage(errorCode: string | null) {
   switch (errorCode) {
@@ -125,6 +127,7 @@ function resolvePostLoginPath(
 
 export default function MainApp() {
   const { data: session, status, update } = useSession();
+  const [offlineSession, setOfflineSession] = useState<Session | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -138,7 +141,74 @@ export default function MainApp() {
   const [providersLoaded, setProvidersLoaded] = useState(false);
   const [recaptchaResetKey, setRecaptchaResetKey] = useState(0);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
   const shouldShowRecaptcha = Boolean(RECAPTCHA_SITE_KEY) && authMode !== "login";
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+
+    function handleOnline() {
+      setIsOnline(true);
+    }
+
+    function handleOffline() {
+      setIsOnline(false);
+    }
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(
+        OFFLINE_SESSION_STORAGE_KEY,
+        JSON.stringify(session),
+      );
+      setOfflineSession(session);
+    } catch {
+      // Offline access remains optional if the browser blocks local storage.
+    }
+  }, [session]);
+
+  useEffect(() => {
+    function loadOfflineSession() {
+      if (isOnline) {
+        return;
+      }
+
+      try {
+        const storedSession = window.localStorage.getItem(
+          OFFLINE_SESSION_STORAGE_KEY,
+        );
+
+        if (!storedSession) {
+          return;
+        }
+
+        setOfflineSession(JSON.parse(storedSession) as Session);
+      } catch {
+        setOfflineSession(null);
+      }
+    }
+
+    loadOfflineSession();
+
+    window.addEventListener("offline", loadOfflineSession);
+
+    return () => {
+      window.removeEventListener("offline", loadOfflineSession);
+    };
+  }, [isOnline]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -335,7 +405,9 @@ export default function MainApp() {
     void handleCredentialsAuth();
   }
 
-  if (status === "loading") {
+  const activeSession = session ?? (!isOnline ? offlineSession : null);
+
+  if (status === "loading" && !activeSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <p className="text-xl font-bold text-amber-600 animate-pulse">Carregando aplicação...</p>
@@ -343,7 +415,7 @@ export default function MainApp() {
     );
   }
 
-  if (!session) {
+  if (!activeSession) {
     return (
       <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(253,230,138,0.4),_rgba(255,247,237,0.75)_32%,_rgba(248,250,252,1)_62%)] p-4 md:flex md:items-center md:justify-center">
         <div className="app-shell-surface mx-auto w-full max-w-md rounded-[32px] border border-white/80 bg-white/95 p-6 text-center shadow-[0_28px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl md:p-8">
@@ -615,8 +687,8 @@ export default function MainApp() {
 
   return (
     <AuthenticatedAppShell
-      key={`${session.user.id}:${initialAuthenticatedTab}`}
-      session={session}
+      key={`${activeSession.user.id}:${initialAuthenticatedTab}`}
+      session={activeSession}
       initialTab={initialAuthenticatedTab}
     />
   );

@@ -14,6 +14,7 @@ import {
 
 type StorageUpdater<T> = T | ((prev: T) => T);
 type CollectionKey = "insumos" | "savedProducts" | "sales" | "quotes";
+export type AppDataSyncStatus = "error" | "offline" | "pending" | "synced" | "syncing";
 type AppDataMutationResponse = {
   ok: boolean;
   updatedAt: string | null;
@@ -74,6 +75,14 @@ const STORAGE_KEYS = {
 } as const;
 
 const runtimeAppDataCache = new Map<string, RuntimeAppDataCacheEntry>();
+
+function isBrowserOnline() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
+    return true;
+  }
+
+  return navigator.onLine;
+}
 
 function buildScopedStorageKey(userId: string, key: string) {
   return `${STORAGE_NAMESPACE}:user:${userId}:${key}`;
@@ -528,6 +537,9 @@ export function useAppData(userId: string) {
     const localState = readLocalAppData(userId);
     return hasMeaningfulAppData(localState);
   });
+  const [syncStatus, setSyncStatus] = useState<AppDataSyncStatus>(() =>
+    isBrowserOnline() ? "syncing" : "offline",
+  );
   const hasHydratedRef = useRef(false);
   const lastSyncedStateRef = useRef("");
   const lastRemoteUpdatedAtRef = useRef<string | null>(null);
@@ -565,8 +577,14 @@ export function useAppData(userId: string) {
       return;
     }
 
+    if (!isBrowserOnline()) {
+      setSyncStatus("offline");
+      return;
+    }
+
     const requestBaseUpdatedAt = lastRemoteUpdatedAtRef.current ?? "";
     saveInFlightRef.current = true;
+    setSyncStatus("syncing");
 
     try {
       const response = await fetch("/api/app-data", {
@@ -597,6 +615,10 @@ export function useAppData(userId: string) {
           lastSyncedStateRef.current = serializedState;
         }
 
+        if (!pendingSaveSerializedRef.current) {
+          setSyncStatus("synced");
+        }
+
         updateRuntimeAppDataCache({
           userId,
           state: latestState,
@@ -620,6 +642,7 @@ export function useAppData(userId: string) {
           lastRemoteUpdatedAtRef.current = payload.updatedAt;
 
           if (hasNewerLocalChanges) {
+            setSyncStatus("pending");
             console.warn(payload.message);
             return;
           }
@@ -630,6 +653,7 @@ export function useAppData(userId: string) {
           latestSerializedStateRef.current = remoteSerializedState;
           pendingSaveSerializedRef.current = null;
           lastSyncedStateRef.current = remoteSerializedState;
+          setSyncStatus("synced");
           updateRuntimeAppDataCache({
             userId,
             state: remoteState,
@@ -644,16 +668,19 @@ export function useAppData(userId: string) {
       }
 
       console.error(await readResponseError(response));
+      setSyncStatus("error");
     } catch (error) {
       // Fall back to the local cache if the database is unavailable.
       console.error(
         "Nao foi possivel salvar os dados no Supabase. Os dados ficaram apenas no navegador por enquanto.",
       );
       console.error(error);
+      setSyncStatus(isBrowserOnline() ? "error" : "offline");
     } finally {
       saveInFlightRef.current = false;
 
       if (
+        isBrowserOnline() &&
         pendingSaveSerializedRef.current &&
         pendingSaveSerializedRef.current !== lastSyncedStateRef.current
       ) {
@@ -680,6 +707,16 @@ export function useAppData(userId: string) {
       cachedEntry?.latestSerializedState ?? localSerializedState;
 
     async function loadFromDatabase() {
+      if (!isBrowserOnline()) {
+        setState(localState);
+        hasHydratedRef.current = true;
+        setIsLoaded(true);
+        setSyncStatus(hasMeaningfulAppData(localState) ? "offline" : "error");
+        return;
+      }
+
+      setSyncStatus("syncing");
+
       try {
         const response = await fetch("/api/app-data", {
           cache: "no-store",
@@ -728,6 +765,11 @@ export function useAppData(userId: string) {
         }
 
         lastRemoteUpdatedAtRef.current = payload.updatedAt;
+        setSyncStatus(
+          latestSerializedStateRef.current === lastSyncedStateRef.current
+            ? "synced"
+            : "pending",
+        );
       } catch (error) {
         if (!isCurrent) {
           return;
@@ -738,6 +780,7 @@ export function useAppData(userId: string) {
         );
         console.error(error);
         setState(localState);
+        setSyncStatus(isBrowserOnline() ? "error" : "offline");
       } finally {
         if (isCurrent) {
           hasHydratedRef.current = true;
@@ -794,11 +837,16 @@ export function useAppData(userId: string) {
     const serializedState = serializeAppDataState(normalizedState);
 
     if (serializedState === lastSyncedStateRef.current) {
+      setSyncStatus(isBrowserOnline() ? "synced" : "offline");
       return;
     }
 
     pendingSaveSerializedRef.current = serializedState;
-    schedulePendingSave();
+    setSyncStatus(isBrowserOnline() ? "pending" : "offline");
+
+    if (isBrowserOnline()) {
+      schedulePendingSave();
+    }
 
     return () => {
       if (saveTimeoutRef.current !== null) {
@@ -807,6 +855,37 @@ export function useAppData(userId: string) {
       }
     };
   }, [isLoaded, schedulePendingSave, state, userId]);
+
+  useEffect(() => {
+    if (!isLoaded || typeof window === "undefined") {
+      return;
+    }
+
+    function handleOnline() {
+      if (
+        pendingSaveSerializedRef.current &&
+        pendingSaveSerializedRef.current !== lastSyncedStateRef.current
+      ) {
+        setSyncStatus("pending");
+        schedulePendingSave(0);
+        return;
+      }
+
+      setSyncStatus("synced");
+    }
+
+    function handleOffline() {
+      setSyncStatus("offline");
+    }
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [isLoaded, schedulePendingSave]);
 
   useEffect(() => {
     if (!isLoaded || typeof window === "undefined") {
@@ -849,6 +928,11 @@ export function useAppData(userId: string) {
     let isCancelled = false;
 
     async function refreshFromDatabase() {
+      if (!isBrowserOnline()) {
+        setSyncStatus("offline");
+        return;
+      }
+
       if (document.visibilityState === "hidden") {
         return;
       }
@@ -903,6 +987,7 @@ export function useAppData(userId: string) {
           "Nao foi possivel atualizar os dados da conta a partir do Supabase.",
         );
         console.error(error);
+        setSyncStatus(isBrowserOnline() ? "error" : "offline");
       }
     }
 
@@ -927,6 +1012,7 @@ export function useAppData(userId: string) {
 
   return {
     isLoaded,
+    syncStatus,
     replaceAllData: (value: Partial<AppDataState>) => {
       setState(normalizeAppDataState(value));
     },

@@ -25,6 +25,7 @@ import ProfileModal from "./ProfileModal";
 import SalesTab from "./SalesTab";
 import AppHelpAssistant from "./AppHelpAssistant";
 import EmailVerificationNotice from "./components/EmailVerificationNotice";
+import { OfflineSyncBanner } from "./components/OfflineSyncBanner";
 import OnboardingGuide from "./onboarding/OnboardingGuide";
 import { useAppData } from "./hooks/useAppData";
 import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
@@ -68,6 +69,7 @@ const TAB_ITEMS = [
   id: ActiveTab;
   label: string;
 }[];
+const OFFLINE_SESSION_STORAGE_KEY = "calcula-artesao:last-session";
 
 export default function AuthenticatedAppShell({
   initialTab,
@@ -175,7 +177,10 @@ export default function AuthenticatedAppShell({
                 </div>
               </button>
               <button
-                onClick={() => signOut()}
+                onClick={() => {
+                  window.localStorage.removeItem(OFFLINE_SESSION_STORAGE_KEY);
+                  void signOut();
+                }}
                 className="rounded-lg bg-amber-700/50 p-2 text-amber-100 transition-colors hover:bg-amber-800 hover:text-white"
                 title="Sair da Conta"
               >
@@ -208,6 +213,7 @@ export default function AuthenticatedAppShell({
       </div>
 
       <GlobalAnnouncementBanner userId={session.user.id} />
+      <OfflineSyncBanner syncStatus={appData.syncStatus} />
       {shouldShowEmailVerificationNotice && session.user.email && (
         <EmailVerificationNotice email={session.user.email} />
       )}
