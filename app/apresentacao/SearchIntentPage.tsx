@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
+import { PageComments } from "@/app/components/PageComments";
 
 import type { SearchIntentPageContent } from "./search-intents";
 import { SEARCH_INTENT_PAGES } from "./search-intents";
@@ -311,6 +312,8 @@ export function SearchIntentPage({
           ))}
         </div>
       </section>
+
+      <PageComments pagePath={`/${content.slug}`} />
 
       <section className="mx-auto w-[min(1180px,calc(100%-32px))] py-20">
         <div className="flex flex-col justify-between gap-7 overflow-hidden rounded-[42px] bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.28),_transparent_18rem),linear-gradient(135deg,_#d97706,_#92400e)] p-8 text-white sm:p-11 lg:flex-row lg:items-center">
