@@ -52,10 +52,12 @@ type CommentAuthor = {
 type PageComment = {
   authorAvatarUrl?: string | null;
   authorName: string;
+  canReport: boolean;
   content: string;
   createdAt: string;
   canDelete: boolean;
   canEdit: boolean;
+  hasReported: boolean;
   id: string;
   reportCount: number;
   updatedAt: string;
@@ -103,6 +105,8 @@ export function PageComments({ pagePath }: PageCommentsProps) {
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("Conteudo inadequado");
 
   const loadComments = useCallback(async () => {
     const response = await fetch(
@@ -290,13 +294,53 @@ export function PageComments({ pagePath }: PageCommentsProps) {
     }
   }
 
+  function startReportingComment(comment: PageComment) {
+    setReportingCommentId(comment.id);
+    setReportReason("Conteudo inadequado");
+    setFeedback(null);
+  }
+
+  function cancelReportingComment() {
+    setReportingCommentId(null);
+    setReportReason("Conteudo inadequado");
+  }
+
   async function handleReportComment(commentId: string) {
     const response = await fetch(`/api/comments/${commentId}/report`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        reason: reportReason,
+      }),
     });
     const result = (await response.json().catch(() => null)) as
-      | { message?: string }
+      | { hidden?: boolean; message?: string; reportCount?: number }
       | null;
+
+    if (response.ok) {
+      if (result?.hidden) {
+        setComments((currentComments) =>
+          currentComments.filter((comment) => comment.id !== commentId),
+        );
+      } else {
+        setComments((currentComments) =>
+          currentComments.map((comment) =>
+            comment.id === commentId
+              ? {
+                  ...comment,
+                  canReport: false,
+                  hasReported: true,
+                  reportCount: result?.reportCount ?? comment.reportCount,
+                }
+              : comment,
+          ),
+        );
+      }
+
+      cancelReportingComment();
+    }
 
     setFeedback(
       result?.message ??
@@ -484,6 +528,7 @@ export function PageComments({ pagePath }: PageCommentsProps) {
           ) : (
             comments.map((comment) => {
               const isEditing = editingCommentId === comment.id;
+              const isReporting = reportingCommentId === comment.id;
               const wasEdited = wasCommentEdited(comment);
 
               return (
@@ -540,16 +585,64 @@ export function PageComments({ pagePath }: PageCommentsProps) {
                         {deletingCommentId === comment.id ? "Excluindo..." : "Excluir"}
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => handleReportComment(comment.id)}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
-                    >
-                      <AlertTriangle size={13} />
-                      Denunciar
-                    </button>
+                    {comment.hasReported ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
+                        <AlertTriangle size={13} />
+                        Denunciado
+                      </span>
+                    ) : (
+                      comment.canReport && (
+                        <button
+                          type="button"
+                          onClick={() => startReportingComment(comment)}
+                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                        >
+                          <AlertTriangle size={13} />
+                          Denunciar
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
+                {isReporting && (
+                  <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-4">
+                    <label
+                      htmlFor={`report-reason-${comment.id}`}
+                      className="text-xs font-black uppercase text-red-800"
+                    >
+                      Motivo da denuncia
+                    </label>
+                    <select
+                      id={`report-reason-${comment.id}`}
+                      value={reportReason}
+                      onChange={(event) => setReportReason(event.target.value)}
+                      className="mt-2 w-full rounded-xl border border-red-100 bg-white px-3 py-2 text-sm font-bold text-slate-700 outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                    >
+                      <option>Conteudo inadequado</option>
+                      <option>Spam ou propaganda</option>
+                      <option>Ofensa ou ataque pessoal</option>
+                      <option>Informacao falsa ou perigosa</option>
+                    </select>
+                    <div className="mt-3 flex flex-wrap justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={cancelReportingComment}
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-black text-red-700 transition hover:bg-red-50"
+                      >
+                        <X size={14} />
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleReportComment(comment.id)}
+                        className="inline-flex items-center justify-center gap-2 rounded-full bg-red-700 px-4 py-2 text-xs font-black text-white transition hover:bg-red-800"
+                      >
+                        <AlertTriangle size={14} />
+                        Enviar denuncia
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {isEditing ? (
                   <div className="mt-4 space-y-3">
                     <textarea

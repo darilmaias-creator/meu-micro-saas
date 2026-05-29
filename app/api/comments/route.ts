@@ -38,6 +38,10 @@ type CommentRow = {
   updated_at: string;
 };
 
+type ReportRow = {
+  comment_id: string;
+};
+
 function getClientIpHash(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for");
   const realIp = request.headers.get("x-real-ip");
@@ -162,6 +166,8 @@ function formatCommentForClient(
     reportCount: comment.report_count ?? 0,
     canEdit: isOwner,
     canDelete: isOwner || permissions.isAdmin,
+    canReport: !isOwner,
+    hasReported: false,
   };
 }
 
@@ -199,12 +205,36 @@ export async function GET(request: Request) {
     throw error;
   }
 
-  const comments = ((data as CommentRow[] | null) ?? []).map((comment) =>
-    formatCommentForClient(comment, {
+  const commentRows = (data as CommentRow[] | null) ?? [];
+  const commentIds = commentRows.map((comment) => comment.id);
+  const reporterIpHash = getClientIpHash(request);
+  const { data: reports, error: reportsError } = commentIds.length
+    ? await supabase
+        .from("comment_reports")
+        .select("comment_id")
+        .eq("reporter_ip_hash", reporterIpHash)
+        .in("comment_id", commentIds)
+    : { data: [], error: null };
+
+  if (reportsError) {
+    throw reportsError;
+  }
+
+  const reportedCommentIds = new Set(
+    ((reports as ReportRow[] | null) ?? []).map((report) => report.comment_id),
+  );
+  const comments = commentRows.map((comment) => {
+    const formattedComment = formatCommentForClient(comment, {
       authorId: author?.id,
       isAdmin,
-    }),
-  );
+    });
+
+    return {
+      ...formattedComment,
+      canReport: formattedComment.canReport && !reportedCommentIds.has(comment.id),
+      hasReported: reportedCommentIds.has(comment.id),
+    };
+  });
 
   return NextResponse.json({
     comments,
