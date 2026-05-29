@@ -1,8 +1,11 @@
 import { createHash } from "node:crypto";
 
 import { cookies } from "next/headers";
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
+import { isAdminEmail } from "@/lib/admin/access";
+import { authOptions } from "@/lib/auth/options";
 import {
   COMMENT_AUTHOR_COOKIE,
   parseCommentAuthorToken,
@@ -32,6 +35,7 @@ type CommentRow = {
   content: string;
   report_count: number | null;
   created_at: string;
+  updated_at: string;
 };
 
 function getClientIpHash(request: Request) {
@@ -124,6 +128,39 @@ async function getCurrentCommentAuthor() {
   };
 }
 
+async function getCurrentCommentPermissions() {
+  const [author, session] = await Promise.all([
+    getCurrentCommentAuthor(),
+    getServerSession(authOptions),
+  ]);
+
+  return {
+    author,
+    isAdmin: isAdminEmail(session?.user?.email),
+  };
+}
+
+function formatCommentForClient(
+  comment: CommentRow,
+  permissions: { authorId?: string | null; isAdmin: boolean },
+) {
+  const isOwner = Boolean(
+    permissions.authorId && permissions.authorId === comment.author_id,
+  );
+
+  return {
+    id: comment.id,
+    authorName: comment.author_display_name,
+    authorAvatarUrl: comment.author_avatar_url,
+    content: comment.content,
+    createdAt: comment.created_at,
+    updatedAt: comment.updated_at,
+    reportCount: comment.report_count ?? 0,
+    canEdit: isOwner,
+    canDelete: isOwner || permissions.isAdmin,
+  };
+}
+
 export async function GET(request: Request) {
   if (!isCommentsDatabaseConfigured()) {
     return NextResponse.json({
@@ -143,10 +180,11 @@ export async function GET(request: Request) {
   }
 
   const supabase = createCommentsSupabaseClient();
+  const { author, isAdmin } = await getCurrentCommentPermissions();
   const { data, error } = await supabase
     .from("page_comments")
     .select(
-      "id, page_path, author_id, author_display_name, author_avatar_url, content, report_count, created_at",
+      "id, page_path, author_id, author_display_name, author_avatar_url, content, report_count, created_at, updated_at",
     )
     .eq("page_path", pagePath)
     .eq("status", "approved")
@@ -157,14 +195,12 @@ export async function GET(request: Request) {
     throw error;
   }
 
-  const comments = ((data as CommentRow[] | null) ?? []).map((comment) => ({
-    id: comment.id,
-    authorName: comment.author_display_name,
-    authorAvatarUrl: comment.author_avatar_url,
-    content: comment.content,
-    createdAt: comment.created_at,
-    reportCount: comment.report_count ?? 0,
-  }));
+  const comments = ((data as CommentRow[] | null) ?? []).map((comment) =>
+    formatCommentForClient(comment, {
+      authorId: author?.id,
+      isAdmin,
+    }),
+  );
 
   return NextResponse.json({
     comments,
@@ -235,7 +271,7 @@ export async function POST(request: Request) {
       status: "approved",
     })
     .select(
-      "id, page_path, author_id, author_display_name, author_avatar_url, content, report_count, created_at",
+      "id, page_path, author_id, author_display_name, author_avatar_url, content, report_count, created_at, updated_at",
     )
     .single();
 
@@ -247,14 +283,10 @@ export async function POST(request: Request) {
 
   return NextResponse.json(
     {
-      comment: {
-        id: comment.id,
-        authorName: comment.author_display_name,
-        authorAvatarUrl: comment.author_avatar_url,
-        content: comment.content,
-        createdAt: comment.created_at,
-        reportCount: comment.report_count ?? 0,
-      },
+      comment: formatCommentForClient(comment, {
+        authorId: author.id,
+        isAdmin: false,
+      }),
       ok: true,
     },
     { status: 201 },

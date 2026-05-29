@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, MessageCircle, Send } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  MessageCircle,
+  Pencil,
+  Send,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { COMMENT_MAX_LENGTH } from "@/lib/comments/rules";
 
@@ -46,8 +54,11 @@ type PageComment = {
   authorName: string;
   content: string;
   createdAt: string;
+  canDelete: boolean;
+  canEdit: boolean;
   id: string;
   reportCount: number;
+  updatedAt: string;
 };
 
 type PageCommentsProps = {
@@ -70,14 +81,26 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+function wasCommentEdited(comment: PageComment) {
+  return (
+    Math.abs(
+      new Date(comment.updatedAt).getTime() - new Date(comment.createdAt).getTime(),
+    ) > 1000
+  );
+}
+
 export function PageComments({ pagePath }: PageCommentsProps) {
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const [author, setAuthor] = useState<CommentAuthor | null>(null);
   const [clientId, setClientId] = useState<string | null>(null);
   const [comments, setComments] = useState<PageComment[]>([]);
   const [content, setContent] = useState("");
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isCommentsEnabled, setIsCommentsEnabled] = useState(true);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
 
@@ -201,6 +224,7 @@ export function PageComments({ pagePath }: PageCommentsProps) {
           }
 
           setAuthor(result.author);
+          void loadComments();
         },
       });
 
@@ -227,7 +251,7 @@ export function PageComments({ pagePath }: PageCommentsProps) {
       renderGoogleButton();
     };
     document.head.appendChild(script);
-  }, [author, clientId]);
+  }, [author, clientId, loadComments]);
 
   async function handleSubmitComment() {
     if (!content.trim()) {
@@ -280,6 +304,92 @@ export function PageComments({ pagePath }: PageCommentsProps) {
           ? "Obrigado. Vamos revisar esse comentario."
           : "Nao foi possivel denunciar agora."),
     );
+  }
+
+  function startEditingComment(comment: PageComment) {
+    setEditingCommentId(comment.id);
+    setEditingContent(comment.content);
+    setFeedback(null);
+  }
+
+  function cancelEditingComment() {
+    setEditingCommentId(null);
+    setEditingContent("");
+  }
+
+  async function handleUpdateComment(commentId: string) {
+    if (!editingContent.trim()) {
+      setFeedback("Escreva seu comentario antes de salvar.");
+      return;
+    }
+
+    setIsSavingEdit(true);
+    setFeedback(null);
+
+    try {
+      const response = await fetch(`/api/comments/${commentId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: editingContent,
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { comment?: PageComment; message?: string }
+        | null;
+
+      if (!response.ok || !result?.comment) {
+        setFeedback(result?.message ?? "Nao foi possivel editar o comentario.");
+        return;
+      }
+
+      setComments((currentComments) =>
+        currentComments.map((comment) =>
+          comment.id === commentId ? result.comment! : comment,
+        ),
+      );
+      cancelEditingComment();
+      setFeedback("Comentario atualizado.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    const shouldDelete = window.confirm("Excluir este comentario?");
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setDeletingCommentId(commentId);
+    setFeedback(null);
+
+    try {
+      const response = await fetch(`/api/comments/${commentId}`, {
+        method: "DELETE",
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { message?: string }
+        | null;
+
+      if (!response.ok) {
+        setFeedback(result?.message ?? "Nao foi possivel excluir o comentario.");
+        return;
+      }
+
+      setComments((currentComments) =>
+        currentComments.filter((comment) => comment.id !== commentId),
+      );
+      if (editingCommentId === commentId) {
+        cancelEditingComment();
+      }
+      setFeedback("Comentario excluido.");
+    } finally {
+      setDeletingCommentId(null);
+    }
   }
 
   if (!isCommentsEnabled) {
@@ -372,7 +482,11 @@ export function PageComments({ pagePath }: PageCommentsProps) {
               Ainda nao ha comentarios nesta pagina.
             </p>
           ) : (
-            comments.map((comment) => (
+            comments.map((comment) => {
+              const isEditing = editingCommentId === comment.id;
+              const wasEdited = wasCommentEdited(comment);
+
+              return (
               <article
                 key={comment.id}
                 className="rounded-3xl border border-slate-200 bg-white p-5"
@@ -400,23 +514,85 @@ export function PageComments({ pagePath }: PageCommentsProps) {
                       </p>
                       <p className="text-xs text-slate-500">
                         {formatCommentDate(comment.createdAt)}
+                        {wasEdited ? " · editado" : ""}
                       </p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleReportComment(comment.id)}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
-                  >
-                    <AlertTriangle size={13} />
-                    Denunciar
-                  </button>
+                  <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                    {comment.canEdit && !isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => startEditingComment(comment)}
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-800"
+                      >
+                        <Pencil size={13} />
+                        Editar
+                      </button>
+                    )}
+                    {comment.canDelete && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteComment(comment.id)}
+                        disabled={deletingCommentId === comment.id}
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <Trash2 size={13} />
+                        {deletingCommentId === comment.id ? "Excluindo..." : "Excluir"}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleReportComment(comment.id)}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <AlertTriangle size={13} />
+                      Denunciar
+                    </button>
+                  </div>
                 </div>
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-700">
-                  {comment.content}
-                </p>
+                {isEditing ? (
+                  <div className="mt-4 space-y-3">
+                    <textarea
+                      value={editingContent}
+                      onChange={(event) => setEditingContent(event.target.value)}
+                      maxLength={COMMENT_MAX_LENGTH}
+                      rows={4}
+                      className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-800 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                    />
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-xs font-bold text-slate-500">
+                        {editingContent.length}/{COMMENT_MAX_LENGTH}
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={cancelEditingComment}
+                          disabled={isSavingEdit}
+                          className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-black text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <X size={14} />
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateComment(comment.id)}
+                          disabled={isSavingEdit}
+                          className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-700 px-4 py-2 text-xs font-black text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <Check size={14} />
+                          {isSavingEdit ? "Salvando..." : "Salvar"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                    {comment.content}
+                  </p>
+                )}
               </article>
-            ))
+              );
+            })
           )}
         </div>
       </div>
