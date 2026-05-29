@@ -46,6 +46,7 @@ function getCommentAuthErrorMessage(error: unknown) {
   const candidate = error as { code?: unknown; message?: unknown };
   const message =
     typeof candidate.message === "string" ? candidate.message : "";
+  const lowerMessage = message.toLowerCase();
 
   if (
     candidate.code === "42P01" ||
@@ -57,10 +58,24 @@ function getCommentAuthErrorMessage(error: unknown) {
 
   if (
     candidate.code === "42501" ||
-    message.toLowerCase().includes("permission") ||
-    message.toLowerCase().includes("row-level security")
+    lowerMessage.includes("permission") ||
+    lowerMessage.includes("row-level security") ||
+    lowerMessage.includes("unauthorized") ||
+    lowerMessage.includes("invalid api key") ||
+    lowerMessage.includes("invalid jwt")
   ) {
     return "A chave de comentarios precisa ser a service_role/secret key do Supabase.";
+  }
+
+  if (
+    lowerMessage.includes("comments_session_secret") ||
+    lowerMessage.includes("nextauth_secret")
+  ) {
+    return "Configure COMMENTS_SESSION_SECRET na Vercel para manter a sessao de comentarios.";
+  }
+
+  if (lowerMessage.includes("failed to fetch") || lowerMessage.includes("fetch failed")) {
+    return "Nao foi possivel conectar ao Supabase de comentarios. Confira se COMMENTS_SUPABASE_URL esta sem /rest/v1 no final.";
   }
 
   return "Nao foi possivel entrar para comentar agora.";

@@ -6,6 +6,10 @@ const commentsSupabaseUrl = process.env.COMMENTS_SUPABASE_URL?.trim();
 const commentsSupabaseSecretKey =
   process.env.COMMENTS_SUPABASE_SECRET_KEY?.trim();
 
+function normalizeSupabaseProjectUrl(value: string) {
+  return value.replace(/\/rest\/v1\/?$/i, "").replace(/\/+$/, "");
+}
+
 export function isCommentsDatabaseConfigured() {
   return Boolean(commentsSupabaseUrl && commentsSupabaseSecretKey);
 }
@@ -19,10 +23,14 @@ export function createCommentsSupabaseClient() {
     throw new Error("COMMENTS_SUPABASE_SECRET_KEY is not configured.");
   }
 
-  return createClient(commentsSupabaseUrl, commentsSupabaseSecretKey, {
+  return createClient(
+    normalizeSupabaseProjectUrl(commentsSupabaseUrl),
+    commentsSupabaseSecretKey,
+    {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
-  });
+    },
+  );
 }
