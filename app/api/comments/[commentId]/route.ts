@@ -2,12 +2,12 @@ import { getServerSession } from "next-auth";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { isAdminEmail } from "@/lib/admin/access";
 import { authOptions } from "@/lib/auth/options";
 import {
   COMMENT_AUTHOR_COOKIE,
   parseCommentAuthorToken,
 } from "@/lib/comments/session";
+import { isCommentAdmin } from "@/lib/comments/admin";
 import {
   createCommentsSupabaseClient,
   isCommentsDatabaseConfigured,
@@ -44,9 +44,22 @@ async function getCurrentActor() {
     cookieStore.get(COMMENT_AUTHOR_COOKIE)?.value,
   );
 
+  const authorId = authorSession?.authorId ?? null;
+  const supabase = createCommentsSupabaseClient();
+  const { data: author } = authorId
+    ? await supabase
+        .from("comment_authors")
+        .select("email_hash")
+        .eq("id", authorId)
+        .maybeSingle()
+    : { data: null };
+
   return {
-    authorId: authorSession?.authorId ?? null,
-    isAdmin: isAdminEmail(session?.user?.email),
+    authorId,
+    isAdmin: isCommentAdmin({
+      authorEmailHash: (author as { email_hash?: string | null } | null)?.email_hash,
+      sessionEmail: session?.user?.email,
+    }),
   };
 }
 
