@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   title:
     "Calculadora para artesão | Precificação, estoque e orçamentos",
   description:
-    "Calcula Artesão: sistema para artesão e pequeno produtor calcular preço de venda, controlar estoque, montar ficha técnica e criar orçamentos.",
+    "Calcula Artesão: sistema para artesão e pequeno produtor calcular preço de venda, controlar estoque, montar produtos e criar orçamentos.",
   keywords: [
     "calcula artesão",
     "calculadora para artesão",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     "precificação de artesanato",
     "preço de venda artesanato",
     "orçamento para artesanato",
-    "ficha técnica artesanato",
+    "calcular produto artesanal",
     "controle de estoque para artesão",
     "como calcular artesanato",
     "aplicativo para artesão",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Calculadora para artesão",
     description:
-      "Precificação, estoque, ficha técnica e orçamentos para artesanato em um único lugar.",
+      "Preço de venda, estoque, produtos e orçamentos para artesanato em um único lugar.",
   },
 };
 
@@ -66,19 +66,19 @@ const features = [
     icon: Boxes,
     title: "Estoque completo",
     description:
-      "Cadastre insumos, medidas, custos, quantidade atual, valor parado e alerta de estoque mínimo.",
+      "Cadastre materiais, medidas, custos, quantidade atual, valor parado e alerta de estoque mínimo.",
   },
   {
     icon: ClipboardList,
-    title: "Ficha técnica",
+    title: "Produto completo",
     description:
-      "Monte produtos usando materiais do estoque, tempo de máquina, mão de obra e custos extras.",
+      "Monte produtos usando materiais do estoque, tempo de máquina, mão de obra e outros gastos.",
   },
   {
     icon: Calculator,
     title: "Preço de venda",
     description:
-      "Veja custo por unidade, margem, lucro, preço sugerido e ajuste manual sem perder clareza.",
+      "Veja custo por unidade, lucro, preço sugerido e ajuste manual sem perder clareza.",
   },
   {
     icon: FileText,
@@ -95,19 +95,19 @@ const workflow = [
       "Informe preço pago, medida, estoque atual e mínimo para saber quanto cada material custa de verdade.",
   },
   {
-    title: "Monte a ficha do produto",
+    title: "Monte o produto",
     description:
-      "Escolha os materiais, informe quantidade usada e inclua tempo, energia, acabamento e custos extras.",
+      "Escolha os materiais, informe quantidade usada e inclua tempo, energia, acabamento e outros gastos.",
   },
   {
-    title: "Venda com margem clara",
+    title: "Venda com lucro claro",
     description:
-      "Receba sugestão de preço, lucro, margem e registro para orçamento ou venda final.",
+      "Receba sugestão de preço, lucro e registro para orçamento ou venda final.",
   },
 ];
 
 const freePlanItems = [
-  "Controle inicial de insumos",
+  "Controle inicial de materiais",
   "Cálculo de preço de venda",
   "Acesso pelo celular e computador",
 ];
@@ -123,7 +123,7 @@ const audienceItems = [
   "Artesãos que precisam calcular preço de venda sem vender no prejuízo.",
   "Quem faz personalizados, lembrancinhas, caixas, MDF, costura, laser ou papelaria criativa.",
   "Pequenos produtores que precisam criar orçamentos claros para clientes.",
-  "MEIs e negócios criativos que querem controlar materiais, estoque e margem de lucro.",
+  "MEIs e negócios criativos que querem controlar materiais, estoque e lucro.",
 ];
 
 const footerSections = [
@@ -168,7 +168,7 @@ const faqItems = [
   {
     question: "Como precificar artesanato de um jeito mais seguro?",
     answer:
-      "O caminho mais confiável e reunir custo de material, tempo, despesas extras e margem de lucro. A Calcula Artesão organiza esse processo em um único lugar.",
+      "O caminho mais confiável e reunir custo de material, tempo, despesas extras e lucro desejado. A Calcula Artesão organiza esse processo em um único lugar.",
   },
   {
     question: "A calculadora serve para orçamento de artesanato?",
@@ -191,7 +191,7 @@ const homeStructuredData = [
     operatingSystem: "Web, Android, Windows",
     url: "https://calculaartesao.com.br",
     description:
-      "Sistema para artesão e pequeno produtor calcular preço de venda, controlar estoque, montar ficha técnica e criar orçamentos.",
+      "Sistema para artesão e pequeno produtor calcular preço de venda, controlar estoque, montar produtos e criar orçamentos.",
     offers: {
       "@type": "Offer",
       price: "0",
@@ -324,7 +324,7 @@ export default async function PresentationPage() {
                 {
                   icon: TrendingUp,
                   value: "Mais controle",
-                  text: "sobre materiais, margem e operação",
+                  text: "sobre materiais, lucro e gastos",
                 },
                 {
                   icon: Smartphone,
@@ -390,7 +390,7 @@ export default async function PresentationPage() {
               <div className="marketing-card rounded-[30px] border border-slate-950/8 bg-white p-5 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
                 <div className="flex items-center gap-2 font-extrabold text-amber-700">
                   <Package size={18} />
-                  Novo insumo
+                  Novo material
                 </div>
                 <div className="mt-4 space-y-3">
                   {[
@@ -491,7 +491,7 @@ export default async function PresentationPage() {
               <p className="mt-4 leading-8 text-slate-600">
                 Se voce trabalha com artesanato, produtos personalizados ou
                 producao sob encomenda, a Calcula Artesão ajuda a somar
-                materiais, tempo, custos, margem de lucro, estoque e orcamento em
+                materiais, tempo, custos, lucro, estoque e orcamento em
                 uma rotina simples de usar.
               </p>
             </div>

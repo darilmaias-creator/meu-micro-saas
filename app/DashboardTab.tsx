@@ -55,7 +55,7 @@ type DashboardTotals = {
   cost: number;
   tithe: number;
   profit: number;
-  margin: number; // Margem de lucro média %
+  margin: number; // Lucro médio em percentual
 };
 
 type DashboardTabProps = {
@@ -116,7 +116,7 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
     { revenue: 0, cost: 0, tithe: 0, profit: 0, margin: 0 },
   );
 
-  // Calcular margem de lucro média
+  // Calcular lucro médio em percentual
   dashTotals.margin = dashTotals.revenue > 0 ? (dashTotals.profit / dashTotals.revenue) * 100 : 0;
 
   // Dados para gráfico de vendas por mês
@@ -132,7 +132,7 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
 
   // Dados para gráfico de distribuição custos vs lucro
   const pieData = [
-    { name: 'Custos Produção', value: dashTotals.cost, color: '#ef4444' },
+    { name: 'Custo de Produção', value: dashTotals.cost, color: '#ef4444' },
     { name: 'Lucro Líquido', value: dashTotals.profit, color: '#f59e0b' },
   ];
 
@@ -295,7 +295,7 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <ProgressCard
-            title="Insumos Cadastrados"
+            title="Materiais Cadastrados"
             current={insumos.length}
             total={isPremium ? undefined : 20}
             icon={<Package size={20} className="text-emerald-600" />}
@@ -372,7 +372,7 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
         </Card>
         <Card className="border-l-4 border-l-red-500">
           <p className="text-xs text-slate-500 uppercase font-bold mb-1">
-            Custos Produção
+            Custo de Produção
           </p>
           <p className="text-2xl font-bold text-slate-800">
             R$ {Number(dashTotals.cost || 0).toFixed(2)}
@@ -399,7 +399,7 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-blue-500 bg-blue-50/30">
           <p className="text-xs text-blue-600 uppercase font-bold mb-1">
-            Margem de Lucro
+            Lucro sobre vendas
           </p>
           <p className="text-2xl font-bold text-blue-700">
             {Number(dashTotals.margin || 0).toFixed(1)}%
@@ -423,7 +423,7 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
             </ResponsiveContainer>
           </div>
           <div>
-            <h4 className="text-sm font-bold mb-2">Distribuição Custos vs Lucro</h4>
+            <h4 className="text-sm font-bold mb-2">Distribuição Custo vs Lucro</h4>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value">

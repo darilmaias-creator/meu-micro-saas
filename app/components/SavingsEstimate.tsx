@@ -20,7 +20,7 @@ export function SavingsEstimate({
 
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <span className="text-emerald-800">Margem média:</span>
+          <span className="text-emerald-800">Lucro médio:</span>
           <span className="font-bold text-emerald-900">{averageMargin}%</span>
         </div>
 
@@ -42,7 +42,7 @@ export function SavingsEstimate({
       </div>
 
       <p className="text-xs text-emerald-700 mt-4">
-        * Baseado em 20 vendas/mês com margem de {averageMargin}%
+        * Baseado em 20 vendas/mês com lucro médio de {averageMargin}%
       </p>
     </div>
   );

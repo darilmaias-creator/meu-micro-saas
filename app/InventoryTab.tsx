@@ -94,7 +94,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
     const handleSaveInsumo = () => {
         // Lógica FREEMIUM: Verifica limite antes de salvar
         if (!editingInsumoId && !isPremium && inventoryItems.length >= FREE_TIER_INSUMO_LIMIT) {
-            alert(`Limite da conta gratuita atingido! Você só pode adicionar até ${FREE_TIER_INSUMO_LIMIT} insumos no estoque. Assine o plano Premium para adicionar itens ilimitados.`);
+            alert(`Limite da conta gratuita atingido! Você só pode adicionar até ${FREE_TIER_INSUMO_LIMIT} materiais no estoque. Assine o plano Premium para adicionar itens ilimitados.`);
             return;
         }
 
@@ -130,19 +130,19 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
         if (editingInsumoId) {
             setInsumos(inventoryItems.map((i) => i.id === editingInsumoId ? novoInsumo : i));
             resetForm();
-            alert(`Insumo "${insName}" atualizado no estoque!`);
+            alert(`Material "${insName}" atualizado no estoque!`);
             return;
         }
 
         setInsumos([novoInsumo, ...inventoryItems]);
         resetForm();
-        alert(`Insumo "${insName}" cadastrado no estoque!`);
+        alert(`Material "${insName}" cadastrado no estoque!`);
     };
 
-    const delInsumo = (id: number) => { if(window.confirm('Apagar este insumo do estoque?')) setInsumos(inventoryItems.filter((i) => i.id !== id)); };
+    const delInsumo = (id: number) => { if(window.confirm('Apagar este material do estoque?')) setInsumos(inventoryItems.filter((i) => i.id !== id)); };
 
     const loadInsumo = (insumo: InventoryRecord) => {
-        if (window.confirm(`Carregar "${insumo.name || 'Insumo'}" para edição?`)) {
+        if (window.confirm(`Carregar "${insumo.name || 'Material'}" para edição?`)) {
             setEditingInsumoId(insumo.id);
             setInsType(insumo.type || 'area');
             setInsName(insumo.name || '');
@@ -167,7 +167,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
         <>
             {showSoftLimitWarning && (
                 <SoftLimitWarning
-                    message={`Você tem apenas ${freeInsumoRemaining} insumo(s) restante(s). Teste Premium para ilimitado.`}
+                    message={`Você tem apenas ${freeInsumoRemaining} ${freeInsumoRemaining === 1 ? 'material restante' : 'materiais restantes'}. Teste Premium para ilimitado.`}
                     onDismiss={() => setDismissedWarning(true)}
                 />
             )}
@@ -178,7 +178,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                 className={`md:col-span-1 border-t-4 border-amber-500`}
             >
                 <div className="mb-4 flex items-center justify-between gap-3">
-                    <h2 className={`font-bold text-lg flex items-center gap-2 text-amber-600`}><Package size={20} /> {editingInsumoId ? 'Editar Insumo' : 'Novo Insumo'}</h2>
+                    <h2 className={`font-bold text-lg flex items-center gap-2 text-amber-600`}><Package size={20} /> {editingInsumoId ? 'Editar Material' : 'Novo Material'}</h2>
                     {(insType === 'area' || insType === 'length') && (
                         <div className="flex bg-slate-100 p-1 rounded border shrink-0">
                             <button onClick={() => unit !== 'cm' && toggleUnitGlobal()} className={`px-3 py-1 rounded text-xs font-bold ${unit === 'cm' ? 'bg-white shadow text-amber-600' : 'text-slate-400'}`}>CM</button>
@@ -188,7 +188,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                 </div>
                 {editingInsumoId && (
                     <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 flex items-center justify-between gap-3">
-                        <span>Você está editando um insumo já salvo no estoque.</span>
+                        <span>Você está editando um material já salvo no estoque.</span>
                         <button onClick={resetForm} className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100">
                             <X size={14} /> Cancelar
                         </button>
@@ -203,7 +203,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                                 : 'border-slate-200 bg-slate-50'
                     }`}>
                         <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Plano grátis • limite de insumos</p>
+                            <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Plano grátis • limite de materiais</p>
                             <span className="text-xs font-black text-slate-700">{freeInsumoUsage}/{FREE_TIER_INSUMO_LIMIT}</span>
                         </div>
                         <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
@@ -222,8 +222,8 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                                     : 'text-slate-600'
                         }`}>
                             {isInsumoLimitReached
-                                ? 'Limite atingido. Para adicionar mais insumos, assine o Premium.'
-                                : `Faltam ${freeInsumoRemaining} ${freeInsumoRemaining === 1 ? 'insumo' : 'insumos'} para atingir o limite.`}
+                                ? 'Limite atingido. Para adicionar mais materiais, assine o Premium.'
+                                : `Faltam ${freeInsumoRemaining} ${freeInsumoRemaining === 1 ? 'material' : 'materiais'} para atingir o limite.`}
                         </p>
                     </div>
                 )}
@@ -237,7 +237,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                         <option value="unit">Unidade Fixa (Argolas, Fechos, Caixas)</option>
                     </select>
                 </div>
-                <InputGroup label="Nome do Insumo" value={insName} onChange={setInsName} type="text" placeholder={insType === 'area' ? "Ex: Placa MDF 3mm" : insType === 'length' ? "Ex: Fita de Cetim Rosa" : insType === 'weight' ? "Ex: Farinha de Trigo 1Kg" : insType === 'volume' ? "Ex: Leite Condensado 395ml" : "Ex: Fecho de Metal"} />
+                <InputGroup label="Nome do Material" value={insName} onChange={setInsName} type="text" placeholder={insType === 'area' ? "Ex: Placa MDF 3mm" : insType === 'length' ? "Ex: Fita de Cetim Rosa" : insType === 'weight' ? "Ex: Farinha de Trigo 1Kg" : insType === 'volume' ? "Ex: Leite Condensado 395ml" : "Ex: Fecho de Metal"} />
                 <InputGroup label="Preço Total Pago" value={insPrice} onChange={setInsPrice} prefix="R$" tooltip="O valor TOTAL que você pagou no lote/pacote inteiro." />
                 <InputGroup label="Quantidade no Pacote" value={insPackQty} onChange={setInsPackQty} type="number" step="1" min="1" tooltip={insType === 'weight' ? "Quantos cones, sacos ou pacotes vieram na compra?" : insType === 'volume' ? "Quantas garrafas, caixas ou frascos vieram na compra?" : "Quantos itens vieram dentro do pacote que você comprou?"} />
                 
@@ -276,8 +276,8 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                     <EmptyState
                         icon={Box}
                         title="Seu estoque está vazio"
-                        description="Cadastre seu primeiro insumo para começar a montar fichas técnicas e controlar custos reais."
-                        ctaLabel="Adicionar insumo"
+                        description="Cadastre seu primeiro material para começar a montar produtos e controlar custos reais."
+                        ctaLabel="Adicionar material"
                         onCtaClick={() =>
                             window.scrollTo({ top: 0, behavior: "smooth" })
                         }
@@ -287,7 +287,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                         <table className="w-full text-left text-sm text-slate-600 whitespace-nowrap">
                             <thead className="bg-slate-50 uppercase text-xs font-bold text-slate-500">
                                 <tr>
-                                    <th className="p-3">Insumo</th>
+                                    <th className="p-3">Material</th>
                                     <th className="p-3">Tipo</th>
                                     <th className="p-3 text-right">Custo Unid.</th>
                                     <th className="p-3 text-center">Estoque</th>
@@ -351,7 +351,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                                                 <button
                                                     onClick={() => delInsumo(i.id)}
                                                     className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50"
-                                                    title="Apagar Insumo"
+                                                    title="Apagar material"
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>

@@ -1326,7 +1326,7 @@ export default function ProfileModal({
                   Backup da conta
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  Baixe um arquivo JSON com seu perfil, configuracoes, insumos,
+                  Baixe um arquivo JSON com seu perfil, configuracoes, materiais,
                   produtos, vendas e orcamentos.
                 </p>
                 <p className="text-xs text-slate-400 mt-2">

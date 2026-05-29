@@ -651,7 +651,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
 
     if (missingProducts.length > 0) {
       alert(
-        `Os seguintes produtos não estão mais no catálogo e precisam ser recriados antes de concluir a venda: ${missingProducts
+        `Os seguintes produtos não estão mais salvos e precisam ser recriados antes de concluir a venda: ${missingProducts
           .map((item) => item.productName)
           .join(", ")}.`,
       );
@@ -986,8 +986,8 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
           <EmptyState
             icon={Package}
             title="Nenhum produto salvo"
-            description="Crie sua primeira ficha técnica para começar a gerar orçamento e registrar vendas."
-            ctaLabel="Criar ficha"
+            description="Crie seu primeiro produto em Calcular Preço para começar a gerar orçamento e registrar vendas."
+            ctaLabel="Criar produto"
             ctaHref="/calcular-preco"
           />
         ) : (
@@ -1001,7 +1001,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                 onChange={(event) => setSaleProductId(event.target.value)}
                 className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm font-bold text-slate-700"
               >
-                <option value="">-- Escolher Produto do Catálogo --</option>
+                <option value="">-- Escolher produto salvo --</option>
                 {savedProductItems.map((product) => (
                   <option key={product.id} value={product.id}>
                     {product.name || "Produto"} (Venda Sugerida: R${" "}
@@ -1144,7 +1144,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                 <EmptyState
                   icon={ShoppingBag}
                   title="Nenhum produto adicionado ainda"
-                  description="Selecione um produto no catálogo e clique em Adicionar produto para montar este orçamento."
+                  description="Selecione um produto salvo e clique em Adicionar produto para montar este orçamento."
                   ctaLabel="Adicionar produto"
                   onCtaClick={addCurrentProductToQuote}
                 />

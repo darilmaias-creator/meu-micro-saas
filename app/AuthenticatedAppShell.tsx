@@ -47,7 +47,7 @@ const TAB_ITEMS = [
   {
     icon: DollarSign,
     id: "operationCosts",
-    label: "Custos da Operacao",
+    label: "Gastos do Negocio",
   },
   {
     icon: Calculator,
@@ -316,7 +316,7 @@ export default function AuthenticatedAppShell({
                   {tabItem.id === "inventory"
                     ? "Materiais"
                     : tabItem.id === "operationCosts"
-                      ? "Custos"
+                      ? "Gastos"
                     : tabItem.id === "calculator"
                       ? "Preco"
                       : tabItem.id === "sales"

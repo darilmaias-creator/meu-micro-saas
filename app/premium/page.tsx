@@ -11,7 +11,7 @@ import {
 } from "@/lib/billing/plans";
 
 const COMPARISON = [
-  { feature: "Insumos", free: "20", premium: "Ilimitado" },
+  { feature: "Materiais", free: "20", premium: "Ilimitado" },
   { feature: "Produtos", free: "10", premium: "Ilimitado" },
   { feature: "Orçamentos", free: "Ilimitado", premium: "Ilimitado" },
   { feature: "Personalização (Logo, Textos)", free: false, premium: true },

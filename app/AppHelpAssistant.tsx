@@ -70,7 +70,7 @@ type QuickAction = {
 const TAB_LABELS: Record<ActiveTab, string> = {
   calculator: "Calcular Preço",
   inventory: "Meus Materiais",
-  operationCosts: "Custos da Operação",
+  operationCosts: "Gastos do Negócio",
   sales: "Orçamentos e Vendas",
   dashboard: "Resumo",
 };
@@ -88,8 +88,8 @@ const QUICK_ACTIONS: QuickAction[] = [
   },
   {
     id: "materials",
-    label: "Cadastrar insumo",
-    prompt: "como cadastrar insumos e materiais",
+    label: "Cadastrar material",
+    prompt: "como cadastrar materiais",
   },
   {
     id: "pricing",
@@ -98,8 +98,8 @@ const QUICK_ACTIONS: QuickAction[] = [
   },
   {
     id: "margin",
-    label: "Qual margem usar?",
-    prompt: "qual margem de lucro eu devo usar",
+    label: "Qual lucro usar?",
+    prompt: "qual lucro desejado eu devo usar",
   },
   {
     id: "mistakes",
@@ -165,7 +165,7 @@ type ConversationTopic = "materials";
 const INITIAL_BOT_MESSAGE: ChatMessage = {
   id: "bot-initial",
   role: "bot",
-  text: "Oi! Sou o assistente da Calcula Artesão. Posso te ajudar a cadastrar insumos, montar ficha técnica, entender custos e escolher uma margem inicial.",
+  text: "Oi! Sou o assistente da Calcula Artesão. Posso te ajudar a cadastrar materiais, montar seu produto, entender custos e escolher um lucro inicial.",
 };
 
 function normalizeText(value: string) {
@@ -335,15 +335,15 @@ function getCraftOnboardingReply(craftType: string) {
       "joalheira",
     ])
   ) {
-    return "Ótimo! Bijuteria é um ótimo negócio. Margem ideal é 50-60%.";
+    return "Ótimo! Bijuteria é um ótimo negócio. Um bom lucro desejado inicial é 50-60%.";
   }
 
   if (includesAny(normalizedCraftType, ["costura", "costureira", "costureiro"])) {
-    return "Ótimo! Costura exige valorizar bem sua mão de obra. Margem ideal é 40-50%.";
+    return "Ótimo! Costura exige valorizar bem sua mão de obra. Um bom lucro desejado inicial é 40-50%.";
   }
 
   if (includesAny(normalizedCraftType, ["ceramica", "cerâmica"])) {
-    return "Ótimo! Cerâmica tem muito valor artesanal. Margem ideal é 60-70%.";
+    return "Ótimo! Cerâmica tem muito valor artesanal. Um bom lucro desejado inicial é 60-70%.";
   }
 
   if (
@@ -354,14 +354,14 @@ function getCraftOnboardingReply(craftType: string) {
       "marceneira",
     ])
   ) {
-    return "Ótimo! Marcenaria costuma ter material e acabamento importantes. Margem ideal é 50-60%.";
+    return "Ótimo! Marcenaria costuma ter material e acabamento importantes. Um bom lucro desejado inicial é 50-60%.";
   }
 
   if (includesAny(normalizedCraftType, ["pintura", "arte", "quadros", "tela"])) {
-    return "Ótimo! Arte autoral precisa valorizar técnica, tempo e exclusividade. Margem ideal é 70-80%.";
+    return "Ótimo! Arte autoral precisa valorizar técnica, tempo e exclusividade. Um bom lucro desejado inicial é 70-80%.";
   }
 
-  return `Ótimo! ${craftType} pode ser precificado com segurança quando você separa material, tempo e margem.`;
+  return `Ótimo! ${craftType} pode ser precificado com segurança quando você separa material, tempo e lucro desejado.`;
 }
 
 function getMaterialsOnboardingReply(answer: string) {
@@ -393,7 +393,7 @@ function getMaterialsOnboardingReply(answer: string) {
       "cadastrados",
     ])
   ) {
-    return "Ótimo! Então vamos usar seus insumos cadastrados como base para calcular melhor.";
+    return "Ótimo! Então vamos usar seus materiais cadastrados como base para calcular melhor.";
   }
 
   return "Perfeito! Vou considerar isso e te guiar pelo próximo passo.";
@@ -421,7 +421,7 @@ function buildOnboardingStepReply(
         craftType,
       } satisfies OnboardingFlowState,
       reply: {
-        text: `${getCraftOnboardingReply(craftType)}\n\n2️⃣ Você já tem insumos cadastrados?`,
+        text: `${getCraftOnboardingReply(craftType)}\n\n2️⃣ Você já tem materiais cadastrados?`,
         targetTab: "inventory" as const,
       } satisfies BotReply,
     };
@@ -448,7 +448,7 @@ function buildOnboardingStepReply(
     nextFlowState: null,
     reply: {
       text:
-        "Entendo. Vou te ajudar a calcular o preço certo.\n\nVamos começar? Clique em “Adicionar Insumo” e me diga qual é o seu primeiro material.",
+        "Entendo. Vou te ajudar a calcular o preço certo.\n\nVamos começar? Clique em “Adicionar material” e me diga qual é o seu primeiro material.",
       targetTab: "inventory" as const,
     } satisfies BotReply,
   };
@@ -507,7 +507,7 @@ function buildPriceCalculationStepReply(
     nextFlowState: null,
     reply: {
       text:
-        `Perfeito! Deixa eu calcular...\n\n📊 Seu produto: ${productName}\n- Materiais: ${materials}\n- Custo de material: R$5\n- Mão de obra (${productionTime}): R$2\n- Embalagem: R$1\n- **Custo Total: R$8**\n\nCom margem de 50%, o preço sugerido é: **R$16**\n\nIsso faz sentido para você? Quer ajustar?\n\nPara valores exatos, preencha esses dados na ficha técnica da aba Calcular Preço.`,
+        `Perfeito! Deixa eu calcular...\n\n📊 Seu produto: ${productName}\n- Materiais: ${materials}\n- Custo de material: R$5\n- Mão de obra (${productionTime}): R$2\n- Embalagem: R$1\n- **Custo Total: R$8**\n\nCom lucro desejado de 50%, o preço sugerido é: **R$16**\n\nIsso faz sentido para você? Quer ajustar?\n\nPara valores exatos, preencha esses dados na aba Calcular Preço.`,
       targetTab: "calculator" as const,
     } satisfies BotReply,
   };
@@ -535,7 +535,7 @@ function buildPriceDoubtStepReply(
       } satisfies PriceDoubtFlowState,
       reply: {
         text:
-          "Ah, entendi. Vamos comparar:\n\nSe você cobra R$10 em uma pulseira que custa R$8:\n- Lucro por pulseira: R$2\n- Margem: 20% (muito baixa!)\n- Você precisa vender 5x mais para ganhar bem\n\nSe você cobra R$16:\n- Lucro por pulseira: R$8\n- Margem: 50% (ideal!)\n- Você vende menos, mas ganha mais por venda\n\nDica: Teste cobrar R$14 e veja se vende. Pode ser o ponto ótimo!",
+          "Ah, entendi. Vamos comparar:\n\nSe você cobra R$10 em uma pulseira que custa R$8:\n- Lucro por pulseira: R$2\n- Lucro sobre o preço: 20% (bem apertado)\n- Você precisa vender muito mais para compensar\n\nSe você cobra R$16:\n- Lucro por pulseira: R$8\n- Lucro sobre o preço: 50%\n- Você vende menos, mas ganha mais por venda\n\nDica: Teste cobrar R$14 e veja se vende. Pode ser o ponto ótimo!",
         targetTab: "calculator" as const,
       } satisfies BotReply,
     };
@@ -554,7 +554,7 @@ function buildOptimizationStartReply(savedProductCount: number) {
   if (savedProductCount <= 0) {
     return {
       text:
-        "Ainda não encontrei produtos cadastrados para analisar.\n\nPara otimizar de verdade, primeiro salve alguns produtos no catálogo com custo, preço e margem. Depois eu posso te ajudar a comparar quais têm melhor resultado.\n\nQuer uma dica para preparar essa análise?",
+        "Ainda não encontrei produtos cadastrados para analisar.\n\nPara otimizar de verdade, primeiro salve alguns produtos com custo, preço e lucro desejado. Depois eu posso te ajudar a comparar quais têm melhor resultado.\n\nQuer uma dica para preparar essa análise?",
       targetTabs: ["calculator", "dashboard"],
     } satisfies BotReply;
   }
@@ -579,7 +579,7 @@ function getOptimizationProductHighlights(
       lowestProduct: null,
       summaryLines: products
         .slice(0, 5)
-        .map((product) => `- ${product.name}: margem ainda não calculada`),
+        .map((product) => `- ${product.name}: lucro ainda não calculado`),
     };
   }
 
@@ -596,8 +596,8 @@ function getOptimizationProductHighlights(
     summaryLines: products.slice(0, 5).map((product) => {
       const marginLabel =
         product.margin === null
-          ? "margem não calculada"
-          : `margem ${product.margin.toFixed(1)}%`;
+          ? "lucro não calculado"
+          : `lucro ${product.margin.toFixed(1)}%`;
 
       return `- ${product.name}: ${marginLabel}`;
     }),
@@ -613,7 +613,7 @@ function buildOptimizationAnalysisText(
   if (!bestProduct || !lowestProduct || bestProduct.id === lowestProduct.id) {
     return `Boa. Com os produtos cadastrados, dá para começar por esta leitura:\n\n${summaryLines.join(
       "\n",
-    )}\n\nRecomendações:\n1. Confira se todos têm custo e preço preenchidos\n2. Identifique qual tem melhor margem\n3. Revise produtos com margem baixa, custo alto ou preço manual muito apertado\n\nAbra o Resumo e me diga qual produto você quer ajustar primeiro.`;
+    )}\n\nRecomendações:\n1. Confira se todos têm custo e preço preenchidos\n2. Identifique qual tem melhor lucro\n3. Revise produtos com lucro baixo, custo alto ou preço manual muito apertado\n\nAbra o Resumo e me diga qual produto você quer ajustar primeiro.`;
   }
 
   const averageMargin =
@@ -622,11 +622,11 @@ function buildOptimizationAnalysisText(
 
   return `Analisando seus produtos cadastrados:\n${summaryLines.join(
     "\n",
-  )}\n\nRecomendações:\n1. Revise ${lowestProduct.name} (menor margem: ${lowestProduct.margin?.toFixed(
+  )}\n\nRecomendações:\n1. Revise ${lowestProduct.name} (menor lucro: ${lowestProduct.margin?.toFixed(
     1,
-  )}%)\n2. Foque em ${bestProduct.name} (melhor margem: ${bestProduct.margin?.toFixed(
+  )}%)\n2. Foque em ${bestProduct.name} (melhor lucro: ${bestProduct.margin?.toFixed(
     1,
-  )}%)\n3. Compare materiais e tempo dos produtos com margem menor\n\nSua margem média nos produtos com margem calculada está em ${averageMargin.toFixed(
+  )}%)\n3. Compare materiais e tempo dos produtos com lucro menor\n\nSeu lucro médio nos produtos calculados está em ${averageMargin.toFixed(
     1,
   )}%. Se quiser, me diga qual produto quer ajustar primeiro.`;
 }
@@ -654,7 +654,7 @@ function buildOptimizationStepReply(
       return {
         nextFlowState: null,
         reply: {
-          text: "Tudo bem. Quando quiser otimizar margem, preço ou custos, é só me chamar.",
+          text: "Tudo bem. Quando quiser otimizar lucro, preço ou custos, é só me chamar.",
           targetTabs: ["calculator", "dashboard"],
         } satisfies BotReply,
       };
@@ -665,7 +665,7 @@ function buildOptimizationStepReply(
         nextFlowState: null,
         reply: {
           text:
-            "Perfeito. Comece salvando de 3 a 5 produtos no catálogo. Para cada um, confira:\n\n1. Custo total por unidade\n2. Preço de venda\n3. Lucro real\n4. Margem\n\nDepois compare assim:\n- Produto com margem alta: foque mais nele\n- Produto com margem baixa: aumente preço ou reduza custo\n- Produto que vende muito: teste pequenos aumentos de preço\n\nQuando tiver produtos salvos, me chame de novo para otimizar.",
+            "Perfeito. Comece salvando de 3 a 5 produtos. Para cada um, confira:\n\n1. Custo total por unidade\n2. Preço de venda\n3. Lucro em reais\n4. Lucro em percentual\n\nDepois compare assim:\n- Produto com lucro alto: foque mais nele\n- Produto com lucro baixo: aumente preço ou reduza custo\n- Produto que vende muito: teste pequenos aumentos de preço\n\nQuando tiver produtos salvos, me chame de novo para otimizar.",
           targetTabs: ["calculator", "dashboard"],
         } satisfies BotReply,
       };
@@ -717,7 +717,7 @@ function buildContextualHelpReply(topic: AppHelpContextEventDetail["topic"]) {
   if (topic === "material-cost") {
     return {
       text:
-        "Custo de Material é quanto você gasta em insumos para fazer 1 unidade do produto.\n\nExemplo: Se você faz uma bijuteria com:\n- Fio de nylon: R$2\n- Miçanga: R$3\n- Total: R$5\n\nVocê já adicionou seus insumos? Se sim, selecione-os aqui.",
+        "Custo de Material é quanto você gasta nos materiais para fazer 1 unidade do produto.\n\nExemplo: Se você faz uma bijuteria com:\n- Fio de nylon: R$2\n- Miçanga: R$3\n- Total: R$5\n\nVocê já adicionou seus materiais? Se sim, selecione-os aqui.",
       targetTabs: ["inventory", "calculator"],
     } satisfies BotReply;
   }
@@ -741,7 +741,7 @@ function buildFollowUpReply(
 
   return {
     text:
-      "O próximo passo é começar pelos materiais. Cadastre os insumos em **Meus Materiais** e depois use a aba **Calcular Preço** para montar o produto.",
+      "O próximo passo é começar pelos materiais. Cadastre tudo em **Meus Materiais** e depois use a aba **Calcular Preço** para montar o produto.",
     targetTabs: ["inventory", "calculator"],
   } satisfies BotReply;
 }
@@ -763,7 +763,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   if (normalizedPrompt.length <= 2) {
     return {
       text:
-        "Pode escrever sua dúvida com mais detalhe? Exemplo: “como criar meu primeiro produto?” ou “qual margem eu uso?”.",
+        "Pode escrever sua dúvida com mais detalhe? Exemplo: “como criar meu primeiro produto?” ou “qual lucro eu uso?”.",
       targetTab: "calculator",
     } satisfies BotReply;
   }
@@ -786,7 +786,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Ótima pergunta! Com Premium você ganha:\n\n✅ **Insumos Ilimitados** (vs 20 no grátis)\n✅ **Produtos Ilimitados** (vs 10 no grátis)\n✅ **Personalização** - Adicione seu logo nos orçamentos\n✅ **Backup Automático** - Seus dados seguros\n✅ **Histórico Completo** - Veja todas as mudanças\n\n**Vale a pena?**\nSe você tem mais de 20 insumos ou 10 produtos, SIM!\nSe você quer personalizar seus orçamentos, SIM!\n\n**Bom Notícia:**\nVocê pode testar Premium por 7 dias, sem cartão de crédito!\n\nQuer ativar o teste agora? Clique aqui: [Ativar Trial]",
+        "Ótima pergunta! Com Premium você ganha:\n\n✅ **Materiais ilimitados** (vs 20 no grátis)\n✅ **Produtos ilimitados** (vs 10 no grátis)\n✅ **Personalização** - Adicione seu logo nos orçamentos\n✅ **Backup automático** - Seus dados seguros\n✅ **Histórico completo** - Veja todas as mudanças\n\n**Vale a pena?**\nSe você tem mais de 20 materiais ou 10 produtos, sim.\nSe você quer personalizar seus orçamentos, também faz sentido.\n\n**Boa notícia:**\nVocê pode testar Premium por 7 dias, sem cartão de crédito!\n\nQuer ativar o teste agora? Clique aqui: [Ativar Trial]",
       targetHref: "/premium",
       targetLabel: "Ativar Trial",
     } satisfies BotReply;
@@ -809,7 +809,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Eu sou o assistente da Calcula Artesão. Posso te orientar sobre como usar a calculadora, cadastrar insumos, montar ficha técnica, entender material, mão de obra, energia e margem.\n\nEu não substituo a calculadora do app: para valores exatos, use os campos da ficha técnica. Também não acesso dados de outros usuários nem faço recomendações financeiras complexas.",
+        "Eu sou o assistente da Calcula Artesão. Posso te orientar sobre como usar a calculadora, cadastrar materiais, montar produto, entender material, mão de obra, energia e lucro desejado.\n\nEu não substituo a calculadora do app: para valores exatos, use os campos da aba Calcular Preço. Também não acesso dados de outros usuários nem faço recomendações financeiras complexas.",
       targetTabs: ["inventory", "calculator", "operationCosts"],
     } satisfies BotReply;
   }
@@ -817,7 +817,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   if (includesAny(normalizedPrompt, ["cada um", "cada uma"])) {
     return {
       text:
-        "Perfeito, vamos por partes:\n1) Meus Materiais: cadastre insumos, preço pago, medida e estoque.\n2) Calcular Preço: monte a ficha técnica, informe tempo, perdas e margem.\n3) Custos da Operação: inclua aluguel, luz, internet, embalagem e taxas.\n4) Orçamentos e Vendas: gere proposta para cliente e registre vendas.\n5) Resumo: acompanhe resultados e sinais de atenção.\n\nSe quiser, te levo direto para a aba certa.",
+        "Perfeito, vamos por partes:\n1) Meus Materiais: cadastre materiais, preço pago, medida e estoque.\n2) Calcular Preço: monte o produto, informe tempo, perdas e lucro desejado.\n3) Gastos do Negócio: inclua aluguel, luz, internet, embalagem e taxas.\n4) Orçamentos e Vendas: gere proposta para cliente e registre vendas.\n5) Resumo: acompanhe resultados e sinais de atenção.\n\nSe quiser, te levo direto para a aba certa.",
       targetTabs: [
         "inventory",
         "calculator",
@@ -842,7 +842,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Claro! Resumo simples:\n1) Meus Materiais: cadastre tudo que entra no produto.\n2) Calcular Preço: transforme material + tempo + custos em preço sugerido.\n3) Custos da Operação: registre despesas do negócio para não vender no prejuízo.\n4) Orçamentos e Vendas: envie proposta e registre venda fechada.\n5) Resumo: veja faturamento, lucro e pontos de atenção.",
+        "Claro! Resumo simples:\n1) Meus Materiais: cadastre tudo que entra no produto.\n2) Calcular Preço: transforme material + tempo + gastos em preço sugerido.\n3) Gastos do Negócio: registre despesas do negócio para não vender no prejuízo.\n4) Orçamentos e Vendas: envie proposta e registre venda fechada.\n5) Resumo: veja faturamento, lucro e pontos de atenção.",
       targetTabs: [
         "inventory",
         "calculator",
@@ -856,7 +856,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   if (isGettingStartedQuestion(normalizedPrompt)) {
     return {
       text:
-        "Olá! 👋 Bem-vindo!\n\nA calculadora ajuda você a descobrir o preço certo para seus produtos.\n\nFunciona assim:\n1. Você adiciona seus materiais (insumos)\n2. Você cria um produto e seleciona os materiais\n3. A calculadora mostra o custo e o preço sugerido\n\nPara começar, cadastre seu primeiro material em Meus Materiais.",
+        "Olá! 👋 Bem-vindo!\n\nA calculadora ajuda você a descobrir o preço certo para seus produtos.\n\nFunciona assim:\n1. Você adiciona seus materiais\n2. Você cria um produto e seleciona os materiais\n3. A calculadora mostra o custo e o preço sugerido\n\nPara começar, cadastre seu primeiro material em Meus Materiais.",
       targetTabs: ["inventory", "calculator"],
     } satisfies BotReply;
   }
@@ -884,7 +884,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Boa escolha. Categorizar produtos ajuda você a parar de usar a mesma margem para tudo.\n\n**1. Produtos Premium**\n- Margem sugerida: 60-70%\n- Produtos personalizados, exclusivos ou com acabamento superior\n- Exemplo: peça sob encomenda, kit especial, edição limitada\n\n**2. Produtos Populares**\n- Margem sugerida: 50-60%\n- Produtos que vendem bem e têm boa saída\n- Exemplo: item campeão de vendas, produto de vitrine, lembrancinha recorrente\n\n**3. Produtos de Desconto**\n- Margem sugerida: 30-40%\n- Produtos para atrair cliente, limpar estoque ou montar combo\n- Cuidado: use com estratégia para não vender no prejuízo\n\n**Como aplicar no app:**\nSalve o produto no catálogo, acompanhe no Resumo quais vendem mais e ajuste a margem na aba Calcular Preço.",
+        "Boa escolha. Categorizar produtos ajuda você a parar de usar o mesmo lucro desejado para tudo.\n\n**1. Produtos Premium**\n- Lucro sugerido: 60-70%\n- Produtos personalizados, exclusivos ou com acabamento superior\n- Exemplo: peça sob encomenda, kit especial, edição limitada\n\n**2. Produtos Populares**\n- Lucro sugerido: 50-60%\n- Produtos que vendem bem e têm boa saída\n- Exemplo: item campeão de vendas, produto de vitrine, lembrancinha recorrente\n\n**3. Produtos de Desconto**\n- Lucro sugerido: 30-40%\n- Produtos para atrair cliente, limpar estoque ou montar combo\n- Cuidado: use com estratégia para não vender no prejuízo\n\n**Como aplicar no app:**\nSalve o produto, acompanhe no Resumo quais vendem mais e ajuste o lucro desejado na aba Calcular Preço.",
       targetTabs: ["calculator", "sales", "dashboard"],
     } satisfies BotReply;
   }
@@ -908,7 +908,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Ótimo! O custo tem 4 partes:\n\n1️⃣ **Custo de Material** - Quanto você gasta em insumos\n2️⃣ **Mão de Obra** - Tempo que você leva para fazer\n3️⃣ **Custos Operacionais** - Energia, aluguel, etc (rateado)\n4️⃣ **Acabamento** - Embalagem, etiqueta, frete (se aplicável)\n\n**Exemplo prático:**\n- Bijuteria com fio (R$2) + miçanga (R$3) = R$5 de material\n- Leva 15 minutos para fazer (R$2 de mão de obra)\n- Embalagem (R$1)\n- **Custo Total: R$8**\n\nQual é o seu produto? Vou ajudar a calcular.",
+        "Ótimo! O custo tem 4 partes:\n\n1️⃣ **Material** - Quanto você gasta no que entra no produto\n2️⃣ **Seu tempo** - Quanto tempo você leva para fazer\n3️⃣ **Gastos do negócio** - Energia, aluguel, internet, taxas etc\n4️⃣ **Acabamento** - Embalagem, etiqueta, frete, se fizer parte da entrega\n\n**Exemplo prático:**\n- Bijuteria com fio (R$2) + miçanga (R$3) = R$5 de material\n- Leva 15 minutos para fazer (R$2 de mão de obra)\n- Embalagem (R$1)\n- **Custo Total: R$8**\n\nQual é o seu produto? Vou ajudar a calcular.",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -925,7 +925,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Para criar um produto:\n1) Entre em Calcular Preço.\n2) Selecione os materiais do estoque e informe quanto usa de cada um.\n3) Preencha tempo de máquina ou tempo manual, se houver.\n4) Informe rendimento, perdas e custos extras.\n5) Veja o preço sugerido e salve no catálogo.\n\nA ficha técnica é o coração do preço: ela evita cobrar “no olho”.",
+        "Para criar um produto:\n1) Entre em Calcular Preço.\n2) Selecione os materiais do estoque e informe quanto usa de cada um.\n3) Preencha tempo de máquina ou tempo fazendo com as mãos, se houver.\n4) Informe rendimento, perdas e outros gastos.\n5) Veja o preço sugerido e salve o produto.\n\nA lista de materiais e tempo é o coração do preço: ela evita cobrar “no olho”.",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -948,7 +948,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Ótima dúvida! Muita gente confunde:\n\n**Margem** = % do preço que é lucro\n**Lucro** = Valor em reais que você ganha\n\n**Exemplo:**\n- Custo: R$8\n- Preço: R$16\n- Lucro: R$8 (em reais)\n- Margem: 50% (porque 8/16 = 50%)\n\n**Por que isso importa?**\n- Margem baixa (30%) = Você vende muito, mas ganha pouco\n- Margem alta (70%) = Você vende pouco, mas ganha mais\n- Margem ideal (50-60%) = Equilíbrio entre volume e lucro\n\n**Teste na calculadora:**\n1. Adicione um produto\n2. Veja a margem sugerida\n3. Ajuste para ver como muda o preço\n\nQuer que eu explique mais alguma coisa?",
+        "Ótima dúvida! No app, pense assim:\n\n**Lucro em reais** = quanto sobra depois de pagar os custos\n**Lucro em %** = quanto essa sobra representa no preço\n\n**Exemplo:**\n- Custo: R$8\n- Preço: R$16\n- Lucro: R$8\n- Lucro em %: 50%\n\n**Por que isso importa?**\n- Lucro baixo (30%) = Você vende, mas sobra pouco\n- Lucro alto (70%) = Pode valer para produto exclusivo\n- Lucro equilibrado (50-60%) = Bom ponto de partida para muitos artesãos\n\n**Teste na calculadora:**\n1. Adicione um produto\n2. Veja o preço sugerido\n3. Ajuste o lucro desejado para ver como muda o preço\n\nQuer que eu explique mais alguma coisa?",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -964,7 +964,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "**🎨 BIJUTERIA**\n- Margem sugerida: 50-60%\n- Maior custo: material (fio, miçanga, corrente, fecho)\n- Atenção: peças pequenas parecem baratas, mas o tempo de montagem pesa\n- Dica: venda em kits ou lotes para aumentar o ticket médio\n\nNa calculadora, cadastre cada material e informe o tempo de montagem para não cobrar só o custo dos insumos.",
+        "**🎨 BIJUTERIA**\n- Lucro sugerido: 50-60%\n- Maior custo: material (fio, miçanga, corrente, fecho)\n- Atenção: peças pequenas parecem baratas, mas o tempo de montagem pesa\n- Dica: venda em kits ou lotes para aumentar o ticket médio\n\nNa calculadora, cadastre cada material e informe o tempo de montagem para não cobrar só o custo dos materiais.",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -981,7 +981,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "**🏺 CERÂMICA**\n- Margem sugerida: 60-70%\n- Maior custo: queima, material, perdas e tempo de acabamento\n- Atenção: inclua peças perdidas, esmalte, energia/forno e embalagem\n- Dica: produtos únicos, séries pequenas e personalização podem vender mais caro\n\nNa calculadora, use custos extras para queima/acabamento e ajuste a margem conforme exclusividade da peça.",
+        "**🏺 CERÂMICA**\n- Lucro sugerido: 60-70%\n- Maior custo: queima, material, perdas e tempo de acabamento\n- Atenção: inclua peças perdidas, esmalte, energia/forno e embalagem\n- Dica: produtos únicos, séries pequenas e personalização podem vender mais caro\n\nNa calculadora, use outros gastos do produto para queima/acabamento e ajuste o lucro desejado conforme exclusividade da peça.",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -997,7 +997,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "**🧵 COSTURA**\n- Margem sugerida: 40-50%\n- Maior custo: mão de obra\n- Atenção: não cobre só tecido, linha e aviamentos\n- Dica: cobre por hora trabalhada + material + acabamento\n\nNa calculadora, preencha bem o tempo manual. Esse é normalmente o ponto que mais muda o preço justo na costura.",
+        "**🧵 COSTURA**\n- Lucro sugerido: 40-50%\n- Maior custo: mão de obra\n- Atenção: não cobre só tecido, linha e aviamentos\n- Dica: cobre por hora trabalhada + material + acabamento\n\nNa calculadora, preencha bem o tempo fazendo com as mãos. Esse é normalmente o ponto que mais muda o preço justo na costura.",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -1012,7 +1012,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "**🪵 MARCENARIA**\n- Margem sugerida: 50-60%\n- Maior custo: madeira, ferragens, acabamento e tempo de produção\n- Atenção: inclua perda de corte, lixa, verniz, energia e transporte\n- Dica: customização e medidas sob encomenda aumentam valor percebido\n\nNa calculadora, use custos extras para acabamento e transporte quando eles fizerem parte da entrega.",
+        "**🪵 MARCENARIA**\n- Lucro sugerido: 50-60%\n- Maior custo: madeira, ferragens, acabamento e tempo de produção\n- Atenção: inclua perda de corte, lixa, verniz, energia e transporte\n- Dica: customização e medidas sob encomenda aumentam valor percebido\n\nNa calculadora, use outros gastos do produto para acabamento e transporte quando eles fizerem parte da entrega.",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -1028,7 +1028,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "**🎭 ARTE/PINTURA**\n- Margem sugerida: 70-80%\n- Maior custo: tempo, técnica e exclusividade\n- Atenção: não cobre só tinta, tela e pincel\n- Dica: edições limitadas, assinatura e encomendas personalizadas podem elevar o preço\n\nNa calculadora, valorize seu tempo e use margem maior para peças autorais.",
+        "**🎭 ARTE/PINTURA**\n- Lucro sugerido: 70-80%\n- Maior custo: tempo, técnica e exclusividade\n- Atenção: não cobre só tinta, tela e pincel\n- Dica: edições limitadas, assinatura e encomendas personalizadas podem elevar o preço\n\nNa calculadora, valorize seu tempo e use lucro maior para peças autorais.",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -1044,7 +1044,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "**🧸 BRINQUEDOS/PELÚCIA**\n- Margem sugerida: 40-50%\n- Maior custo: material + mão de obra\n- Atenção: peças com muitos detalhes consomem bastante tempo\n- Dica: personalização com nome, cor ou tema aumenta valor percebido\n\nNa calculadora, informe o tempo manual com cuidado e salve modelos recorrentes no catálogo.",
+        "**🧸 BRINQUEDOS/PELÚCIA**\n- Lucro sugerido: 40-50%\n- Maior custo: material + mão de obra\n- Atenção: peças com muitos detalhes consomem bastante tempo\n- Dica: personalização com nome, cor ou tema aumenta valor percebido\n\nNa calculadora, informe o tempo fazendo com as mãos com cuidado e salve modelos recorrentes.",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -1059,7 +1059,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Entendi! Vou dar dicas específicas para seu setor.\n\n**🎨 BIJUTERIA**\n- Margem: 50-60%\n- Maior custo: Material (fio, miçanga, etc)\n- Dica: Venda em lotes para aumentar volume\n\n**🧵 COSTURA**\n- Margem: 40-50%\n- Maior custo: Mão de obra\n- Dica: Cobre por hora trabalhada + material\n\n**🏺 CERÂMICA**\n- Margem: 60-70%\n- Maior custo: Queima e material\n- Dica: Produtos únicos vendem mais caro\n\n**🪵 MARCENARIA**\n- Margem: 50-60%\n- Maior custo: Material (madeira)\n- Dica: Customização aumenta preço\n\n**🎭 ARTE/PINTURA**\n- Margem: 70-80%\n- Maior custo: Tempo\n- Dica: Edições limitadas vendem mais\n\n**🧸 BRINQUEDOS/PELÚCIA**\n- Margem: 40-50%\n- Maior custo: Material + mão de obra\n- Dica: Personalizações aumentam valor\n\nQual é seu setor? Vou dar dicas mais precisas!",
+        "Entendi! Vou dar dicas específicas para seu setor.\n\n**🎨 BIJUTERIA**\n- Lucro sugerido: 50-60%\n- Maior custo: material (fio, miçanga, etc)\n- Dica: venda em lotes para aumentar volume\n\n**🧵 COSTURA**\n- Lucro sugerido: 40-50%\n- Maior custo: mão de obra\n- Dica: cobre por hora trabalhada + material\n\n**🏺 CERÂMICA**\n- Lucro sugerido: 60-70%\n- Maior custo: queima e material\n- Dica: produtos únicos vendem mais caro\n\n**🪵 MARCENARIA**\n- Lucro sugerido: 50-60%\n- Maior custo: material (madeira)\n- Dica: customização aumenta preço\n\n**🎭 ARTE/PINTURA**\n- Lucro sugerido: 70-80%\n- Maior custo: tempo\n- Dica: edições limitadas vendem mais\n\n**🧸 BRINQUEDOS/PELÚCIA**\n- Lucro sugerido: 40-50%\n- Maior custo: material + mão de obra\n- Dica: personalizações aumentam valor\n\nQual é seu setor? Vou dar dicas mais precisas!",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -1081,7 +1081,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Excelente pergunta! A fórmula é simples:\n\n**Preço = Custo ÷ (1 - Margem)**\n\n**Margens por tipo de artesanato:**\n- 🎨 Bijuteria: 50-60% (custo baixo, muita concorrência)\n- 🧵 Costura: 40-50% (mão de obra alta)\n- 🏺 Cerâmica: 60-70% (produto único, menos concorrência)\n- 🪵 Madeira: 50-60% (material caro, trabalho artesanal)\n\n**Exemplo:**\n- Custo: R$8\n- Margem desejada: 50%\n- Preço = 8 ÷ (1 - 0.5) = R$16\n\nQual é seu tipo de artesanato? Vou sugerir a margem ideal.",
+        "Excelente pergunta! A ideia é simples:\n\nVocê informa o custo e escolhe quanto quer ganhar. O app transforma isso em preço sugerido.\n\n**Lucro desejado por tipo de artesanato:**\n- 🎨 Bijuteria: 50-60% (custo baixo, muita concorrência)\n- 🧵 Costura: 40-50% (mão de obra alta)\n- 🏺 Cerâmica: 60-70% (produto único, menos concorrência)\n- 🪵 Madeira: 50-60% (material caro, trabalho artesanal)\n\n**Exemplo:**\n- Custo: R$8\n- Lucro desejado: 50%\n- Preço sugerido: R$16\n\nQual é seu tipo de artesanato? Vou sugerir um ponto de partida.",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -1110,14 +1110,14 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
     ) {
       return {
         text:
-          "Como ponto de partida, muitos artesãos testam margens entre 30% e 60%, dependendo do produto, acabamento, demanda e posicionamento.\n\nUse assim:\n- Produto simples e competitivo: margem menor.\n- Produto personalizado, delicado ou sob encomenda: margem maior.\n- Se a margem real ficar apertada, revise material, tempo ou preço de venda.\n\nO app mostra o lucro real depois que você informa os custos.",
+          "Como ponto de partida, muitos artesãos testam lucro desejado entre 30% e 60%, dependendo do produto, acabamento, demanda e posicionamento.\n\nUse assim:\n- Produto simples e competitivo: lucro menor.\n- Produto personalizado, delicado ou sob encomenda: lucro maior.\n- Se o lucro real ficar apertado, revise material, tempo ou preço de venda.\n\nO app mostra o lucro real depois que você informa os custos.",
         targetTab: "calculator" as const,
       } satisfies BotReply;
     }
 
     return {
       text:
-        "Para calcular preço, o app soma material, perdas, tempo, custos operacionais e margem. O preço sugerido aparece na aba Calcular Preço.\n\nDica: se o preço ficou muito baixo, provavelmente algum custo ficou de fora. Se ficou muito alto, revise desperdício, tempo, rendimento e margem.",
+        "Para calcular preço, o app soma material, perdas, tempo, gastos do negócio e lucro desejado. O preço sugerido aparece na aba Calcular Preço.\n\nDica: se o preço ficou muito baixo, provavelmente algum custo ficou de fora. Se ficou muito alto, revise desperdício, tempo, rendimento e lucro desejado.",
       targetTab: "calculator" as const,
     } satisfies BotReply;
   }
@@ -1183,7 +1183,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Sem problema! Vou ajudar a resolver.\n\nPode me descrever o problema? Por exemplo:\n- ❌ \"Adicionei um produto mas o preço ficou muito alto\"\n- ❌ \"Não consigo adicionar um insumo\"\n- ❌ \"O custo está dobrando sem motivo\"\n\nEnquanto isso, aqui estão os erros mais comuns:\n\n**Erro 1: Custo muito alto**\n→ Verifique se você incluiu corretamente a medida (kg, metro, etc)\n\n**Erro 2: Preço muito alto**\n→ Reduza a margem ou verifique os custos operacionais\n\n**Erro 3: Não consegue adicionar insumo**\n→ Certifique-se que preencheu TODOS os campos obrigatórios\n\nQual é seu problema específico?",
+        "Sem problema! Vou ajudar a resolver.\n\nPode me descrever o problema? Por exemplo:\n- ❌ \"Adicionei um produto mas o preço ficou muito alto\"\n- ❌ \"Não consigo adicionar um material\"\n- ❌ \"O custo está dobrando sem motivo\"\n\nEnquanto isso, aqui estão os erros mais comuns:\n\n**Erro 1: Custo muito alto**\n→ Verifique se você incluiu corretamente a medida (kg, metro, etc)\n\n**Erro 2: Preço muito alto**\n→ Reduza o lucro desejado ou verifique os gastos do negócio\n\n**Erro 3: Não consegue adicionar material**\n→ Certifique-se que preencheu todos os campos obrigatórios\n\nQual é seu problema específico?",
       targetTabs: ["calculator", "inventory", "operationCosts"],
     } satisfies BotReply;
   }
@@ -1208,7 +1208,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Vamos otimizar! 3 estratégias:\n\n**1. Reduzir Custos**\n- Compre material em maior quantidade (desconto)\n- Negocie com fornecedores\n- Otimize o tempo de produção\n- Reutilize embalagem\n\n**2. Aumentar Preço**\n- Teste aumentar 10% (muitos clientes não notam)\n- Cobre mais por customização\n- Adicione valor (embalagem premium, etc)\n\n**3. Mudar Produto**\n- Foque em produtos com margem maior\n- Crie produtos premium (preço mais alto)\n- Reduza produtos com baixa margem\n\n**Dica de Ouro:**\nTeste aumentar o preço em 10% e veja se as vendas caem.\nSe caírem menos de 20%, você ganha mais dinheiro!\n\nQual é seu maior desafio? Custos altos ou preço baixo?",
+        "Vamos otimizar! 3 estratégias:\n\n**1. Reduzir custos**\n- Compre material em maior quantidade, se fizer sentido\n- Negocie com fornecedores\n- Otimize o tempo de produção\n- Reutilize embalagem quando possível\n\n**2. Aumentar preço**\n- Teste aumentar 10%\n- Cobre mais por customização\n- Adicione valor, como embalagem premium\n\n**3. Mudar o foco**\n- Foque em produtos com lucro maior\n- Crie produtos premium\n- Revise produtos com lucro baixo\n\n**Dica:**\nTeste aumentar o preço em 10% e veja se as vendas caem. Se caírem pouco, você ganha mais dinheiro.\n\nQual é seu maior desafio? Custos altos ou preço baixo?",
       targetTabs: ["calculator", "operationCosts", "dashboard"],
     } satisfies BotReply;
   }
@@ -1234,7 +1234,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Ótimo! Aqui estão as melhores práticas:\n\n**1. Atualize seus custos regularmente**\n- Preço de material muda\n- Atualize a cada 3 meses\n\n**2. Categorize seus produtos**\n- Produtos premium (margem 60-70%)\n- Produtos populares (margem 50-60%)\n- Produtos desconto (margem 30-40%)\n\n**3. Acompanhe suas vendas**\n- Qual produto vende mais?\n- Qual tem melhor margem?\n- Foque nos vencedores\n\n**4. Teste preços**\n- Aumente 10% e veja o resultado\n- Reduza 5% e veja se vende mais\n- Encontre o ponto ótimo\n\n**5. Inclua tudo no custo**\n- Não esqueça embalagem\n- Não esqueça frete\n- Não esqueça seu tempo\n\n**Resultado esperado:**\nSeguindo essas práticas, artesãos aumentam a margem em 20-30%!\n\nQual dessas você quer explorar mais?",
+        "Ótimo! Aqui estão as melhores práticas:\n\n**1. Atualize seus custos regularmente**\n- Preço de material muda\n- Atualize a cada 3 meses\n\n**2. Categorize seus produtos**\n- Produtos premium (lucro 60-70%)\n- Produtos populares (lucro 50-60%)\n- Produtos desconto (lucro 30-40%)\n\n**3. Acompanhe suas vendas**\n- Qual produto vende mais?\n- Qual deixa mais lucro?\n- Foque nos vencedores\n\n**4. Teste preços**\n- Aumente 10% e veja o resultado\n- Reduza 5% e veja se vende mais\n- Encontre o ponto ótimo\n\n**5. Inclua tudo no custo**\n- Não esqueça embalagem\n- Não esqueça frete\n- Não esqueça seu tempo\n\nQual dessas você quer explorar mais?",
       targetTabs: ["calculator", "sales", "dashboard"],
     } satisfies BotReply;
   }
@@ -1253,7 +1253,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Erros comuns na precificação:\n1) Cobrar só o material e esquecer sua mão de obra.\n2) Não incluir embalagem, taxas e perdas.\n3) Usar margem igual para todos os produtos.\n4) Não atualizar preço dos insumos.\n5) Dar desconto sem saber o lucro real.\n\nSe o preço parecer estranho, revise ficha técnica, rendimento, tempo e custos operacionais.",
+        "Erros comuns no preço:\n1) Cobrar só o material e esquecer sua mão de obra.\n2) Não incluir embalagem, taxas e perdas.\n3) Usar o mesmo lucro desejado para todos os produtos.\n4) Não atualizar preço dos materiais.\n5) Dar desconto sem saber o lucro real.\n\nSe o preço parecer estranho, revise materiais, rendimento, tempo e gastos do negócio.",
       targetTabs: ["calculator", "inventory", "operationCosts"],
     } satisfies BotReply;
   }
@@ -1261,7 +1261,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   if (includesAny(normalizedPrompt, ["orcamento", "venda", "cliente", "proposta"])) {
     return {
       text:
-        "Em Orçamentos e Vendas você transforma produtos salvos em proposta para o cliente. Também pode registrar a venda quando o pedido for fechado.\n\nDica: antes de dar desconto, confira o lucro líquido para não vender com margem negativa.",
+        "Em Orçamentos e Vendas você transforma produtos salvos em proposta para o cliente. Também pode registrar a venda quando o pedido for fechado.\n\nDica: antes de dar desconto, confira o lucro líquido para não vender no prejuízo.",
       targetTab: "sales" as const,
     } satisfies BotReply;
   }
@@ -1282,7 +1282,7 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   ) {
     return {
       text:
-        "Custos da operação são despesas que não aparecem em um único produto, mas afetam seu negócio: aluguel, internet, energia do ateliê, embalagem, taxas, transporte e manutenção.\n\nCadastre esses valores para o app ratear melhor seus custos e evitar preço bonito que dá prejuízo.",
+        "Gastos do negócio são despesas que não aparecem em um único produto, mas afetam seu negócio: aluguel, internet, energia do ateliê, embalagem, taxas, transporte e manutenção.\n\nCadastre esses valores para o app dividir melhor seus gastos e evitar preço bonito que dá prejuízo.",
       targetTab: "operationCosts" as const,
     } satisfies BotReply;
   }
@@ -1298,8 +1298,8 @@ function buildBotReply(userPrompt: string, activeTab: ActiveTab) {
   return {
     text:
       activeTab === "calculator"
-        ? "Entendi. Na calculadora, posso te ajudar com ficha técnica, margem, mão de obra, perdas, energia e preço sugerido.\n\nTente perguntar: “qual margem usar?”, “como cadastro material?” ou “por que meu preço ficou baixo?”."
-        : "Entendi sua dúvida. Posso te orientar sobre cadastro de insumos, criação de produto, margem, custos e orçamento.\n\nSe quiser um caminho guiado, clique em “Como eu começo?”.",
+        ? "Entendi. Na calculadora, posso te ajudar com materiais, lucro desejado, mão de obra, perdas, energia e preço sugerido.\n\nTente perguntar: “qual lucro usar?”, “como cadastro material?” ou “por que meu preço ficou baixo?”."
+        : "Entendi sua dúvida. Posso te orientar sobre cadastro de materiais, criação de produto, lucro desejado, custos e orçamento.\n\nSe quiser um caminho guiado, clique em “Como eu começo?”.",
     targetTabs: ["inventory", "calculator", "operationCosts", "sales"],
   } satisfies BotReply;
 }

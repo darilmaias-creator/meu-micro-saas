@@ -128,8 +128,8 @@ export default function CalculatorTab({ appData, isPremium }: any) {
     const totalBatchCostWithOperations = operationCostBreakdown.adjustedBatchCost;
     const operationModeLabel =
         operationCostBreakdown.operationCostMode === 'per_hour'
-            ? 'Rateio por hora produtiva'
-            : 'Rateio simples por unidade';
+            ? 'Dividir por hora trabalhada'
+            : 'Dividir por unidade';
     const suggestedProfitValue = unitCost * (Number(config.profitMargin || 0) / 100);
     const suggestedPrice = unitCost + suggestedProfitValue;
     const isManual = manualPrice !== '';
@@ -190,10 +190,10 @@ export default function CalculatorTab({ appData, isPremium }: any) {
             operationCostMode: operationCostBreakdown.operationCostMode,
         };
         setSavedProducts([newProduct, ...savedProducts]);
-        alert('Produto salvo no Catálogo!');
+        alert('Produto salvo!');
     };
 
-    const deleteProduct = (id: any) => { if (window.confirm('Excluir do catálogo?')) setSavedProducts(savedProducts.filter((p: any) => p && p.id !== id)); };
+    const deleteProduct = (id: any) => { if (window.confirm('Excluir este produto salvo?')) setSavedProducts(savedProducts.filter((p: any) => p && p.id !== id)); };
     
     const loadProduct = (product: any) => {
         if (window.confirm(`Carregar "${product.name || 'Produto'}" para edição?`)) {
@@ -211,7 +211,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
     };
 
     const exportProductsToCSV = () => {
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFFData;Nome;Rendimento;Custo Unidade;Preço Venda;Lucro R$;Margem %\n";
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFFData;Nome;Rendimento;Custo Unidade;Preço Venda;Lucro R$;Lucro %\n";
         savedProducts.forEach((p: any) => {
             const row = [p.date, `"${p.name}"`, p.yieldQty || 1, Number(p.totalCost || 0).toFixed(2).replace('.', ','), Number(p.activePrice || 0).toFixed(2).replace('.', ','), Number(p.activeProfitValue || 0).toFixed(2).replace('.', ','), (((Number(p.activeProfitValue) || 0) / (Number(p.totalCost) || 1)) * 100).toFixed(1).replace('.', ',') + '%'];
             csvContent += row.join(";") + "\n";
@@ -514,11 +514,11 @@ export default function CalculatorTab({ appData, isPremium }: any) {
             {/* COLUNA ESQUERDA: CONFIGS E INSERÇÃO */}
             <div className="md:col-span-7 space-y-6">
                 <Card>
-                    <div className="flex items-center gap-2 text-amber-600 mb-4"><Settings size={20} /><h2 className="font-bold text-lg">1. Configurações Globais</h2></div>
+                    <div className="flex items-center gap-2 text-amber-600 mb-4"><Settings size={20} /><h2 className="font-bold text-lg">1. Dados básicos do cálculo</h2></div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <InputGroup label="Sua Hora de Trabalho" value={config.hourlyRate} onChange={config.setHourlyRate} prefix="R$" className="font-bold text-amber-700" tooltip="Quanto você quer ganhar por hora de trabalho?" />
-                        <InputGroup label="Custo da Máquina" value={config.machineCost} onChange={config.setMachineCost} prefix="R$" tooltip="Valor pago na máquina (se possuir uma)." />
-                        <InputGroup label="Vida Útil Máquina (h)" value={config.diodeLife} onChange={config.setDiodeLife} tooltip="Tempo médio de vida da máquina/módulo." />
+                        <InputGroup label="Quanto quer ganhar por hora" value={config.hourlyRate} onChange={config.setHourlyRate} prefix="R$" className="font-bold text-amber-700" tooltip="Quanto você quer ganhar por hora de trabalho?" />
+                        <InputGroup label="Valor da máquina" value={config.machineCost} onChange={config.setMachineCost} prefix="R$" tooltip="Valor pago na máquina, se você usar uma." />
+                        <InputGroup label="Quantas horas sua máquina dura" value={config.diodeLife} onChange={config.setDiodeLife} tooltip="Tempo médio de vida da máquina ou módulo." />
                         <InputGroup label="Custo Energia (kW/h)" value={config.energyCost} onChange={config.setEnergyCost} prefix="R$" tooltip="Preço do kW/h na sua conta de luz." />
                     </div>
                 </Card>
@@ -528,7 +528,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                     className="border-t-4 border-amber-500"
                 >
                     <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                        <div className="flex items-center gap-2 text-amber-600"><Package size={20} /><h2 className="font-bold text-lg text-slate-800">2. Materiais & Tempos</h2></div>
+                        <div className="flex items-center gap-2 text-amber-600"><Package size={20} /><h2 className="font-bold text-lg text-slate-800">2. Materiais e tempo</h2></div>
                         <div className="flex bg-slate-100 p-1 rounded border"><button onClick={() => config.unit !== 'cm' && toggleUnitGlobal()} className={`px-3 py-1 rounded text-xs font-bold ${config.unit === 'cm' ? 'bg-white shadow text-amber-600' : 'text-slate-400'}`}>CM</button><button onClick={() => config.unit !== 'mm' && toggleUnitGlobal()} className={`px-3 py-1 rounded text-xs font-bold ${config.unit === 'mm' ? 'bg-white shadow text-amber-600' : 'text-slate-400'}`}>MM</button></div>
                     </div>
 
@@ -565,18 +565,18 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                                 )
                             }
                         })()}
-                        <button onClick={handleAddIngredient} disabled={!tempInsumoId} className="w-full py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 text-white font-bold rounded-lg transition-colors flex justify-center gap-2"><Plus size={18} /> Inserir Material na Ficha</button>
+                        <button onClick={handleAddIngredient} disabled={!tempInsumoId} className="w-full py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 text-white font-bold rounded-lg transition-colors flex justify-center gap-2"><Plus size={18} /> Adicionar material ao produto</button>
                     </div>
 
                     {recipeItems.length > 0 ? (
-                        <div className="space-y-2 mb-4"><h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide">Materiais na Ficha</h3>{recipeItems.map((item, idx) => (<div key={idx} className="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-lg shadow-sm"><div><p className="font-bold text-sm text-slate-700">{item.name}</p><p className="text-xs text-slate-500">{item.display} {item.autoWaste > 0 && <span className="text-amber-500 ml-1">(+{item.autoWaste.toFixed(1)}% sobra incl.)</span>}</p></div><div className="flex items-center gap-3"><span className="font-bold text-slate-800">R$ {item.cost.toFixed(2)}</span><button onClick={() => removeRecipeItem(idx)} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button></div></div>))}</div>
+                        <div className="space-y-2 mb-4"><h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide">Materiais do produto</h3>{recipeItems.map((item, idx) => (<div key={idx} className="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-lg shadow-sm"><div><p className="font-bold text-sm text-slate-700">{item.name}</p><p className="text-xs text-slate-500">{item.display} {item.autoWaste > 0 && <span className="text-amber-500 ml-1">(+{item.autoWaste.toFixed(1)}% sobra incl.)</span>}</p></div><div className="flex items-center gap-3"><span className="font-bold text-slate-800">R$ {item.cost.toFixed(2)}</span><button onClick={() => removeRecipeItem(idx)} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button></div></div>))}</div>
                     ) : (
                         <div className="mb-4">
-                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Materiais na Ficha</h3>
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Materiais do produto</h3>
                             <EmptyState
                                 icon={Package}
                                 title="Nenhum ingrediente na ficha"
-                                description="Selecione um material do estoque e clique em Inserir Material na Ficha para começar seu cálculo."
+                                description="Selecione um material do estoque e clique em Adicionar material ao produto para começar seu cálculo."
                                 ctaLabel="Adicionar ingrediente"
                                 onCtaClick={() => {
                                     const target = document.querySelector('[data-onboarding="calculator-recipe-form"]');
@@ -589,9 +589,9 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                     )}
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-4 border-t border-slate-100">
-                        <div className="col-span-1 sm:col-span-2"><TimeInputGroup label="Tempo de Máquina (Laser/CNC)" totalMinutes={cutTime} onChange={setCutTime} /><Toggle label="Cobrar supervisão no corte?" checked={chargeSupervision} onChange={setChargeSupervision} tooltip="Adiciona a sua Hora de Trabalho ao tempo da máquina." /></div>
-                        <div className="col-span-1 sm:col-span-2"><TimeInputGroup label="Tempo Manual (Acabamento/Confecção)" totalMinutes={finishTime} onChange={setFinishTime} /></div>
-                        <InputGroup label="Custos Extras Fixos" value={extraCosts} onChange={setExtraCosts} prefix="R$" tooltip="Caixa, fita não cadastrada, etc." placeholder="0.00" /><InputGroup label="Margem Perda Geral" value={wasteFactor} onChange={setWasteFactor} suffix="%" tooltip="Erro global sobre itens que não são área." placeholder="10" />
+                        <div className="col-span-1 sm:col-span-2"><TimeInputGroup label="Tempo de máquina, se tiver" totalMinutes={cutTime} onChange={setCutTime} /><Toggle label="Cobrar sua supervisão nesse tempo?" checked={chargeSupervision} onChange={setChargeSupervision} tooltip="Adiciona quanto você quer ganhar por hora ao tempo da máquina." /></div>
+                        <div className="col-span-1 sm:col-span-2"><TimeInputGroup label="Tempo fazendo com as mãos" totalMinutes={finishTime} onChange={setFinishTime} /></div>
+                        <InputGroup label="Outros gastos do produto" value={extraCosts} onChange={setExtraCosts} prefix="R$" tooltip="Caixa, fita não cadastrada, etiqueta, embalagem etc." placeholder="0.00" /><InputGroup label="Perda geral de material" value={wasteFactor} onChange={setWasteFactor} suffix="%" tooltip="Sobra, erro ou desperdício nos materiais que não usam área." placeholder="10" />
                     </div>
                 </Card>
             </div>
@@ -602,7 +602,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                     <div className="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-amber-500 rounded-full opacity-10 blur-2xl"></div>
                     <div className="flex items-center gap-2 mb-6 text-amber-400 relative z-10">
                         <DollarSign size={24} />
-                        <h2 className="font-bold text-xl">Resumo Financeiro</h2>
+                        <h2 className="font-bold text-xl">Preço sugerido</h2>
                     </div>
                     <div className="space-y-4 relative z-10">
                         <div className="bg-slate-800/80 rounded-lg p-4 space-y-2 border border-slate-700">
@@ -613,7 +613,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                             <div className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-3 mb-3">
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
-                                        <p className="text-[10px] uppercase tracking-wide font-bold text-slate-400">Operacao do negocio</p>
+                                        <p className="text-[10px] uppercase tracking-wide font-bold text-slate-400">Gastos do negocio</p>
                                         <div className="flex items-center gap-2 mt-1">
                                             <span className="text-xs text-slate-300">{operationModeLabel}</span>
                                             <span className="text-xs font-bold text-amber-300">R$ {Number(operationCostBreakdown.monthlyTotal || 0).toFixed(2)}/mes</span>
@@ -638,10 +638,10 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                                 </span>
                                 <span>R$ {Number(materialTotalCost || 0).toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between text-xs text-slate-400"><span>Tempo (Máquina + Mão de Obra)</span><span>R$ {(Number(cutCost || 0) + Number(laborCost || 0)).toFixed(2)}</span></div>
-                            <div className="flex justify-between text-xs text-slate-400"><span>Operação rateada</span><span>R$ {Number(operationCostBreakdown.operationCostBatchTotal || 0).toFixed(2)}</span></div>
+                            <div className="flex justify-between text-xs text-slate-400"><span>Tempo de produção</span><span>R$ {(Number(cutCost || 0) + Number(laborCost || 0)).toFixed(2)}</span></div>
+                            <div className="flex justify-between text-xs text-slate-400"><span>Gastos divididos</span><span>R$ {Number(operationCostBreakdown.operationCostBatchTotal || 0).toFixed(2)}</span></div>
                             {operationCostBreakdown.markupBatchTotal > 0 && (
-                                <div className="flex justify-between text-xs text-slate-400"><span>Acréscimo operacional</span><span>R$ {Number(operationCostBreakdown.markupBatchTotal || 0).toFixed(2)}</span></div>
+                                <div className="flex justify-between text-xs text-slate-400"><span>Reserva extra</span><span>R$ {Number(operationCostBreakdown.markupBatchTotal || 0).toFixed(2)}</span></div>
                             )}
                             <div className="border-t border-slate-600 pt-2 flex justify-between text-sm font-bold text-slate-200">
                                 <span>Custo direto do lote ({(yieldQty || 1)} un)</span>
@@ -652,7 +652,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                                 <span>R$ {Number(totalBatchCostWithOperations || 0).toFixed(2)}</span>
                             </div>
                             <div className="bg-slate-700/50 p-2 rounded mt-2 flex justify-between items-center text-amber-400 font-bold border border-slate-600">
-                                <span>CUSTO (1 UNIDADE)</span>
+                                <span>CUSTO POR UNIDADE</span>
                                 <span className="text-lg">R$ {Number(unitCost || 0).toFixed(2)}</span>
                             </div>
                         </div>
@@ -676,7 +676,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                         </div>
                         <div className={`mt-4 p-4 rounded-xl border flex justify-between items-center ${activeProfitValue > 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
                             <div>
-                                <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Lucro Líquido Real</p>
+                                <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Lucro por unidade</p>
                                 <p className={`text-2xl font-bold ${activeProfitValue > 0 ? 'text-green-400' : 'text-red-400'}`}>R$ {Number(activeProfitValue || 0).toFixed(2)}</p>
                             </div>
                             <div className={`px-3 py-1 rounded-full text-xs font-bold ${activeProfitValue > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>{Number(activeProfitMargin || 0).toFixed(1)}%</div>
@@ -699,7 +699,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                     <div className="bg-white rounded-lg p-5">
                         <div className="flex items-center gap-2 mb-4 text-indigo-700">
                             <Sparkles size={20} className="animate-pulse" />
-                            <h2 className="font-bold text-lg">Catálogo & Marketing</h2>
+                            <h2 className="font-bold text-lg">Salvar produto e divulgar</h2>
                         </div>
 
                         {!isPremium && (
@@ -748,7 +748,7 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                                             : 'bg-slate-800 hover:bg-slate-900'
                                     }`}
                                 >
-                                    <Save size={16} /> Salvar no Catálogo
+                                    <Save size={16} /> Salvar produto
                                 </button>
                                 <button onClick={generateMarketingCopy} disabled={isGenerating || !productName} className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold rounded-lg flex items-center justify-center gap-2 text-sm shadow-lg">{isGenerating ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <><Sparkles size={16} /> Criar Post</>}</button>
                             </div>
@@ -760,14 +760,14 @@ export default function CalculatorTab({ appData, isPremium }: any) {
             </div></div>
 
             {/* HISTÓRICO DE PRODUTOS */}
-            <div className="col-span-1 md:col-span-12 mt-8 animate-fadeIn"><div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"><div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center flex-wrap gap-4"><h3 className="font-bold text-lg text-slate-700 flex items-center gap-2"><Save size={20} className="text-slate-500"/> Catálogo de Produtos Salvos {!isPremium && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">{freeProductUsage}/{FREE_TIER_PRODUCT_LIMIT} usados</span>}</h3>{savedProducts.length > 0 && (<button onClick={exportProductsToCSV} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"><Download size={16} /> Baixar Planilha</button>)}</div>
+            <div className="col-span-1 md:col-span-12 mt-8 animate-fadeIn"><div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"><div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center flex-wrap gap-4"><h3 className="font-bold text-lg text-slate-700 flex items-center gap-2"><Save size={20} className="text-slate-500"/> Produtos salvos {!isPremium && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold ml-2">{freeProductUsage}/{FREE_TIER_PRODUCT_LIMIT} usados</span>}</h3>{savedProducts.length > 0 && (<button onClick={exportProductsToCSV} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"><Download size={16} /> Baixar Planilha</button>)}</div>
             {savedProducts.length === 0 ? (
                 <div className="p-6">
                     <EmptyState
                         icon={Save}
                         title="Nenhum produto salvo"
-                        description="Crie sua primeira ficha técnica, calcule o preço e salve no catálogo para reutilizar depois."
-                        ctaLabel="Criar ficha"
+                        description="Crie seu primeiro produto, calcule o preço e salve para reutilizar depois."
+                        ctaLabel="Criar produto"
                         onCtaClick={() =>
                             window.scrollTo({ top: 0, behavior: "smooth" })
                         }

@@ -21,7 +21,7 @@ export default function TrialExpiradoPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2">
           <p className="font-bold text-amber-900">O que você vai perder:</p>
           <ul className="text-sm text-amber-800 space-y-1">
-            <li>✓ Insumos ilimitados (agora limitado a 20)</li>
+            <li>✓ Materiais ilimitados (agora limitado a 20)</li>
             <li>✓ Produtos ilimitados (agora limitado a 10)</li>
             <li>✓ Personalização de documentos</li>
             <li>✓ Backup automático</li>

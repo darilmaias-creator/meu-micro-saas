@@ -4,9 +4,9 @@ import { Lightbulb } from "lucide-react";
 
 const DAILY_TIPS = [
   {
-    title: "Margem Ideal",
+    title: "Lucro Desejado",
     content:
-      "A margem ideal para artesanato é entre 50-60%. Isso cobre custos fixos e gera lucro sustentável.",
+      "Um bom lucro desejado para artesanato costuma ficar entre 50-60%. Isso cobre gastos fixos e gera lucro sustentável.",
   },
   {
     title: "Controle de Estoque",
@@ -16,7 +16,7 @@ const DAILY_TIPS = [
   {
     title: "Precificação Dinâmica",
     content:
-      "Produtos personalizados podem ter margem maior (60-70%) que produtos em série (40-50%).",
+      "Produtos personalizados podem ter lucro desejado maior (60-70%) que produtos em série (40-50%).",
   },
   {
     title: "Orçamentos Claros",
@@ -26,12 +26,12 @@ const DAILY_TIPS = [
   {
     title: "Custos Ocultos",
     content:
-      "Não esqueça de incluir embalagem, etiqueta e frete nos custos. Eles impactam a margem.",
+      "Não esqueça de incluir embalagem, etiqueta e frete nos custos. Eles impactam seu lucro.",
   },
   {
     title: "Teste de Preço",
     content:
-      "Teste aumentar o preço em 10%. Muitos clientes não notam e você ganha mais margem.",
+      "Teste aumentar o preço em 10%. Muitos clientes não notam e você melhora seu lucro.",
   },
   {
     title: "Histórico de Vendas",
