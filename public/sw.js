@@ -1,9 +1,19 @@
-const CACHE_NAME = "calculadora-do-produtor-pwa-v8-offline-app-shell";
+const CACHE_NAME = "calculadora-do-produtor-pwa-v9-offline-routes";
 const NOTIFICATION_CLICK_MESSAGE_TYPE = "CALC_ARTESAO_NOTIFICATION_CLICK";
+const CACHE_APP_ROUTES_MESSAGE_TYPE = "CALC_ARTESAO_CACHE_APP_ROUTES";
 const ICON_VERSION = "20260502-favicon-refresh";
+const APP_SHELL_ROUTES = [
+  "/entrar",
+  "/estoque",
+  "/custos-operacao",
+  "/ficha-tecnica",
+  "/vendas",
+  "/dashboard",
+  "/meu-negocio",
+];
 const STATIC_ASSETS = [
   "/",
-  "/entrar",
+  ...APP_SHELL_ROUTES,
   "/manifest.webmanifest",
   `/icon?v=${ICON_VERSION}`,
   `/apple-icon?v=${ICON_VERSION}`,
@@ -19,9 +29,37 @@ const STATIC_ASSETS = [
 ];
 
 const NAVIGATION_FALLBACKS = [
+  "/estoque",
   "/entrar",
   "/",
 ];
+
+async function cacheAppRoutes(routes = APP_SHELL_ROUTES) {
+  const cache = await caches.open(CACHE_NAME);
+
+  await Promise.all(
+    routes.map(async (routePath) => {
+      try {
+        const routeUrl = new URL(routePath, self.location.origin);
+
+        if (routeUrl.origin !== self.location.origin) {
+          return;
+        }
+
+        const response = await fetch(routeUrl.href, {
+          credentials: "include",
+          redirect: "follow",
+        });
+
+        if (response.ok) {
+          await cache.put(routeUrl.pathname, response.clone());
+        }
+      } catch {
+        // Keep offline setup best-effort. One failed route should not block the app.
+      }
+    }),
+  );
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -50,6 +88,20 @@ self.addEventListener("activate", (event) => {
   );
 
   self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+  const message = event.data;
+
+  if (message?.type !== CACHE_APP_ROUTES_MESSAGE_TYPE) {
+    return;
+  }
+
+  const routes = Array.isArray(message.routes)
+    ? message.routes.filter((routePath) => typeof routePath === "string")
+    : APP_SHELL_ROUTES;
+
+  event.waitUntil(cacheAppRoutes(routes));
 });
 
 self.addEventListener("fetch", (event) => {

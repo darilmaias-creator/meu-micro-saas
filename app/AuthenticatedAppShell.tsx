@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   BarChart2,
@@ -70,6 +70,15 @@ const TAB_ITEMS = [
   label: string;
 }[];
 const OFFLINE_SESSION_STORAGE_KEY = "calcula-artesao:last-session";
+const CACHE_APP_ROUTES_MESSAGE_TYPE = "CALC_ARTESAO_CACHE_APP_ROUTES";
+const OFFLINE_APP_ROUTES = [
+  "/estoque",
+  "/custos-operacao",
+  "/ficha-tecnica",
+  "/vendas",
+  "/dashboard",
+  "/meu-negocio",
+];
 
 export default function AuthenticatedAppShell({
   initialTab,
@@ -91,6 +100,26 @@ export default function AuthenticatedAppShell({
     sales: appData.sales,
     quotes: appData.quotes,
   });
+  const isOffline = appData.syncStatus === "offline";
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !("serviceWorker" in navigator) ||
+      !navigator.onLine
+    ) {
+      return;
+    }
+
+    void navigator.serviceWorker.ready
+      .then((registration) => {
+        registration.active?.postMessage({
+          type: CACHE_APP_ROUTES_MESSAGE_TYPE,
+          routes: OFFLINE_APP_ROUTES,
+        });
+      })
+      .catch(() => undefined);
+  }, [session.user.id]);
 
   if (!appData.isLoaded) {
     return (
@@ -192,19 +221,30 @@ export default function AuthenticatedAppShell({
           <nav className="hidden max-w-full overflow-x-auto rounded-2xl bg-amber-700/50 p-1 no-scrollbar md:flex">
             {TAB_ITEMS.map((tabItem) => {
               const Icon = tabItem.icon;
-
-              return (
-                <Link
-                  key={tabItem.id}
-                  href={getPathForActiveTab(tabItem.id)}
-                  className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                    activeTab === tabItem.id
-                      ? "bg-white text-amber-700 shadow"
-                      : "text-amber-50 hover:bg-amber-700"
-                  }`}
-                >
+              const tabPath = getPathForActiveTab(tabItem.id);
+              const tabClassName = `px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+                activeTab === tabItem.id
+                  ? "bg-white text-amber-700 shadow"
+                  : "text-amber-50 hover:bg-amber-700"
+              }`;
+              const tabContent = (
+                <>
                   <Icon size={16} />
                   {tabItem.label}
+                </>
+              );
+
+              return isOffline ? (
+                <a key={tabItem.id} href={tabPath} className={tabClassName}>
+                  {tabContent}
+                </a>
+              ) : (
+                <Link
+                  key={tabItem.id}
+                  href={tabPath}
+                  className={tabClassName}
+                >
+                  {tabContent}
                 </Link>
               );
             })}
@@ -263,17 +303,14 @@ export default function AuthenticatedAppShell({
           {TAB_ITEMS.map((tabItem) => {
             const Icon = tabItem.icon;
             const isActive = activeTab === tabItem.id;
-
-            return (
-              <Link
-                key={tabItem.id}
-                href={getPathForActiveTab(tabItem.id)}
-                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2.5 text-[11px] font-bold transition-all ${
-                  isActive
-                    ? "bg-amber-50 text-amber-700 shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                }`}
-              >
+            const tabPath = getPathForActiveTab(tabItem.id);
+            const tabClassName = `flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2.5 text-[11px] font-bold transition-all ${
+              isActive
+                ? "bg-amber-50 text-amber-700 shadow-sm"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+            }`;
+            const tabContent = (
+              <>
                 <Icon size={18} />
                 <span className="text-center leading-tight">
                   {tabItem.id === "inventory"
@@ -286,6 +323,20 @@ export default function AuthenticatedAppShell({
                         ? "Vendas"
                         : "Resumo"}
                 </span>
+              </>
+            );
+
+            return isOffline ? (
+              <a key={tabItem.id} href={tabPath} className={tabClassName}>
+                {tabContent}
+              </a>
+            ) : (
+              <Link
+                key={tabItem.id}
+                href={tabPath}
+                className={tabClassName}
+              >
+                {tabContent}
               </Link>
             );
           })}
