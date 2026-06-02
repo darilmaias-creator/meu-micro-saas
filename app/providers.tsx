@@ -5,7 +5,6 @@ import React from "react";
 
 import AppModeBridge from "./AppModeBridge";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
-import { InactivityLogout } from "./components/InactivityLogout";
 import PwaRegister from "./PwaRegister";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -13,7 +12,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <PwaRegister />
       <AppModeBridge />
-      <InactivityLogout />
       {children}
       <CookieConsentBanner />
     </SessionProvider>
