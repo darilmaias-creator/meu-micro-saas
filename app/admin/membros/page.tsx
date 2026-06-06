@@ -29,9 +29,11 @@ type MemberRow = {
 };
 
 type MembersStats = {
+  activeTrialCount: number;
   freeCount: number;
   last24hCount: number;
   last7dCount: number;
+  paidPremiumCount: number;
   premiumCount: number;
   totalCount: number;
   unverifiedCount: number;
@@ -60,19 +62,44 @@ function formatDate(value: string | null | undefined) {
 }
 
 function getPlanLabel(member: MemberRow) {
-  const trialExpiresAt = member.premium_trial_expires_at
-    ? new Date(member.premium_trial_expires_at).getTime()
-    : 0;
-
   if (member.plan === "premium") {
     return "Premium";
   }
 
-  if (trialExpiresAt > Date.now()) {
+  if (isActivePremiumTrial(member)) {
     return "Teste Premium";
   }
 
   return "Gratis";
+}
+
+function isActivePremiumTrial(member: MemberRow, now = Date.now()) {
+  const trialExpiresAt = member.premium_trial_expires_at
+    ? new Date(member.premium_trial_expires_at).getTime()
+    : 0;
+
+  return member.plan !== "premium" && trialExpiresAt > now;
+}
+
+function getTrialRemainingLabel(member: MemberRow, now = Date.now()) {
+  if (!member.premium_trial_expires_at) {
+    return "-";
+  }
+
+  const expiresAt = new Date(member.premium_trial_expires_at).getTime();
+  const remainingMs = expiresAt - now;
+
+  if (remainingMs <= 0) {
+    return "Expirado";
+  }
+
+  const days = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+
+  if (days === 1) {
+    return "1 dia restante";
+  }
+
+  return `${days} dias restantes`;
 }
 
 function getPlanClasses(member: MemberRow) {
@@ -169,11 +196,14 @@ async function getMembersDashboardData() {
   if (!isMembersDatabaseConfigured()) {
     return {
       isConfigured: false,
+      activeTrialMembers: [] as MemberRow[],
       members: [] as MemberRow[],
       stats: {
+        activeTrialCount: 0,
         freeCount: 0,
         last24hCount: 0,
         last7dCount: 0,
+        paidPremiumCount: 0,
         premiumCount: 0,
         totalCount: 0,
         unverifiedCount: 0,
@@ -200,11 +230,17 @@ async function getMembersDashboardData() {
     }),
   );
   const now = Date.now();
+  const activeTrialMembers = members.filter((member) =>
+    isActivePremiumTrial(member, now),
+  );
+  const paidPremiumMembers = members.filter((member) => member.plan === "premium");
 
   return {
     isConfigured: true,
     members,
+    activeTrialMembers,
     stats: {
+      activeTrialCount: activeTrialMembers.length,
       freeCount: members.filter((member) => getPlanLabel(member) === "Gratis")
         .length,
       last24hCount: members.filter(
@@ -216,6 +252,7 @@ async function getMembersDashboardData() {
           now - new Date(member.created_at).getTime() <=
           7 * 24 * 60 * 60 * 1000,
       ).length,
+      paidPremiumCount: paidPremiumMembers.length,
       premiumCount: members.filter((member) => getPlanLabel(member) !== "Gratis")
         .length,
       totalCount: response.count ?? members.length,
@@ -255,7 +292,8 @@ export default async function MembersAdminPage() {
     );
   }
 
-  const { isConfigured, members, stats } = await getMembersDashboardData();
+  const { activeTrialMembers, isConfigured, members, stats } =
+    await getMembersDashboardData();
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900">
@@ -300,7 +338,7 @@ export default async function MembersAdminPage() {
           </section>
         )}
 
-        <section className="grid gap-3 md:grid-cols-6">
+        <section className="grid gap-3 md:grid-cols-7">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase text-slate-500">
               Total
@@ -309,9 +347,15 @@ export default async function MembersAdminPage() {
           </div>
           <div className="rounded-lg border border-emerald-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase text-emerald-700">
-              Premium/teste
+              Premium pago
             </p>
-            <p className="mt-2 text-3xl font-bold">{stats.premiumCount}</p>
+            <p className="mt-2 text-3xl font-bold">{stats.paidPremiumCount}</p>
+          </div>
+          <div className="rounded-lg border border-amber-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase text-amber-700">
+              Teste premium
+            </p>
+            <p className="mt-2 text-3xl font-bold">{stats.activeTrialCount}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase text-slate-500">
@@ -336,6 +380,78 @@ export default async function MembersAdminPage() {
               Ultimos 7 dias
             </p>
             <p className="mt-2 text-3xl font-bold">{stats.last7dCount}</p>
+          </div>
+        </section>
+
+        <section className="overflow-hidden rounded-lg border border-amber-200 bg-white shadow-sm">
+          <div className="border-b border-amber-100 bg-amber-50/60 p-4">
+            <h2 className="text-lg font-bold text-amber-950">
+              Usuarios em teste premium
+            </h2>
+            <p className="mt-1 text-sm text-amber-800">
+              Mostrando quem esta usando o teste gratuito premium agora.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-amber-100 text-sm">
+              <thead className="bg-amber-50 text-left text-xs font-semibold uppercase text-amber-800">
+                <tr>
+                  <th className="px-4 py-3">Membro</th>
+                  <th className="px-4 py-3">Inicio</th>
+                  <th className="px-4 py-3">Expira em</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Login</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-amber-50">
+                {activeTrialMembers.length === 0 ? (
+                  <tr>
+                    <td className="px-4 py-8 text-center text-slate-500" colSpan={5}>
+                      Nenhum usuario usando teste premium ativo agora.
+                    </td>
+                  </tr>
+                ) : (
+                  activeTrialMembers.map((member) => (
+                    <tr key={member.id} className="align-top hover:bg-amber-50/50">
+                      <td className="px-4 py-3">
+                        <div className="flex min-w-60 items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-600 text-sm font-bold text-white">
+                            {member.name.slice(0, 1).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-900">
+                              {member.name}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {member.email}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                        {formatDate(member.created_at)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                        <p className="font-semibold text-slate-900">
+                          {formatDate(member.premium_trial_expires_at)}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-amber-700">
+                          {getTrialRemainingLabel(member)}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
+                          Teste ativo
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                        {getProvidersLabel(member)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
 
