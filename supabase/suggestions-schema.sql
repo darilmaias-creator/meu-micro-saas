@@ -1,3 +1,16 @@
+create table if not exists public.api_rate_limits (
+  key text primary key,
+  action text not null,
+  attempts integer not null default 0,
+  window_started_at timestamptz not null,
+  blocked_until timestamptz null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists api_rate_limits_action_idx
+  on public.api_rate_limits (action);
+
 alter table public.api_rate_limits
   drop constraint if exists api_rate_limits_action_check;
 
