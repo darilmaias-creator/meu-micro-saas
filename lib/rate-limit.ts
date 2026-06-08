@@ -13,7 +13,8 @@ type HeaderBag =
 type ApiRateLimitAction =
   | "ai_assistant_gemini"
   | "billing_checkout"
-  | "marketing_generate";
+  | "marketing_generate"
+  | "user_suggestion";
 
 type ApiRateLimitRule = {
   action: ApiRateLimitAction;
@@ -61,6 +62,12 @@ const API_RATE_LIMIT_RULES: Record<ApiRateLimitAction, ApiRateLimitRule> = {
     action: "marketing_generate",
     blockDurationMs: 15 * 60 * 1000,
     maxRequests: 20,
+    windowMs: 60 * 60 * 1000,
+  },
+  user_suggestion: {
+    action: "user_suggestion",
+    blockDurationMs: 15 * 60 * 1000,
+    maxRequests: 10,
     windowMs: 60 * 60 * 1000,
   },
 };

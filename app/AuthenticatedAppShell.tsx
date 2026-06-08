@@ -7,6 +7,7 @@ import {
   Calculator,
   Crown,
   DollarSign,
+  Lightbulb,
   LogOut,
   Package,
   ShoppingBag,
@@ -26,6 +27,7 @@ import SalesTab from "./SalesTab";
 import AppHelpAssistant from "./AppHelpAssistant";
 import EmailVerificationNotice from "./components/EmailVerificationNotice";
 import { OfflineSyncBanner } from "./components/OfflineSyncBanner";
+import { SuggestionModal } from "./components/SuggestionModal";
 import OnboardingGuide from "./onboarding/OnboardingGuide";
 import { useAppData } from "./hooks/useAppData";
 import { DEFAULT_STORE_LOGO } from "@/lib/app-data/defaults";
@@ -85,6 +87,7 @@ export default function AuthenticatedAppShell({
   session,
 }: AuthenticatedAppShellProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
   const appData = useAppData(session.user.id);
 
   const activeTab = initialTab;
@@ -166,19 +169,29 @@ export default function AuthenticatedAppShell({
             )}
 
             <div className="flex w-full items-center justify-between gap-2 md:w-auto md:justify-end md:gap-4">
-              <Link
-                href="/meu-negocio"
-                className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50"
-              >
-                <Store size={14} />
-                Meu Negocio
-              </Link>
-              <Link
-                href="/politicas/cancelamento-e-reembolso"
-                className="hidden rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50 md:inline-flex"
-              >
-                Politica Premium
-              </Link>
+              <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                <Link
+                  href="/meu-negocio"
+                  className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50"
+                >
+                  <Store size={14} />
+                  Meu Negocio
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setIsSuggestionOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50"
+                >
+                  <Lightbulb size={14} />
+                  Sugestoes
+                </button>
+                <Link
+                  href="/politicas/cancelamento-e-reembolso"
+                  className="hidden rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50 md:inline-flex"
+                >
+                  Politica Premium
+                </Link>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsProfileOpen(true)}
@@ -290,6 +303,11 @@ export default function AuthenticatedAppShell({
       <AppHelpAssistant
         activeTab={activeTab}
         assistantContext={assistantContext}
+      />
+      <SuggestionModal
+        activeTab={activeTab}
+        isOpen={isSuggestionOpen}
+        onClose={() => setIsSuggestionOpen(false)}
       />
 
       <ProfileModal
