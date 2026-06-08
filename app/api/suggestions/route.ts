@@ -23,6 +23,38 @@ type SuggestionPayload = {
   message?: unknown;
 };
 
+export async function GET() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { message: "Voce precisa estar logado para acompanhar sugestoes." },
+      { status: 401 },
+    );
+  }
+
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("user_suggestions")
+    .select("id, category, message, active_tab, status, created_at, updated_at")
+    .eq("user_id", session.user.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error("[suggestions:list-user]", error);
+
+    return NextResponse.json(
+      { message: "Nao foi possivel carregar suas sugestoes agora." },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({
+    suggestions: data ?? [],
+  });
+}
+
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
 
