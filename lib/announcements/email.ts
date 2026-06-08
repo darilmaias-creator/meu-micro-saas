@@ -1,12 +1,14 @@
 import "server-only";
 
-import { sendResendEmail } from "@/lib/email/resend";
+import { ResendEmailError, sendResendEmail } from "@/lib/email/resend";
 import { parseAnnouncementMessageContent } from "@/lib/announcements/message-content";
 import { escapeHTML } from "@/lib/sanitize";
 
 import type { AnnouncementRecord } from "./types";
 
-const ANNOUNCEMENT_EMAIL_BATCH_SIZE = 15;
+const ANNOUNCEMENT_EMAIL_DELAY_MS = 300;
+const ANNOUNCEMENT_EMAIL_MAX_RETRIES = 2;
+const ANNOUNCEMENT_EMAIL_RATE_LIMIT_DELAY_MS = 1200;
 
 export type AnnouncementEmailRecipient = {
   userId: string;
@@ -134,6 +136,46 @@ function normalizeRecipients(input: AnnouncementEmailRecipient[]) {
   return normalized;
 }
 
+function wait(milliseconds: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+async function sendAnnouncementEmailWithRetry(input: {
+  announcement: AnnouncementRecord;
+  recipient: AnnouncementEmailRecipient;
+}) {
+  const emailBody = createAnnouncementEmailBody({
+    announcement: input.announcement,
+    recipientName: input.recipient.name,
+  });
+
+  for (let attempt = 0; attempt <= ANNOUNCEMENT_EMAIL_MAX_RETRIES; attempt += 1) {
+    try {
+      await sendResendEmail({
+        to: input.recipient.email,
+        subject: emailBody.subject,
+        text: emailBody.text,
+        html: emailBody.html,
+      });
+
+      return;
+    } catch (error) {
+      const shouldRetry =
+        error instanceof ResendEmailError &&
+        error.status === 429 &&
+        attempt < ANNOUNCEMENT_EMAIL_MAX_RETRIES;
+
+      if (!shouldRetry) {
+        throw error;
+      }
+
+      await wait(ANNOUNCEMENT_EMAIL_RATE_LIMIT_DELAY_MS * (attempt + 1));
+    }
+  }
+}
+
 export async function sendAnnouncementEmailToUsers(input: {
   announcement: AnnouncementRecord;
   recipients: AnnouncementEmailRecipient[];
@@ -148,40 +190,25 @@ export async function sendAnnouncementEmailToUsers(input: {
     sampleErrors: [],
   };
 
-  for (let index = 0; index < recipients.length; index += ANNOUNCEMENT_EMAIL_BATCH_SIZE) {
-    const batch = recipients.slice(index, index + ANNOUNCEMENT_EMAIL_BATCH_SIZE);
-    const batchResults = await Promise.allSettled(
-      batch.map(async (recipient) => {
-        const emailBody = createAnnouncementEmailBody({
-          announcement: input.announcement,
-          recipientName: recipient.name,
-        });
+  for (const recipient of recipients) {
+    try {
+      await sendAnnouncementEmailWithRetry({
+        announcement: input.announcement,
+        recipient,
+      });
 
-        await sendResendEmail({
-          to: recipient.email,
-          subject: emailBody.subject,
-          text: emailBody.text,
-          html: emailBody.html,
-        });
-      }),
-    );
-
-    for (const result of batchResults) {
-      if (result.status === "fulfilled") {
-        summary.sent += 1;
-        continue;
-      }
-
+      summary.sent += 1;
+    } catch (error) {
       summary.failed += 1;
 
       if (summary.sampleErrors.length < 5) {
         summary.sampleErrors.push(
-          result.reason instanceof Error
-            ? result.reason.message
-            : String(result.reason),
+          error instanceof Error ? error.message : String(error),
         );
       }
     }
+
+    await wait(ANNOUNCEMENT_EMAIL_DELAY_MS);
   }
 
   return summary;

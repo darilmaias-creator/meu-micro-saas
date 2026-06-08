@@ -7,6 +7,16 @@ export type ResendAttachment = {
   content: string;
 };
 
+export class ResendEmailError extends Error {
+  status: number;
+
+  constructor(input: { message: string; status: number }) {
+    super(input.message);
+    this.name = "ResendEmailError";
+    this.status = input.status;
+  }
+}
+
 function getResendConfig() {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
@@ -52,9 +62,10 @@ export async function sendResendEmail(input: {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(
-      `Resend request failed with status ${response.status}: ${errorText}`,
-    );
+    throw new ResendEmailError({
+      message: `Resend request failed with status ${response.status}: ${errorText}`,
+      status: response.status,
+    });
   }
 
   return response.json().catch(() => null);
