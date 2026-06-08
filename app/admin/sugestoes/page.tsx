@@ -12,6 +12,8 @@ import {
   type SuggestionStatus,
 } from "@/lib/suggestions";
 
+import { AdminSuggestionActions } from "./AdminSuggestionActions";
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -248,12 +250,13 @@ export default async function SuggestionsAdminPage() {
                   <th className="px-4 py-3">Mensagem</th>
                   <th className="px-4 py-3">Aba</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Acoes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {suggestions.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-8 text-center text-slate-500" colSpan={6}>
+                    <td className="px-4 py-8 text-center text-slate-500" colSpan={7}>
                       Nenhuma sugestao encontrada.
                     </td>
                   </tr>
@@ -295,6 +298,12 @@ export default async function SuggestionsAdminPage() {
                         >
                           {SUGGESTION_STATUS_LABELS[suggestion.status]}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <AdminSuggestionActions
+                          currentStatus={suggestion.status}
+                          suggestionId={suggestion.id}
+                        />
                       </td>
                     </tr>
                   ))

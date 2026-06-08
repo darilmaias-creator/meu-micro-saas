@@ -18,6 +18,14 @@ export type SuggestionStatus =
   | "resolved"
   | "archived";
 
+export const SUGGESTION_STATUSES = [
+  "new",
+  "reviewing",
+  "planned",
+  "resolved",
+  "archived",
+] as const;
+
 export const SUGGESTION_CATEGORY_LABELS: Record<SuggestionCategory, string> = {
   duvida: "Duvida",
   erro: "Erro",
@@ -39,6 +47,13 @@ export function isSuggestionCategory(
   return (
     typeof value === "string" &&
     SUGGESTION_CATEGORIES.includes(value as SuggestionCategory)
+  );
+}
+
+export function isSuggestionStatus(value: unknown): value is SuggestionStatus {
+  return (
+    typeof value === "string" &&
+    SUGGESTION_STATUSES.includes(value as SuggestionStatus)
   );
 }
 
