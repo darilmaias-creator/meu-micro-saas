@@ -3,8 +3,7 @@ export type GenericRecord = Record<string, unknown>;
 export const DEFAULT_STORE_NAME = "Calcula Artesão";
 export const DEFAULT_STORE_SUBTITLE =
   "Orçamentos claros. Clientes seguros. Negócios fechados.";
-export const DEFAULT_STORE_LOGO =
-  "https://i.postimg.cc/W1ZM8nRZ/arte-principal.png";
+export const DEFAULT_STORE_LOGO = "/branding/icone%20512x512.png";
 export const DEFAULT_QUOTE_VALIDITY_DAYS = "15";
 export const DEFAULT_QUOTE_LEAD_TIME_TEXT =
   "O prazo pode variar conforme quantidade e personalização.";

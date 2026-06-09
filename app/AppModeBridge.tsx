@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Calculator } from "lucide-react";
-const APP_ENTRY_LOGO_URL = "https://i.postimg.cc/W1ZM8nRZ/arte-principal.png";
+const APP_ENTRY_LOGO_URL = "/branding/icone%20512x512.png";
 
 const DISPLAY_MODE_QUERIES = [
   "(display-mode: standalone)",
