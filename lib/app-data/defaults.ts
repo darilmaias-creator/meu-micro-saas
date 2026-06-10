@@ -4,6 +4,7 @@ export const DEFAULT_STORE_NAME = "Calcula Artesão";
 export const DEFAULT_STORE_SUBTITLE =
   "Orçamentos claros. Clientes seguros. Negócios fechados.";
 export const DEFAULT_STORE_LOGO = "/branding/icone%20512x512.png";
+const MAX_BRANDING_VALUE_LENGTH = 5_000;
 export const DEFAULT_QUOTE_VALIDITY_DAYS = "15";
 export const DEFAULT_QUOTE_LEAD_TIME_TEXT =
   "O prazo pode variar conforme quantidade e personalização.";
@@ -210,7 +211,31 @@ export function normalizeBrandingValue(storageKey: string, storedValue: string) 
     return DEFAULT_STORE_LOGO;
   }
 
+  if (
+    storageKey.endsWith("calc_userLogo") &&
+    (storedValue.startsWith("data:") ||
+      storedValue.length > MAX_BRANDING_VALUE_LENGTH)
+  ) {
+    return DEFAULT_STORE_LOGO;
+  }
+
   return storedValue;
+}
+
+function normalizeNumberValue(value: unknown, fallback = 0) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalized = Number(value.replace(",", "."));
+
+    if (Number.isFinite(normalized)) {
+      return normalized;
+    }
+  }
+
+  return fallback;
 }
 
 function normalizeOperationCostMode(value: unknown): OperationCostMode {
@@ -251,6 +276,50 @@ function normalizeCustomOperationCosts(value: unknown): OperationCostEntry[] {
       } satisfies OperationCostEntry;
     })
     .filter((item): item is OperationCostEntry => item !== null);
+}
+
+function normalizeSavedProducts(value: unknown): GenericRecord[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const numericKeys = [
+    "totalCost",
+    "activePrice",
+    "activeProfitValue",
+    "profitMargin",
+    "yieldQty",
+    "laborCost",
+    "materialTotalCost",
+  ];
+
+  return value
+    .filter((item): item is GenericRecord => {
+      return Boolean(
+        item &&
+          typeof item === "object" &&
+          !Array.isArray(item) &&
+          Object.getPrototypeOf(item) === Object.prototype,
+      );
+    })
+    .map((item) => {
+      const normalizedItem: GenericRecord = { ...item };
+
+      for (const key of numericKeys) {
+        if (key in normalizedItem) {
+          normalizedItem[key] = normalizeNumberValue(normalizedItem[key]);
+        }
+      }
+
+      if ("profitMargin" in normalizedItem) {
+        normalizedItem.profitMargin = Math.min(
+          100,
+          Math.max(0, normalizeNumberValue(normalizedItem.profitMargin)),
+        );
+      }
+
+      return normalizedItem;
+    });
 }
 
 export function normalizeAppDataState(
@@ -364,9 +433,7 @@ export function normalizeAppDataState(
       ),
     },
     insumos: Array.isArray(input?.insumos) ? input.insumos : defaults.insumos,
-    savedProducts: Array.isArray(input?.savedProducts)
-      ? input.savedProducts
-      : defaults.savedProducts,
+    savedProducts: normalizeSavedProducts(input?.savedProducts),
     sales: Array.isArray(input?.sales) ? input.sales : defaults.sales,
     quotes: Array.isArray(input?.quotes) ? input.quotes : defaults.quotes,
   };

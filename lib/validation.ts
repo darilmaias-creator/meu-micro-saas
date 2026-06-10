@@ -1,4 +1,8 @@
-import type { AppDataState, GenericRecord } from "@/lib/app-data/defaults";
+import {
+  normalizeBrandingValue,
+  type AppDataState,
+  type GenericRecord,
+} from "@/lib/app-data/defaults";
 
 type ValidationSuccess<T> = {
   ok: true;
@@ -43,6 +47,20 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+function coerceNumber(value: unknown) {
+  if (isFiniteNumber(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const normalized = Number(value.replace(",", "."));
+
+    return Number.isFinite(normalized) ? normalized : null;
+  }
+
+  return null;
+}
+
 function validateString(value: unknown, path: string, maxLength = MAX_APP_DATA_STRING_LENGTH) {
   if (typeof value !== "string") {
     return fail("Texto invalido.", path);
@@ -72,14 +90,16 @@ function validateNumberRange(input: {
 }) {
   const value = input.value;
 
-  if (!isFiniteNumber(value)) {
+  const numericValue = coerceNumber(value);
+
+  if (numericValue === null) {
     return fail("Numero invalido.", input.path);
   }
 
   const min = input.min ?? (input.allowZero ? 0 : Number.MIN_VALUE);
   const max = input.max ?? MAX_SAFE_PRICE;
 
-  if (value < min || value > max) {
+  if (numericValue < min || numericValue > max) {
     return fail("Numero fora do intervalo permitido.", input.path);
   }
 
@@ -341,7 +361,16 @@ function validateConfig(config: unknown) {
     return fail("Configuracao invalida.", "config");
   }
 
-  const genericError = validateGenericJsonValue(config, "config", 0);
+  const configForValidation: GenericRecord = { ...config };
+
+  if (typeof configForValidation.userLogo === "string") {
+    configForValidation.userLogo = normalizeBrandingValue(
+      "calc_userLogo",
+      configForValidation.userLogo,
+    );
+  }
+
+  const genericError = validateGenericJsonValue(configForValidation, "config", 0);
 
   if (genericError) {
     return genericError;
