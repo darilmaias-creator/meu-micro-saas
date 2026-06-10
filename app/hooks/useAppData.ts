@@ -734,21 +734,27 @@ export function useAppData(userId: string) {
 
         const remoteState = normalizeAppDataState(payload.data);
         const remoteSerializedState = serializeAppDataState(remoteState);
+        const hasUnsyncedLocalChanges =
+          Boolean(cachedEntry) &&
+          localSerializedState !== (cachedEntry?.lastSyncedState ?? "");
         const shouldKeepLocalState =
-          payload.source === "default" && hasMeaningfulAppData(localState);
+          hasUnsyncedLocalChanges ||
+          (payload.source === "default" && hasMeaningfulAppData(localState));
 
         if (shouldKeepLocalState) {
           setState(localState);
           latestSerializedStateRef.current = localSerializedState;
           latestNormalizedStateRef.current = localState;
-          lastSyncedStateRef.current = "";
+          lastSyncedStateRef.current = cachedEntry?.lastSyncedState ?? "";
+          pendingSaveSerializedRef.current = localSerializedState;
           updateRuntimeAppDataCache({
             userId,
             state: localState,
-            lastRemoteUpdatedAt: payload.updatedAt,
-            lastSyncedState: "",
+            lastRemoteUpdatedAt: cachedEntry?.lastRemoteUpdatedAt ?? payload.updatedAt,
+            lastSyncedState: cachedEntry?.lastSyncedState ?? "",
             latestSerializedState: localSerializedState,
           });
+          schedulePendingSave(0);
         } else {
           setState(remoteState);
           writeLocalAppData(userId, remoteState);
@@ -764,7 +770,10 @@ export function useAppData(userId: string) {
           });
         }
 
-        lastRemoteUpdatedAtRef.current = payload.updatedAt;
+        lastRemoteUpdatedAtRef.current =
+          shouldKeepLocalState && hasUnsyncedLocalChanges
+            ? cachedEntry?.lastRemoteUpdatedAt ?? payload.updatedAt
+            : payload.updatedAt;
         setSyncStatus(
           latestSerializedStateRef.current === lastSyncedStateRef.current
             ? "synced"
@@ -794,7 +803,7 @@ export function useAppData(userId: string) {
     return () => {
       isCurrent = false;
     };
-  }, [userId]);
+  }, [schedulePendingSave, userId]);
 
   useEffect(() => {
     isLoadedRef.current = isLoaded;
