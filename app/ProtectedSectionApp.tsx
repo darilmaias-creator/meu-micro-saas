@@ -99,7 +99,7 @@ export default function ProtectedSectionApp({
 
   return (
     <AuthenticatedAppShell
-      key={`${activeSession.user.id}:${initialTab}`}
+      key={activeSession.user.id}
       session={activeSession}
       initialTab={initialTab}
     />

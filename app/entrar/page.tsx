@@ -687,7 +687,7 @@ export default function MainApp() {
 
   return (
     <AuthenticatedAppShell
-      key={`${activeSession.user.id}:${initialAuthenticatedTab}`}
+      key={activeSession.user.id}
       session={activeSession}
       initialTab={initialAuthenticatedTab}
     />
