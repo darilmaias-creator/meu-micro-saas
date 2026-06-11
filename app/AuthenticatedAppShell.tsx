@@ -25,6 +25,7 @@ import OperationCostsTab from "./OperationCostsTab";
 import ProfileModal from "./ProfileModal";
 import SalesTab from "./SalesTab";
 import AppHelpAssistant from "./AppHelpAssistant";
+import { ActivityTracker } from "./components/ActivityTracker";
 import EmailVerificationNotice from "./components/EmailVerificationNotice";
 import { OfflineSyncBanner } from "./components/OfflineSyncBanner";
 import { SuggestionModal } from "./components/SuggestionModal";
@@ -136,6 +137,7 @@ export default function AuthenticatedAppShell({
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-transparent pb-24 font-sans text-slate-800 md:pb-12">
+      <ActivityTracker />
       <div className="app-safe-top sticky top-0 z-40 bg-amber-600/95 text-white shadow-md backdrop-blur-xl">
         <div className="app-shell-surface mx-auto max-w-6xl rounded-b-[30px] bg-amber-600 px-4 pb-4 pt-3 md:rounded-b-3xl md:pt-4">
           <div className="mb-4 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">

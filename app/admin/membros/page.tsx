@@ -28,13 +28,34 @@ type MemberRow = {
   updated_at: string;
 };
 
+type ActivityRow = {
+  active_seconds: number | null;
+  activity_date: string;
+  last_path: string | null;
+  last_seen_at: string | null;
+  page_views: number | null;
+  user_id: string;
+};
+
+type MemberActivitySummary = {
+  activeDays7d: number;
+  activeSeconds7d: number;
+  activeSecondsToday: number;
+  lastPath: string | null;
+  lastSeenAt: string | null;
+  pageViewsToday: number;
+};
+
 type MembersStats = {
   activeTrialCount: number;
+  activeTodayCount: number;
+  averageTodayActiveSeconds: number;
   freeCount: number;
   last24hCount: number;
   last7dCount: number;
   paidPremiumCount: number;
   premiumCount: number;
+  todayActiveSeconds: number;
   totalCount: number;
   unverifiedCount: number;
 };
@@ -59,6 +80,44 @@ function formatDate(value: string | null | undefined) {
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function formatDuration(totalSeconds: number) {
+  const safeSeconds = Math.max(0, Math.round(totalSeconds));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}min`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes}min`;
+  }
+
+  return safeSeconds > 0 ? `${safeSeconds}s` : "-";
+}
+
+function getLocalDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "America/Cuiaba",
+    year: "numeric",
+  }).formatToParts(date);
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  return `${year}-${month}-${day}`;
+}
+
+function getLocalDateDaysAgo(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+
+  return getLocalDateKey(date);
 }
 
 function getPlanLabel(member: MemberRow) {
@@ -182,6 +241,19 @@ function isMissingOptionalMemberColumnError(error: unknown) {
   );
 }
 
+function isMissingActivityTableError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const message = "message" in error ? String(error.message) : "";
+
+  return (
+    message.includes("user_activity") ||
+    message.includes("Could not find the table")
+  );
+}
+
 async function fetchMembers(columns: string) {
   const supabase = createSupabaseServerClient();
 
@@ -192,6 +264,59 @@ async function fetchMembers(columns: string) {
     .limit(200);
 }
 
+async function fetchActivityRows() {
+  const supabase = createSupabaseServerClient();
+  const sinceDate = getLocalDateDaysAgo(6);
+
+  return supabase
+    .from("user_activity")
+    .select(
+      "user_id, activity_date, active_seconds, page_views, last_seen_at, last_path",
+    )
+    .gte("activity_date", sinceDate)
+    .order("last_seen_at", { ascending: false })
+    .limit(5000);
+}
+
+function buildActivitySummary(rows: ActivityRow[]) {
+  const today = getLocalDateKey();
+  const summaryByUserId = new Map<string, MemberActivitySummary>();
+
+  for (const row of rows) {
+    const existing = summaryByUserId.get(row.user_id) ?? {
+      activeDays7d: 0,
+      activeSeconds7d: 0,
+      activeSecondsToday: 0,
+      lastPath: null,
+      lastSeenAt: null,
+      pageViewsToday: 0,
+    };
+    const activeSeconds = Math.max(0, Number(row.active_seconds ?? 0));
+
+    existing.activeDays7d += activeSeconds > 0 || (row.page_views ?? 0) > 0 ? 1 : 0;
+    existing.activeSeconds7d += activeSeconds;
+
+    if (row.activity_date === today) {
+      existing.activeSecondsToday += activeSeconds;
+      existing.pageViewsToday += Math.max(0, Number(row.page_views ?? 0));
+    }
+
+    if (
+      row.last_seen_at &&
+      (!existing.lastSeenAt ||
+        new Date(row.last_seen_at).getTime() >
+          new Date(existing.lastSeenAt).getTime())
+    ) {
+      existing.lastSeenAt = row.last_seen_at;
+      existing.lastPath = row.last_path;
+    }
+
+    summaryByUserId.set(row.user_id, existing);
+  }
+
+  return summaryByUserId;
+}
+
 async function getMembersDashboardData() {
   if (!isMembersDatabaseConfigured()) {
     return {
@@ -200,14 +325,18 @@ async function getMembersDashboardData() {
       members: [] as MemberRow[],
       stats: {
         activeTrialCount: 0,
+        activeTodayCount: 0,
+        averageTodayActiveSeconds: 0,
         freeCount: 0,
         last24hCount: 0,
         last7dCount: 0,
         paidPremiumCount: 0,
         premiumCount: 0,
+        todayActiveSeconds: 0,
         totalCount: 0,
         unverifiedCount: 0,
       } satisfies MembersStats,
+      activityByUserId: new Map<string, MemberActivitySummary>(),
     };
   }
 
@@ -234,13 +363,38 @@ async function getMembersDashboardData() {
     isActivePremiumTrial(member, now),
   );
   const paidPremiumMembers = members.filter((member) => member.plan === "premium");
+  let activityRows: ActivityRow[] = [];
+  const activityResponse = await fetchActivityRows();
+
+  if (activityResponse.error && !isMissingActivityTableError(activityResponse.error)) {
+    throw activityResponse.error;
+  }
+
+  if (!activityResponse.error) {
+    activityRows = (activityResponse.data as unknown as ActivityRow[] | null) ?? [];
+  }
+
+  const activityByUserId = buildActivitySummary(activityRows);
+  const todayActivitySummaries = Array.from(activityByUserId.values()).filter(
+    (summary) => summary.activeSecondsToday > 0 || summary.pageViewsToday > 0,
+  );
+  const todayActiveSeconds = todayActivitySummaries.reduce(
+    (total, summary) => total + summary.activeSecondsToday,
+    0,
+  );
 
   return {
     isConfigured: true,
     members,
     activeTrialMembers,
+    activityByUserId,
     stats: {
       activeTrialCount: activeTrialMembers.length,
+      activeTodayCount: todayActivitySummaries.length,
+      averageTodayActiveSeconds:
+        todayActivitySummaries.length > 0
+          ? Math.round(todayActiveSeconds / todayActivitySummaries.length)
+          : 0,
       freeCount: members.filter((member) => getPlanLabel(member) === "Gratis")
         .length,
       last24hCount: members.filter(
@@ -255,6 +409,7 @@ async function getMembersDashboardData() {
       paidPremiumCount: paidPremiumMembers.length,
       premiumCount: members.filter((member) => getPlanLabel(member) !== "Gratis")
         .length,
+      todayActiveSeconds,
       totalCount: response.count ?? members.length,
       unverifiedCount: members.filter((member) => !member.email_verified_at)
         .length,
@@ -292,7 +447,7 @@ export default async function MembersAdminPage() {
     );
   }
 
-  const { activeTrialMembers, isConfigured, members, stats } =
+  const { activeTrialMembers, activityByUserId, isConfigured, members, stats } =
     await getMembersDashboardData();
 
   return (
@@ -389,6 +544,37 @@ export default async function MembersAdminPage() {
           </div>
         </section>
 
+        <section className="grid gap-3 md:grid-cols-4">
+          <div className="rounded-lg border border-cyan-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase text-cyan-700">
+              Ativos hoje
+            </p>
+            <p className="mt-2 text-3xl font-bold">{stats.activeTodayCount}</p>
+          </div>
+          <div className="rounded-lg border border-cyan-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase text-cyan-700">
+              Tempo total hoje
+            </p>
+            <p className="mt-2 text-3xl font-bold">
+              {formatDuration(stats.todayActiveSeconds)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-cyan-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase text-cyan-700">
+              Media por usuario
+            </p>
+            <p className="mt-2 text-3xl font-bold">
+              {formatDuration(stats.averageTodayActiveSeconds)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-cyan-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase text-cyan-700">
+              Janela medida
+            </p>
+            <p className="mt-2 text-3xl font-bold">7 dias</p>
+          </div>
+        </section>
+
         <section className="overflow-hidden rounded-lg border border-amber-200 bg-white shadow-sm">
           <div className="border-b border-amber-100 bg-amber-50/60 p-4">
             <h2 className="text-lg font-bold text-amber-950">
@@ -477,6 +663,8 @@ export default async function MembersAdminPage() {
                   <th className="px-4 py-3">Plano</th>
                   <th className="px-4 py-3">Login</th>
                   <th className="px-4 py-3">E-mail</th>
+                  <th className="px-4 py-3">Ultimo acesso</th>
+                  <th className="px-4 py-3">Uso</th>
                   <th className="px-4 py-3">Backup</th>
                   <th className="px-4 py-3">Stripe</th>
                   <th className="px-4 py-3">Atualizado</th>
@@ -485,12 +673,15 @@ export default async function MembersAdminPage() {
               <tbody className="divide-y divide-slate-100">
                 {members.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-8 text-center text-slate-500" colSpan={8}>
+                    <td className="px-4 py-8 text-center text-slate-500" colSpan={10}>
                       Nenhum membro encontrado.
                     </td>
                   </tr>
                 ) : (
-                  members.map((member) => (
+                  members.map((member) => {
+                    const activity = activityByUserId.get(member.id);
+
+                    return (
                     <tr key={member.id} className="align-top hover:bg-slate-50">
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                         <p className="font-medium text-slate-900">
@@ -537,6 +728,27 @@ export default async function MembersAdminPage() {
                           {getEmailStatusLabel(member)}
                         </span>
                       </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                        <p className="font-medium text-slate-900">
+                          {formatDate(activity?.lastSeenAt)}
+                        </p>
+                        {activity?.lastPath && (
+                          <p className="mt-1 max-w-40 truncate text-xs text-slate-500">
+                            {activity.lastPath}
+                          </p>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                        <p className="font-semibold text-slate-900">
+                          Hoje: {formatDuration(activity?.activeSecondsToday ?? 0)}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          7 dias: {formatDuration(activity?.activeSeconds7d ?? 0)}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Dias ativos: {activity?.activeDays7d ?? 0}/7
+                        </p>
+                      </td>
                       <td className="px-4 py-3 text-slate-700">
                         <p className="whitespace-nowrap">
                           {member.backup_frequency || "off"}
@@ -554,7 +766,8 @@ export default async function MembersAdminPage() {
                         {formatDate(member.updated_at)}
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
