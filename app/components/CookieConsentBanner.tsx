@@ -34,7 +34,7 @@ export function CookieConsentBanner() {
       <p className="text-sm font-bold text-slate-900">Uso de cookies</p>
       <p className="mt-2 text-xs leading-5 text-slate-600">
         Usamos cookies essenciais para login, segurança e funcionamento do app.
-        Ao continuar, voce concorda com a nossa{" "}
+        Ao continuar, você concorda com a nossa{" "}
         <Link
           href="/politicas/privacidade"
           className="font-bold text-amber-700 underline"

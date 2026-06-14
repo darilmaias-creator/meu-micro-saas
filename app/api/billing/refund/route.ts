@@ -115,7 +115,7 @@ export async function POST(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json(
-      { message: "Voce precisa estar logado para solicitar o reembolso." },
+      { message: "Você precisa estar logado para solicitar o reembolso." },
       { status: 401 },
     );
   }
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message:
-          "O reembolso do Premium ainda nao esta configurado no servidor.",
+          "O reembolso do Premium ainda não está configurado no servidor.",
       },
       { status: 503 },
     );
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { message: "Nao foi possivel localizar a conta logada." },
+        { message: "Não foi possível localizar a conta logada." },
         { status: 404 },
       );
     }
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           message:
-            "Essa conta nao tem uma assinatura Premium ativa para reembolso.",
+            "Essa conta não tem uma assinatura Premium ativa para reembolso.",
         },
         { status: 400 },
       );
@@ -182,7 +182,7 @@ export async function POST(request: Request) {
         {
           code: "FOUNDER_REFUND_CONFIRMATION_REQUIRED",
           message:
-            "Sua conta esta com o valor especial de lancamento. Se seguir com o reembolso, esse beneficio nao podera ser recuperado em futuras assinaturas.",
+            "Sua conta está com o valor especial de lançamento. Se seguir com o reembolso, esse benefício não poderá ser recuperado em futuras assinaturas.",
         },
         { status: 409 },
       );
@@ -204,7 +204,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           message:
-            "Ainda nao encontramos um pagamento aprovado para reembolso nessa assinatura. Se voce pagou por boleto, aguarde a confirmacao total e tente novamente.",
+            "Ainda não encontramos um pagamento aprovado para reembolso nessa assinatura. Se você pagou por boleto, aguarde a confirmação total e tente novamente.",
         },
         { status: 400 },
       );
@@ -218,7 +218,7 @@ export async function POST(request: Request) {
     if (!canRequestPremiumRefund(effectivePremiumActivatedAt)) {
       return NextResponse.json(
         {
-          message: `O reembolso integral fica disponivel somente nos primeiros ${PREMIUM_FULL_REFUND_WINDOW_DAYS} dias apos a liberacao do Premium.`,
+          message: `O reembolso integral fica disponível somente nos primeiros ${PREMIUM_FULL_REFUND_WINDOW_DAYS} dias após a liberação do Premium.`,
         },
         { status: 400 },
       );
@@ -255,7 +255,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           message:
-            "O reembolso foi iniciado, mas o cancelamento automatico da assinatura precisou de revisao manual. Tente novamente em instantes.",
+            "O reembolso foi iniciado, mas o cancelamento automático da assinatura precisou de revisão manual. Tente novamente em instantes.",
         },
         { status: 500 },
       );
@@ -291,7 +291,7 @@ export async function POST(request: Request) {
       refunded: true,
       refundId: refund.id,
       message: founderOfferWouldBeLost
-        ? "Reembolso integral solicitado com sucesso. O Premium foi encerrado e o valor especial de lancamento foi encerrado na sua conta."
+        ? "Reembolso integral solicitado com sucesso. O Premium foi encerrado e o valor especial de lançamento foi encerrado na sua conta."
         : "Reembolso integral solicitado com sucesso. O Premium foi encerrado na sua conta.",
     });
   } catch (error) {
@@ -304,7 +304,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: "Nao foi possivel solicitar o reembolso agora." },
+      { message: "Não foi possível solicitar o reembolso agora." },
       { status: 500 },
     );
   }

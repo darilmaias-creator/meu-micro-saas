@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json(
-      { message: "Voce precisa estar logado para confirmar a assinatura." },
+      { message: "Você precisa estar logado para confirmar a assinatura." },
       { status: 401 },
     );
   }
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     body = (await request.json()) as ConfirmCheckoutPayload;
   } catch {
     return NextResponse.json(
-      { message: "Nao foi possivel ler os dados da confirmacao de compra." },
+      { message: "Não foi possível ler os dados da confirmação de compra." },
       { status: 400 },
     );
   }
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   if (!sessionId) {
     return NextResponse.json(
-      { message: "O identificador da sessao de checkout nao foi informado." },
+      { message: "O identificador da sessão de checkout não foi informado." },
       { status: 400 },
     );
   }
@@ -61,14 +61,14 @@ export async function POST(request: Request) {
 
     if (relatedUserId && relatedUserId !== session.user.id) {
       return NextResponse.json(
-        { message: "Essa sessao de checkout nao pertence a conta logada." },
+        { message: "Essa sessão de checkout não pertence à conta logada." },
         { status: 403 },
       );
     }
 
     if (checkoutSession.mode !== "subscription") {
       return NextResponse.json(
-        { message: "Essa sessao de checkout nao e de assinatura." },
+        { message: "Essa sessão de checkout não é de assinatura." },
         { status: 400 },
       );
     }
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     if (!subscription) {
       return NextResponse.json({
         confirmed: false,
-        message: "A assinatura ainda nao ficou disponivel para sincronizacao.",
+        message: "A assinatura ainda não ficou disponível para sincronização.",
       });
     }
 
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: "Nao foi possivel confirmar a assinatura agora." },
+      { message: "Não foi possível confirmar a assinatura agora." },
       { status: 500 },
     );
   }

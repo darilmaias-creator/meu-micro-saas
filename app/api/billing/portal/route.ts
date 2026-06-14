@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json(
-      { message: "Voce precisa estar logado para gerenciar a assinatura." },
+      { message: "Você precisa estar logado para gerenciar a assinatura." },
       { status: 401 },
     );
   }
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message:
-          "O gerenciamento da assinatura ainda nao esta configurado no servidor.",
+          "O gerenciamento da assinatura ainda não está configurado no servidor.",
       },
       { status: 503 },
     );
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { message: "Nao foi possivel localizar a conta logada." },
+        { message: "Não foi possível localizar a conta logada." },
         { status: 404 },
       );
     }
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           message:
-            "Essa conta ainda nao tem uma assinatura ativa para gerenciar.",
+            "Essa conta ainda não tem uma assinatura ativa para gerenciar.",
         },
         { status: 400 },
       );
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: "Nao foi possivel abrir o gerenciamento da assinatura." },
+      { message: "Não foi possível abrir o gerenciamento da assinatura." },
       { status: 500 },
     );
   }

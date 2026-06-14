@@ -42,7 +42,7 @@ export default function SuccessStatusClient({
     }
 
     if (effectiveConfirmationState === "pending") {
-      return "O pagamento foi enviado. A confirmacao do Premium pode levar mais alguns segundos.";
+      return "O pagamento foi enviado. A confirmação do Premium pode levar mais alguns segundos.";
     }
 
     return "Estamos confirmando sua assinatura Premium com a Stripe agora.";
@@ -132,7 +132,7 @@ export default function SuccessStatusClient({
         )}
         {effectiveConfirmationState === "pending" && (
           <p className="mt-2 text-sm text-slate-500">
-            Se o selo Premium ainda nao aparecer na volta, feche e abra o perfil
+            Se o selo Premium ainda não aparecer na volta, feche e abra o perfil
             novamente em alguns segundos.
           </p>
         )}

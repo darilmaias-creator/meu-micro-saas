@@ -34,7 +34,7 @@ export default function EmailVerificationNotice({
         setStatus("error");
         setMessage(
           result?.message ??
-            "Nao foi possivel enviar o e-mail de confirmacao agora.",
+            "Não foi possível enviar o e-mail de confirmação agora.",
         );
         return;
       }
@@ -42,11 +42,11 @@ export default function EmailVerificationNotice({
       setStatus("sent");
       setMessage(
         result?.message ??
-          "Enviamos um novo link de confirmacao para seu e-mail.",
+          "Enviamos um novo link de confirmação para seu e-mail.",
       );
     } catch {
       setStatus("error");
-      setMessage("Nao foi possivel enviar o e-mail de confirmacao agora.");
+      setMessage("Não foi possível enviar o e-mail de confirmação agora.");
     }
   }
 
@@ -71,7 +71,7 @@ export default function EmailVerificationNotice({
         setStatus("error");
         setMessage(
           result?.message ??
-            "Ainda nao identificamos a confirmacao. Confira se voce abriu o link mais recente enviado por e-mail.",
+            "Ainda não identificamos a confirmação. Confira se você abriu o link mais recente enviado por e-mail.",
         );
         return;
       }
@@ -81,7 +81,7 @@ export default function EmailVerificationNotice({
       setIsHidden(true);
     } catch {
       setStatus("error");
-      setMessage("Nao foi possivel atualizar sua sessao agora.");
+      setMessage("Não foi possível atualizar sua sessão agora.");
     }
   }
 
@@ -104,8 +104,8 @@ export default function EmailVerificationNotice({
             <div className="min-w-0">
               <p className="text-sm font-black">Confirme seu e-mail</p>
               <p className="mt-1 text-sm leading-6 text-amber-900">
-                Envie um link para confirmar {email}. Isso aumenta a seguranca
-                da sua conta e ajuda na recuperacao de acesso.
+                Envie um link para confirmar {email}. Isso aumenta a segurança
+                da sua conta e ajuda na recuperação de acesso.
               </p>
               {message && (
                 <p

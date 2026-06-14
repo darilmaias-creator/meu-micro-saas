@@ -315,10 +315,10 @@ export default function CalculatorTab({ appData, isPremium }: any) {
                             <div className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-3 mb-3">
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
-                                        <p className="text-[10px] uppercase tracking-wide font-bold text-slate-400">Operacao do negocio</p>
+                                        <p className="text-[10px] uppercase tracking-wide font-bold text-slate-400">Operação do negócio</p>
                                         <div className="flex items-center gap-2 mt-1">
                                             <span className="text-xs text-slate-300">{operationModeLabel}</span>
-                                            <span className="text-xs font-bold text-amber-300">R$ {Number(operationCostBreakdown.monthlyTotal || 0).toFixed(2)}/mes</span>
+                                            <span className="text-xs font-bold text-amber-300">R$ {Number(operationCostBreakdown.monthlyTotal || 0).toFixed(2)}/mês</span>
                                         </div>
                                     </div>
                                     <Link href="/custos-operacao" className="rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-bold text-amber-300 transition-colors hover:border-amber-400 hover:text-amber-200">

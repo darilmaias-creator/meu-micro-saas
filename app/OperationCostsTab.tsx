@@ -22,10 +22,10 @@ export function OperationCostsSummary({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">
-            Gastos do Negocio
+            Gastos do Negócio
           </p>
           <h3 className="mt-1 text-base font-bold text-slate-800">
-            Resumo aplicado no preco
+            Resumo aplicado no preço
           </h3>
         </div>
         {!isPremium && (
@@ -84,14 +84,14 @@ export function OperationCostsSummary({
             Ajuste seus gastos em uma aba separada e mantenha a calculadora simples.
           </p>
           <p className="text-xs text-slate-500">
-            Os valores configurados aqui entram automaticamente no preco sugerido.
+            Os valores configurados aqui entram automaticamente no preço sugerido.
           </p>
         </div>
         <Link
           href="/custos-operacao"
           className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-indigo-700"
         >
-          Abrir gastos do negocio
+          Abrir gastos do negócio
         </Link>
       </div>
     </div>
@@ -111,9 +111,9 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
     ? config.customOperationCosts
     : [];
   const freeModeOperationHint =
-    "No plano gratis, voce usa gastos basicos divididos por unidade.";
+    "No plano grátis, você usa gastos básicos divididos por unidade.";
   const premiumModeOperationHint =
-    "No Premium, voce libera gastos personalizados, divisao por hora e reserva extra.";
+    "No Premium, você libera gastos personalizados, divisão por hora e reserva extra.";
   const operationModeLabel =
     operationConfig.operationCostMode === "per_hour"
       ? "Dividir por hora trabalhada"
@@ -129,7 +129,7 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
     }
 
     if (!(normalizedAmount > 0)) {
-      alert("Informe um valor valido para o gasto personalizado.");
+      alert("Informe um valor válido para o gasto personalizado.");
       return;
     }
 
@@ -163,12 +163,12 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
                 <div className="mb-1 flex items-center gap-2 text-indigo-700">
                   <DollarSign size={20} />
                   <h2 className="text-lg font-bold text-slate-800">
-                    Gastos do Negocio
+                    Gastos do Negócio
                   </h2>
                 </div>
                 <p className="text-sm text-slate-500">
-                  Traga aluguel, agua, luz e outros gastos para dentro do
-                  calculo do preco.
+                  Traga aluguel, água, luz e outros gastos para dentro do
+                  cálculo do preço.
                 </p>
               </div>
               {!isPremium && (
@@ -189,13 +189,13 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
           >
             <p className="text-sm font-semibold text-slate-700">
               {isPremium
-                ? "Seus gastos do negocio entram automaticamente no preco sugerido."
+                ? "Seus gastos do negócio entram automaticamente no preço sugerido."
                 : freeModeOperationHint}
             </p>
             <p className="mt-1 text-xs text-slate-500">
               {isPremium
                 ? premiumModeOperationHint
-                : "O Premium libera gastos personalizados, divisao por hora trabalhada e reserva extra."}
+                : "O Premium libera gastos personalizados, divisão por hora trabalhada e reserva extra."}
             </p>
           </div>
 
@@ -209,10 +209,10 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
                 value={config.fixedCostRent}
                 onChange={config.setFixedCostRent}
                 prefix="R$"
-                tooltip="Valor mensal do atelie, sala ou espaco de producao."
+                tooltip="Valor mensal do ateliê, sala ou espaço de produção."
               />
               <InputGroup
-                label="Agua"
+                label="Água"
                 value={config.fixedCostWater}
                 onChange={config.setFixedCostWater}
                 prefix="R$"
@@ -234,7 +234,7 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">
-                Gastos variaveis mensais
+                Gastos variáveis mensais
               </h3>
               <InputGroup
                 label="Embalagem"
@@ -248,14 +248,14 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
                 value={config.variableCostTransport}
                 onChange={config.setVariableCostTransport}
                 prefix="R$"
-                tooltip="Compras, entregas e deslocamentos ligados a producao."
+                tooltip="Compras, entregas e deslocamentos ligados à produção."
               />
               <InputGroup
                 label="Taxas"
                 value={config.variableCostFees}
                 onChange={config.setVariableCostFees}
                 prefix="R$"
-                tooltip="Taxas de maquininha, plataforma e outras cobrancas variaveis."
+                tooltip="Taxas de maquininha, plataforma e outras cobranças variáveis."
                 className="mb-0"
               />
             </div>
@@ -264,11 +264,11 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="lg:col-span-1">
               <InputGroup
-                label="Producao media por mes"
+                label="Produção média por mês"
                 value={config.monthlyProductionTarget}
                 onChange={config.setMonthlyProductionTarget}
                 placeholder="Ex: 80"
-                tooltip="Quantidade media de pecas produzidas por mes para dividir os gastos por unidade."
+                tooltip="Quantidade média de peças produzidas por mês para dividir os gastos por unidade."
               />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-2">
@@ -280,7 +280,7 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
                 }`}
               >
                 <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-                  Total fixo / mes
+                  Total fixo / mês
                 </p>
                 <p className="text-2xl font-bold text-slate-800">
                   R$ {operationConfig.fixedMonthlyTotal.toFixed(2)}
@@ -294,7 +294,7 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
                 }`}
               >
                 <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-                  Total variavel / mes
+                  Total variável / mês
                 </p>
                 <p className="text-2xl font-bold text-slate-800">
                   R$ {operationConfig.variableMonthlyTotal.toFixed(2)}
@@ -302,7 +302,7 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
               </div>
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
                 <p className="mb-1 text-xs font-bold uppercase tracking-wide text-amber-700">
-                  Como entra no preco
+                  Como entra no preço
                 </p>
                 <p className="text-sm font-bold text-amber-800">
                   {operationModeLabel}
@@ -323,10 +323,10 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
               <Crown size={18} className={isPremium ? "text-amber-300" : "text-slate-400"} />
               <div>
                 <h3 className="font-bold">
-                  Recursos avancados de gastos do negocio
+                  Recursos avançados de gastos do negócio
                 </h3>
                 <p className="text-xs text-slate-300">
-                  Gastos personalizados, divisao por hora e reserva extra.
+                  Gastos personalizados, divisão por hora e reserva extra.
                 </p>
               </div>
             </div>
@@ -340,8 +340,8 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
           <div className="space-y-4">
             {!isPremium && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                O plano gratis continua usando seus gastos basicos divididos
-                por unidade. Se quiser aprofundar a operacao, o Premium
+                O plano grátis continua usando seus gastos básicos divididos
+                por unidade. Se quiser aprofundar a operação, o Premium
                 libera tudo.
               </div>
             )}
@@ -349,7 +349,7 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className={isPremium ? "" : "opacity-70"}>
                 <InputGroup
-                  label="Horas produtivas por mes"
+                  label="Horas produtivas por mês"
                   value={config.productiveHoursPerMonth}
                   onChange={config.setProductiveHoursPerMonth}
                   disabled={!isPremium}
@@ -387,7 +387,7 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
                   disabled={!isPremium}
                   suffix="%"
                   placeholder="0"
-                  tooltip="Percentual extra para imprevistos, reinvestimento e protecao do lucro."
+                  tooltip="Percentual extra para imprevistos, reinvestimento e proteção do lucro."
                 />
               </div>
             </div>
@@ -399,8 +399,8 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
                     Gastos personalizados
                   </h4>
                   <p className="text-xs text-slate-500">
-                    Adicione outros gastos do seu negocio quando quiser um
-                    preco ainda mais completo.
+                    Adicione outros gastos do seu negócio quando quiser um
+                    preço ainda mais completo.
                   </p>
                 </div>
                 {isPremium && (
@@ -422,7 +422,7 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
                     value={customCostName}
                     onChange={setCustomCostName}
                     disabled={!isPremium}
-                    placeholder="Ex: Contador, plataforma, manutencao"
+                    placeholder="Ex: contador, plataforma, manutenção"
                     className="mb-0"
                   />
                 </div>
@@ -484,7 +484,7 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
                     ctaLabel="Adicionar gasto"
                     onCtaClick={() => {
                       const target = document.querySelector<HTMLInputElement>(
-                        'input[placeholder="Ex: Contador, plataforma, manutencao"]',
+                        'input[placeholder="Ex: contador, plataforma, manutenção"]',
                       );
                       target?.focus();
                     }}
@@ -564,10 +564,10 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
             </div>
 
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <p className="font-bold">Como isso entra no preco?</p>
+              <p className="font-bold">Como isso entra no preço?</p>
               <p className="mt-1 text-xs leading-relaxed text-amber-800">
-                Tudo o que voce configurar aqui sera aplicado automaticamente no
-                calculo do custo final dentro da aba Calcular Preco.
+                Tudo o que você configurar aqui será aplicado automaticamente no
+                cálculo do custo final dentro da aba Calcular Preço.
               </p>
             </div>
           </div>
@@ -581,21 +581,21 @@ export default function OperationCostsTab({ appData, isPremium }: any) {
           <ul className="mt-4 space-y-3 text-sm leading-relaxed text-slate-600">
             <li>
               <span className="font-bold text-slate-800">Gastos fixos:</span>{" "}
-              entram todo mes mesmo sem venda.
+              entram todo mês mesmo sem venda.
             </li>
             <li>
-              <span className="font-bold text-slate-800">Gastos variaveis:</span>{" "}
-              acompanham o volume do seu negocio.
+              <span className="font-bold text-slate-800">Gastos variáveis:</span>{" "}
+              acompanham o volume do seu negócio.
             </li>
             <li>
               <span className="font-bold text-slate-800">
-                Producao media por mes:
+                Produção média por mês:
               </span>{" "}
               ajuda o app a dividir seus gastos por unidade.
             </li>
             <li>
               <span className="font-bold text-slate-800">Premium:</span> libera
-              gastos personalizados, divisao por hora e reserva extra.
+              gastos personalizados, divisão por hora e reserva extra.
             </li>
           </ul>
         </Card>

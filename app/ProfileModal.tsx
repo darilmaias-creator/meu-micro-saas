@@ -169,7 +169,7 @@ export default function ProfileModal({
             tone: "error",
             message:
               result?.message ??
-              "Nao foi possivel carregar o espaco de depoimento agora.",
+              "Não foi possível carregar o espaço de depoimento agora.",
           });
           return;
         }
@@ -183,7 +183,7 @@ export default function ProfileModal({
 
         setTestimonialFeedback({
           tone: "error",
-          message: "Nao foi possivel carregar o espaco de depoimento agora.",
+          message: "Não foi possível carregar o espaço de depoimento agora.",
         });
       } finally {
         if (isActive) {
@@ -261,7 +261,7 @@ export default function ProfileModal({
       setTestimonialFeedback({
         tone: "error",
         message:
-          "O envio do depoimento fica disponivel somente apos 7 dias de uso da conta.",
+          "O envio do depoimento fica disponível somente após 7 dias de uso da conta.",
       });
       return;
     }
@@ -294,7 +294,7 @@ export default function ProfileModal({
           tone: "error",
           message:
             result?.message ??
-            "Nao foi possivel salvar o seu depoimento agora.",
+            "Não foi possível salvar o seu depoimento agora.",
         });
         return;
       }
@@ -310,7 +310,7 @@ export default function ProfileModal({
     } catch {
       setTestimonialFeedback({
         tone: "error",
-        message: "Nao foi possivel salvar o seu depoimento agora.",
+        message: "Não foi possível salvar o seu depoimento agora.",
       });
     } finally {
       setIsSavingTestimonial(false);
@@ -339,7 +339,7 @@ export default function ProfileModal({
           tone: "error",
           message:
             result?.message ??
-            "Nao foi possivel abrir o gerenciamento da assinatura agora.",
+            "Não foi possível abrir o gerenciamento da assinatura agora.",
         });
         return;
       }
@@ -349,7 +349,7 @@ export default function ProfileModal({
       setFeedback({
         tone: "error",
         message:
-          "Nao foi possivel abrir o gerenciamento da assinatura agora.",
+          "Não foi possível abrir o gerenciamento da assinatura agora.",
       });
     } finally {
       setIsOpeningBillingPortal(false);
@@ -380,7 +380,7 @@ export default function ProfileModal({
           tone: "error",
           message:
             result?.message ??
-            "Antes do reembolso, precisamos confirmar a perda do beneficio founder.",
+            "Antes do reembolso, precisamos confirmar a perda do benefício founder.",
         });
         return;
       }
@@ -389,7 +389,7 @@ export default function ProfileModal({
         setFeedback({
           tone: "error",
           message:
-            result?.message ?? "Nao foi possivel solicitar o reembolso agora.",
+            result?.message ?? "Não foi possível solicitar o reembolso agora.",
         });
         return;
       }
@@ -405,7 +405,7 @@ export default function ProfileModal({
     } catch {
       setFeedback({
         tone: "error",
-        message: "Nao foi possivel solicitar o reembolso agora.",
+        message: "Não foi possível solicitar o reembolso agora.",
       });
     } finally {
       setIsRequestingPremiumRefund(false);
@@ -418,7 +418,7 @@ export default function ProfileModal({
     if (!canRequestFullRefund) {
       setFeedback({
         tone: "error",
-        message: `O reembolso integral fica disponivel apenas nos primeiros ${PREMIUM_FULL_REFUND_WINDOW_DAYS} dias apos a liberacao do Premium.`,
+        message: `O reembolso integral fica disponível apenas nos primeiros ${PREMIUM_FULL_REFUND_WINDOW_DAYS} dias após a liberação do Premium.`,
       });
       return;
     }
@@ -445,7 +445,7 @@ export default function ProfileModal({
     if (!hasProfileChanges) {
       setFeedback({
         tone: "error",
-        message: "Nenhuma alteracao foi feita no perfil.",
+        message: "Nenhuma alteração foi feita no perfil.",
       });
       return;
     }
@@ -472,7 +472,7 @@ export default function ProfileModal({
         setFeedback({
           tone: "error",
           message:
-            result?.message ?? "Nao foi possivel atualizar o seu perfil agora.",
+            result?.message ?? "Não foi possível atualizar o seu perfil agora.",
         });
         return;
       }
@@ -486,7 +486,7 @@ export default function ProfileModal({
     } catch {
       setFeedback({
         tone: "error",
-        message: "Nao foi possivel atualizar o seu perfil agora.",
+        message: "Não foi possível atualizar o seu perfil agora.",
       });
     } finally {
       setIsSaving(false);
@@ -497,7 +497,7 @@ export default function ProfileModal({
     if (!canChangePhoto) {
       setFeedback({
         tone: "error",
-        message: "A troca de foto esta disponivel apenas para usuarios premium.",
+        message: "A troca de foto está disponível apenas para usuários premium.",
       });
       return;
     }
@@ -515,7 +515,7 @@ export default function ProfileModal({
     if (file.size > MAX_PROFILE_IMAGE_SIZE_BYTES) {
       setFeedback({
         tone: "error",
-        message: "Escolha uma foto com no maximo 800 KB.",
+        message: "Escolha uma foto com no máximo 800 KB.",
       });
       event.target.value = "";
       return;
@@ -545,7 +545,7 @@ export default function ProfileModal({
     } catch {
       setFeedback({
         tone: "error",
-        message: "Nao foi possivel carregar a imagem selecionada.",
+        message: "Não foi possível carregar a imagem selecionada.",
       });
     } finally {
       event.target.value = "";
@@ -604,7 +604,7 @@ export default function ProfileModal({
           tone: "error",
           message:
             result?.message ??
-            "Nao foi possivel salvar as preferencias de backup agora.",
+            "Não foi possível salvar as preferências de backup agora.",
         });
         return;
       }
@@ -614,12 +614,12 @@ export default function ProfileModal({
       setFeedback({
         tone: "success",
         message:
-          result?.message ?? "Preferencias de backup salvas com sucesso.",
+          result?.message ?? "Preferências de backup salvas com sucesso.",
       });
     } catch {
       setFeedback({
         tone: "error",
-        message: "Nao foi possivel salvar as preferencias de backup agora.",
+        message: "Não foi possível salvar as preferências de backup agora.",
       });
     } finally {
       setIsSavingBackupSettings(false);
@@ -650,7 +650,7 @@ export default function ProfileModal({
           tone: "error",
           message:
             result?.message ??
-            "Nao foi possivel enviar o backup por e-mail agora.",
+            "Não foi possível enviar o backup por e-mail agora.",
         });
         return;
       }
@@ -662,7 +662,7 @@ export default function ProfileModal({
     } catch {
       setFeedback({
         tone: "error",
-        message: "Nao foi possivel enviar o backup por e-mail agora.",
+        message: "Não foi possível enviar o backup por e-mail agora.",
       });
     } finally {
       setIsSendingBackupEmail(false);
@@ -686,7 +686,7 @@ export default function ProfileModal({
         setFeedback({
           tone: "success",
           message:
-            "Seu navegador nao suporta compartilhamento direto. O backup foi baixado para voce.",
+            "Seu navegador não suporta compartilhamento direto. O backup foi baixado para você.",
         });
         return;
       }
@@ -718,7 +718,7 @@ export default function ProfileModal({
           setFeedback({
             tone: "success",
             message:
-              "Esse navegador nao conseguiu abrir o compartilhamento. O backup foi baixado para voce.",
+              "Esse navegador não conseguiu abrir o compartilhamento. O backup foi baixado para você.",
           });
         } catch {
         setFeedback({
@@ -765,7 +765,7 @@ export default function ProfileModal({
         setFeedback({
           tone: "error",
           message:
-            "Esse arquivo nao parece ser um backup valido exportado pelo app.",
+            "Esse arquivo não parece ser um backup válido exportado pelo app.",
         });
         return;
       }
@@ -796,7 +796,7 @@ export default function ProfileModal({
         setFeedback({
           tone: "error",
           message:
-            result?.message ?? "Nao foi possivel restaurar o backup agora.",
+            result?.message ?? "Não foi possível restaurar o backup agora.",
         });
         return;
       }
@@ -811,7 +811,7 @@ export default function ProfileModal({
       setFeedback({
         tone: "error",
         message:
-          "Nao foi possivel ler esse arquivo de backup. Confira se ele e um JSON valido exportado pelo app.",
+          "Não foi possível ler esse arquivo de backup. Confira se ele é um JSON válido exportado pelo app.",
       });
     } finally {
       setIsRestoring(false);
@@ -842,7 +842,7 @@ export default function ProfileModal({
         setFeedback({
           tone: "error",
           message:
-            result?.message ?? "Nao foi possivel excluir a sua conta agora.",
+            result?.message ?? "Não foi possível excluir a sua conta agora.",
         });
         return;
       }
@@ -852,7 +852,7 @@ export default function ProfileModal({
     } catch {
       setFeedback({
         tone: "error",
-        message: "Nao foi possivel excluir a sua conta agora.",
+        message: "Não foi possível excluir a sua conta agora.",
       });
     } finally {
       setIsDeleting(false);
@@ -873,7 +873,7 @@ export default function ProfileModal({
     if (!response.ok || !payload) {
       throw new Error(
         (payload as { message?: string } | null)?.message ??
-          "Nao foi possivel preparar o backup agora.",
+          "Não foi possível preparar o backup agora.",
       );
     }
 
@@ -909,8 +909,8 @@ export default function ProfileModal({
     }
 
     return action === "baixar"
-      ? "Nao foi possivel exportar os dados agora."
-      : "Nao foi possivel compartilhar o backup agora.";
+      ? "Não foi possível exportar os dados agora."
+      : "Não foi possível compartilhar o backup agora.";
   }
 
   return (
@@ -979,8 +979,8 @@ export default function ProfileModal({
                 {isPremium
                   ? "Seu plano permite alterar nome e foto sempre que precisar."
                   : canChangeName
-                    ? "Atencao: no modo gratis voce so podera alterar o nome uma unica vez. Depois disso, novas trocas exigem o plano premium."
-                    : "Voce ja usou a unica troca de nome do plano gratis. A partir daqui, novas mudancas exigem o plano premium."}
+                    ? "Atenção: no modo grátis você só poderá alterar o nome uma única vez. Depois disso, novas trocas exigem o plano premium."
+                    : "Você já usou a única troca de nome do plano grátis. A partir daqui, novas mudanças exigem o plano premium."}
               </p>
 
               <div className="flex flex-wrap gap-2">
@@ -1046,10 +1046,10 @@ export default function ProfileModal({
 
           {!isPremium && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              No plano gratis:
+              No plano grátis:
               {" "}
-              voce pode trocar o nome uma unica vez e a foto fica bloqueada para
-              usuarios premium.
+              você pode trocar o nome uma única vez e a foto fica bloqueada para
+              usuários premium.
             </div>
           )}
 
@@ -1067,18 +1067,18 @@ export default function ProfileModal({
                   <p className="mt-1 text-sm text-slate-600">
                     {isPremium
                       ? hasFounderPriceLocked
-                        ? `Seu valor de lançamento ficou travado em ${founderPriceLabel}/mes.`
-                        : `Sua conta esta no valor normal de ${standardPriceLabel}/mes.`
+                        ? `Seu valor de lançamento ficou travado em ${founderPriceLabel}/mês.`
+                        : `Sua conta está no valor normal de ${standardPriceLabel}/mês.`
                       : user.founderOfferRevokedAt
-                        ? `Seu beneficio de lançamento foi encerrado apos um reembolso anterior. Novas assinaturas seguem o valor normal de ${standardPriceLabel}/mes.`
-                      : `Oferta de lancamento: ${founderPriceLabel}/mes para os ${PREMIUM_FOUNDER_LIMIT} primeiros pagantes. Depois, ${standardPriceLabel}/mes.`}
+                        ? `Seu benefício de lançamento foi encerrado após um reembolso anterior. Novas assinaturas seguem o valor normal de ${standardPriceLabel}/mês.`
+                      : `Oferta de lançamento: ${founderPriceLabel}/mês para os ${PREMIUM_FOUNDER_LIMIT} primeiros pagantes. Depois, ${standardPriceLabel}/mês.`}
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm text-slate-700">
                   <p>
                     Premium libera troca de foto, altera nome sem limite e
-                    remove restricoes do plano gratis.
+                    remove restrições do plano grátis.
                   </p>
                   {isPremium && stripeSubscriptionStatusLabel && (
                     <p className="mt-2 text-xs font-bold uppercase tracking-wide text-slate-500">
@@ -1088,21 +1088,21 @@ export default function ProfileModal({
                   {isPremium && !hasActiveStripeSubscription && (
                     <p className="mt-2 text-xs text-slate-500">
                       Essa conta premium foi liberada manualmente. O
-                      gerenciamento automatico pela Stripe aparece nas novas
+                      gerenciamento automático pela Stripe aparece nas novas
                       assinaturas pagas.
                     </p>
                   )}
                   {isPremium && user.stripeCurrentPeriodEnd && (
                     <p className="mt-1 text-xs text-slate-500">
-                      Periodo atual ate{" "}
+                      Período atual até{" "}
                       {new Date(user.stripeCurrentPeriodEnd).toLocaleDateString("pt-BR")}
                     </p>
                   )}
                   {hasActiveStripeSubscription && canRequestFullRefund && (
                     <p className="mt-1 text-xs text-slate-500">
                       {refundDeadline
-                        ? `Reembolso integral disponivel ate ${refundDeadline.toLocaleDateString("pt-BR")}.`
-                        : `O reembolso integral pode ser pedido em ate ${PREMIUM_FULL_REFUND_WINDOW_DAYS} dias apos a liberacao do Premium.`}
+                        ? `Reembolso integral disponível até ${refundDeadline.toLocaleDateString("pt-BR")}.`
+                        : `O reembolso integral pode ser pedido em até ${PREMIUM_FULL_REFUND_WINDOW_DAYS} dias após a liberação do Premium.`}
                     </p>
                   )}
                 </div>
@@ -1175,12 +1175,12 @@ export default function ProfileModal({
             {showFounderRefundWarning && founderRefundWarningRequired && (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
                 <p className="font-bold">
-                  Sua conta esta com o valor especial de lancamento.
+                  Sua conta está com o valor especial de lançamento.
                 </p>
                 <p className="mt-2">
-                  Hoje voce manteve o Premium em {founderPriceLabel}/mes. Se
-                  seguir com o reembolso integral agora, esse beneficio founder
-                  sera encerrado e futuras assinaturas voltarao para o valor
+                  Hoje você manteve o Premium em {founderPriceLabel}/mês. Se
+                  seguir com o reembolso integral agora, esse benefício founder
+                  será encerrado e futuras assinaturas voltarão para o valor
                   vigente do Premium.
                 </p>
                 <p className="mt-2">
@@ -1230,7 +1230,7 @@ export default function ProfileModal({
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
                 <p className="font-bold text-slate-700">Regras</p>
                 <p className="mt-1">
-                  Liberado apos 7 dias para incentivar depoimentos mais sinceros.
+                  Liberado após 7 dias para incentivar depoimentos mais sinceros.
                 </p>
               </div>
             </div>
@@ -1243,13 +1243,13 @@ export default function ProfileModal({
                   </div>
                   <div>
                     <p className="font-bold">
-                      Seu espaco de depoimento abre em {testimonialDaysRemaining}{" "}
+                      Seu espaço de depoimento abre em {testimonialDaysRemaining}{" "}
                       {testimonialDaysRemaining === 1 ? "dia" : "dias"}.
                     </p>
                     <p className="mt-1">
-                      Ele sera liberado em{" "}
+                      Ele será liberado em{" "}
                       {testimonialEligibleAt.toLocaleDateString("pt-BR")}. Assim
-                      o depoimento aparece depois que voce tiver mais vivencia
+                      o depoimento aparece depois que você tiver mais vivência
                       real com o app.
                     </p>
                   </div>
@@ -1267,13 +1267,13 @@ export default function ProfileModal({
                 disabled={!canWriteTestimonial || isLoadingTestimonial}
                 maxLength={TESTIMONIAL_MAX_LENGTH}
                 onChange={(event) => setTestimonialMessage(event.target.value)}
-                placeholder="Conte o que melhorou na sua rotina, no controle do estoque, na precificacao ou nos orcamentos."
+                placeholder="Conte o que melhorou na sua rotina, no controle do estoque, na precificação ou nos orçamentos."
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 disabled:bg-slate-100 disabled:text-slate-400"
               />
               <div className="mt-2 flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                 <span>
                   Esse texto fica ligado ao nome da sua conta e podera aparecer
-                  no site quando a area de depoimentos estiver ativa.
+                  no site quando a área de depoimentos estiver ativa.
                 </span>
                 <span>{testimonialMessage.length}/{TESTIMONIAL_MAX_LENGTH}</span>
               </div>
@@ -1326,12 +1326,12 @@ export default function ProfileModal({
                   Backup da conta
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  Baixe um arquivo JSON com seu perfil, configuracoes, materiais,
-                  produtos, vendas e orcamentos.
+                  Baixe um arquivo JSON com seu perfil, configurações, materiais,
+                  produtos, vendas e orçamentos.
                 </p>
                 <p className="text-xs text-slate-400 mt-2">
-                  A restauracao pelo arquivo reaplica os dados principais do app
-                  na conta atual. Login, e-mail e senha nao sao trocados pelo
+                  A restauração pelo arquivo reaplica os dados principais do app
+                  na conta atual. Login, e-mail e senha não são trocados pelo
                   backup.
                 </p>
                 <div className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
@@ -1339,7 +1339,7 @@ export default function ProfileModal({
                   <ol className="space-y-1 list-decimal pl-4">
                     <li>Salve o e-mail e a frequencia para automatizar seus envios.</li>
                     <li>Exporte ou compartilhe o backup antes de trocar de conta ou dispositivo.</li>
-                    <li>Use a restauracao apenas quando quiser substituir os dados atuais por um arquivo salvo.</li>
+                    <li>Use a restauração apenas quando quiser substituir os dados atuais por um arquivo salvo.</li>
                   </ol>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
@@ -1361,7 +1361,7 @@ export default function ProfileModal({
                       placeholder="seu@email.com"
                     />
                     <p className="mt-2 text-xs text-slate-400">
-                      Esse e-mail recebe o envio automatico e tambem o envio manual do backup.
+                      Esse e-mail recebe o envio automático e também o envio manual do backup.
                     </p>
                   </div>
                   <div>
@@ -1464,7 +1464,7 @@ export default function ProfileModal({
                 </h3>
                 <p className="text-sm text-red-700 mt-1">
                   Ao excluir a conta, seu perfil e todos os dados sincronizados
-                  serao removidos do sistema.
+                  serão removidos do sistema.
                 </p>
               </div>
             </div>
@@ -1525,7 +1525,7 @@ export default function ProfileModal({
               disabled={isSaving}
               className="rounded-2xl bg-amber-600 px-5 py-3 text-sm font-bold text-white hover:bg-amber-700 disabled:bg-amber-300 disabled:cursor-not-allowed transition-colors"
             >
-              {isSaving ? "Salvando..." : "Salvar alteracoes"}
+              {isSaving ? "Salvando..." : "Salvar alterações"}
             </button>
           </div>
         </div>

@@ -32,7 +32,7 @@ export async function GET() {
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { message: "Voce precisa estar logado para ver seu depoimento." },
+        { message: "Você precisa estar logado para ver seu depoimento." },
         { status: 401 },
       );
     }
@@ -41,7 +41,7 @@ export async function GET() {
 
     if (!user) {
       return NextResponse.json(
-        { message: "Nao foi possivel localizar sua conta." },
+        { message: "Não foi possível localizar sua conta." },
         { status: 404 },
       );
     }
@@ -63,7 +63,7 @@ export async function GET() {
     });
   } catch {
     return NextResponse.json(
-      { message: "Nao foi possivel carregar o seu depoimento agora." },
+      { message: "Não foi possível carregar o seu depoimento agora." },
       { status: 500 },
     );
   }
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { message: "Voce precisa estar logado para enviar um depoimento." },
+        { message: "Você precisa estar logado para enviar um depoimento." },
         { status: 401 },
       );
     }
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { message: "Nao foi possivel localizar sua conta." },
+        { message: "Não foi possível localizar sua conta." },
         { status: 404 },
       );
     }
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
         {
           code: "TOO_EARLY",
           message:
-            "Seu depoimento fica disponivel somente apos 7 dias de uso da conta.",
+            "Seu depoimento fica disponível somente após 7 dias de uso da conta.",
           eligibility: buildEligibilityPayload(user.createdAt),
         },
         { status: 403 },
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       body = (await request.json()) as TestimonialPayload;
     } catch {
       return NextResponse.json(
-        { message: "Nao foi possivel ler os dados do depoimento." },
+        { message: "Não foi possível ler os dados do depoimento." },
         { status: 400 },
       );
     }
@@ -146,13 +146,13 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       message:
-        "Depoimento salvo com sucesso. Quando a area de depoimentos estiver ativa no site, ele podera aparecer automaticamente.",
+        "Depoimento salvo com sucesso. Quando a área de depoimentos estiver ativa no site, ele poderá aparecer automaticamente.",
       eligibility: buildEligibilityPayload(user.createdAt),
       testimonial,
     });
   } catch {
     return NextResponse.json(
-      { message: "Nao foi possivel salvar o seu depoimento agora." },
+      { message: "Não foi possível salvar o seu depoimento agora." },
       { status: 500 },
     );
   }

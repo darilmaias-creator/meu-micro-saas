@@ -799,7 +799,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     container.style.zIndex = "9999";
 
     window.setTimeout(() => {
-      const docPrefix = docType === "orcamento" ? "Orcamento" : "Recibo";
+      const docPrefix = docType === "orcamento" ? "Orçamento" : "Recibo";
       const fileLabel =
         currentDocumentData.items.length > 1
           ? "Varios_Produtos"

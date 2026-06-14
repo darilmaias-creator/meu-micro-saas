@@ -41,7 +41,7 @@ export default function EmbeddedCheckoutClient() {
 
         if (!stripe) {
           throw new Error(
-            "A chave publica da Stripe ainda nao esta configurada no app.",
+            "A chave pública da Stripe ainda não está configurada no app.",
           );
         }
 
@@ -69,7 +69,7 @@ export default function EmbeddedCheckoutClient() {
           }
 
           throw new Error(
-            result?.message ?? "Nao foi possivel preparar o checkout agora.",
+            result?.message ?? "Não foi possível preparar o checkout agora.",
           );
         }
 
@@ -105,7 +105,7 @@ export default function EmbeddedCheckoutClient() {
         setErrorMessage(
           error instanceof Error && error.message
             ? error.message
-            : "Nao foi possivel abrir o checkout agora.",
+            : "Não foi possível abrir o checkout agora.",
         );
       }
     }
@@ -182,7 +182,7 @@ export default function EmbeddedCheckoutClient() {
                 seguro da Stripe.
               </p>
               <p className="mt-2 text-xs text-slate-500">
-                Ao continuar, voce concorda com a nossa{" "}
+                Ao continuar, você concorda com a nossa{" "}
                 <Link
                   href="/politicas/cancelamento-e-reembolso"
                   className="font-bold text-amber-700 hover:text-amber-800"
@@ -192,7 +192,7 @@ export default function EmbeddedCheckoutClient() {
                 .
               </p>
               <p className="mt-2 text-xs text-slate-500">
-                Se voce tiver um cupom, o campo para aplicar o codigo aparece
+                Se você tiver um cupom, o campo para aplicar o código aparece
                 no proprio checkout da Stripe.
               </p>
               {detectedPromotionCode && (
@@ -225,7 +225,7 @@ export default function EmbeddedCheckoutClient() {
 
               {status === "error" && (
                 <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
-                  {errorMessage ?? "Nao foi possivel abrir o checkout agora."}
+                  {errorMessage ?? "Não foi possível abrir o checkout agora."}
                 </div>
               )}
 

@@ -52,7 +52,7 @@ export function validateAppDataPlanLimits(input: {
     return {
       code: "FREE_INSUMO_LIMIT",
       message:
-        "Seu plano gratis permite manter ate 20 insumos no estoque. Assine o Premium para liberar itens ilimitados.",
+        "Seu plano grátis permite manter até 20 insumos no estoque. Assine o Premium para liberar itens ilimitados.",
     };
   }
 
@@ -65,7 +65,7 @@ export function validateAppDataPlanLimits(input: {
     return {
       code: "FREE_PRODUCT_LIMIT",
       message:
-        "Seu plano gratis permite manter ate 10 produtos salvos. Assine o Premium para liberar produtos ilimitados.",
+        "Seu plano grátis permite manter até 10 produtos salvos. Assine o Premium para liberar produtos ilimitados.",
     };
   }
 
@@ -89,7 +89,7 @@ export function validateAppDataPlanLimits(input: {
     return {
       code: "FREE_BRANDING_LOCKED",
       message:
-        "Personalizacao da marca nos documentos e exclusiva do plano Premium. No plano gratis, voce pode manter o que ja tinha salvo ou voltar ao padrao.",
+        "Personalização da marca nos documentos é exclusiva do plano Premium. No plano grátis, você pode manter o que já tinha salvo ou voltar ao padrão.",
     };
   }
 
@@ -105,7 +105,7 @@ export function validateAppDataPlanLimits(input: {
     return {
       code: "FREE_QUOTE_SETTINGS_LOCKED",
       message:
-        "As configuracoes do orçamento com textos e contatos personalizados sao exclusivas do plano Premium. No plano gratis, o app usa os textos padrao sem apagar o que voce ja deixou salvo.",
+        "As configurações do orçamento com textos e contatos personalizados são exclusivas do plano Premium. No plano grátis, o app usa os textos padrão sem apagar o que você já deixou salvo.",
     };
   }
 
@@ -124,7 +124,7 @@ export function validateAppDataPlanLimits(input: {
     return {
       code: "FREE_OPERATION_COST_ADVANCED_LOCKED",
       message:
-        "Os recursos avancados de custos operacionais ficam no Premium. No plano gratis, voce usa os custos basicos e o rateio simples por unidade sem perder o que ja deixou salvo.",
+        "Os recursos avançados de custos operacionais ficam no Premium. No plano grátis, você usa os custos básicos e o rateio simples por unidade sem perder o que já deixou salvo.",
     };
   }
 

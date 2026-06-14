@@ -233,7 +233,7 @@ export default function InventoryTab({ insumos, setInsumos, unit, setUnit, isPre
                         <option value="area">Área (Chapas, Placas, Acrílico)</option>
                         <option value="length">Comprimento (Fitas, Tecidos, Correntes)</option>
                         <option value="weight">Peso em Gramas (Farinha, Acucar, Fios, Resina)</option>
-                        <option value="volume">Liquidos em ML (Leite, Oleo, Essencia, Caldas)</option>
+                        <option value="volume">Líquidos em ML (leite, óleo, essência, caldas)</option>
                         <option value="unit">Unidade Fixa (Argolas, Fechos, Caixas)</option>
                     </select>
                 </div>

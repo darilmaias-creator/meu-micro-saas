@@ -68,7 +68,7 @@ export async function GET() {
 
   if (!session?.user?.id) {
     return NextResponse.json(
-      { message: "Voce precisa estar logado para acessar seus dados." },
+      { message: "Você precisa estar logado para acessar seus dados." },
       { status: 401 },
     );
   }
@@ -111,7 +111,7 @@ export async function GET() {
     });
     return NextResponse.json(
       {
-        message: "Nao foi possivel carregar os dados do aplicativo.",
+        message: "Não foi possível carregar os dados do aplicativo.",
         ...(process.env.NODE_ENV !== "production"
           ? { details: getErrorDetails(error) }
           : {}),
@@ -126,7 +126,7 @@ export async function PUT(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json(
-      { message: "Voce precisa estar logado para salvar seus dados." },
+      { message: "Você precisa estar logado para salvar seus dados." },
       { status: 401 },
     );
   }
@@ -137,7 +137,7 @@ export async function PUT(request: Request) {
     body = (await request.json()) as Partial<AppDataState>;
   } catch {
     return NextResponse.json(
-      { message: "Nao foi possivel ler os dados enviados." },
+      { message: "Não foi possível ler os dados enviados." },
       { status: 400 },
     );
   }
@@ -224,7 +224,7 @@ export async function PUT(request: Request) {
         code: "REMOTE_STATE_CONFLICT",
         data: currentState,
         message:
-          "Seus dados foram atualizados em outro aparelho. Recarregamos a versao mais recente para evitar perda de informacoes.",
+          "Seus dados foram atualizados em outro aparelho. Recarregamos a versão mais recente para evitar perda de informações.",
         updatedAt: currentUpdatedAt,
       };
 
@@ -287,7 +287,7 @@ export async function PUT(request: Request) {
     });
     return NextResponse.json(
       {
-        message: "Nao foi possivel salvar os dados do aplicativo.",
+        message: "Não foi possível salvar os dados do aplicativo.",
         ...(process.env.NODE_ENV !== "production"
           ? { details: getErrorDetails(error) }
           : {}),

@@ -8,10 +8,10 @@ export default function BillingCancelledPage() {
           Assinatura cancelada
         </p>
         <h1 className="mt-3 text-3xl font-black text-slate-900">
-          Voce interrompeu o checkout
+          Você interrompeu o checkout
         </h1>
         <p className="mt-4 text-sm text-slate-600">
-          Nenhuma cobranca foi concluida. Quando quiser, voce pode voltar e
+          Nenhuma cobrança foi concluída. Quando quiser, você pode voltar e
           assinar o Premium normalmente.
         </p>
         <Link
@@ -24,4 +24,3 @@ export default function BillingCancelledPage() {
     </div>
   );
 }
-

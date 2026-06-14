@@ -65,18 +65,18 @@ function getRegisterErrorMessage(error: unknown) {
     message.includes("relation") ||
     message.includes("does not exist")
   ) {
-    return "A tabela de usuarios ainda nao foi criada no Supabase.";
+    return "A tabela de usuários ainda não foi criada no Supabase.";
   }
 
   if (message.includes("SUPABASE_SECRET_KEY")) {
-    return "A chave secreta do Supabase nao esta configurada na Vercel.";
+    return "A chave secreta do Supabase não está configurada na Vercel.";
   }
 
   if (message.includes("NEXT_PUBLIC_SUPABASE_URL")) {
-    return "A URL do Supabase nao esta configurada na Vercel.";
+    return "A URL do Supabase não está configurada na Vercel.";
   }
 
-  return "Nao foi possivel criar sua conta agora.";
+  return "Não foi possível criar sua conta agora.";
 }
 
 export async function POST(request: Request) {
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     body = (await request.json()) as RegisterPayload;
   } catch {
     return NextResponse.json(
-      { message: "Nao foi possivel ler os dados enviados." },
+      { message: "Não foi possível ler os dados enviados." },
       { status: 400 },
     );
   }
@@ -190,8 +190,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message: verificationEmailSent
-          ? "Conta criada com sucesso. Enviamos um e-mail de confirmacao."
-          : "Conta criada com sucesso. Entre na sua area e reenvie o e-mail de confirmacao.",
+          ? "Conta criada com sucesso. Enviamos um e-mail de confirmação."
+          : "Conta criada com sucesso. Entre na sua área e reenvie o e-mail de confirmação.",
         verificationEmailSent,
       },
       { status: 201 },

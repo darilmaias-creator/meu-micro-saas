@@ -112,7 +112,7 @@ export default function AppModeBridge() {
           Calcula Artesão
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-500">
-          Estoque, ficha tecnica e vendas em um unico lugar.
+          Estoque, ficha técnica e vendas em um único lugar.
         </p>
       </div>
     </div>

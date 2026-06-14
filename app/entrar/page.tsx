@@ -28,28 +28,28 @@ const OFFLINE_SESSION_STORAGE_KEY = "calcula-artesao:last-session";
 function mapAuthErrorMessage(errorCode: string | null) {
   switch (errorCode) {
     case "Signin":
-      return "Nao foi possivel iniciar a autenticacao agora.";
+      return "Não foi possível iniciar a autenticação agora.";
     case "Configuration":
     case "configuration":
-      return "A autenticacao do servidor ainda nao esta configurada corretamente.";
+      return "A autenticação do servidor ainda não está configurada corretamente.";
     case "Storage":
-      return "Nao foi possivel acessar os dados de autenticacao no banco.";
+      return "Não foi possível acessar os dados de autenticação no banco.";
     case "AccessDenied":
-      return "O login foi bloqueado pela configuracao atual.";
+      return "O login foi bloqueado pela configuração atual.";
     case "OAuthSignin":
     case "OAuthCallback":
     case "OAuthCreateAccount":
-      return "Nao foi possivel entrar com o Google agora.";
+      return "Não foi possível entrar com o Google agora.";
     case "OAuthAccountNotLinked":
-      return "Esta conta do Google ja esta ligada a outro metodo de acesso.";
+      return "Esta conta do Google já está ligada a outro método de acesso.";
     case "EmailSignin":
-      return "Nao foi possivel enviar o e-mail de autenticacao agora.";
+      return "Não foi possível enviar o e-mail de autenticação agora.";
     case "Callback":
-      return "A autenticacao falhou no retorno do servidor.";
+      return "A autenticação falhou no retorno do servidor.";
     case "CredentialsSignin":
-      return "E-mail ou senha invalidos.";
+      return "E-mail ou senha inválidos.";
     case "SessionRequired":
-      return "Sua sessao nao pode ser iniciada agora.";
+      return "Sua sessão não pode ser iniciada agora.";
     default:
       return null;
   }
@@ -57,10 +57,10 @@ function mapAuthErrorMessage(errorCode: string | null) {
 
 function buildUnknownAuthErrorMessage(errorCode: string | null) {
   if (!errorCode) {
-    return "Nao foi possivel concluir a autenticacao agora.";
+    return "Não foi possível concluir a autenticação agora.";
   }
 
-  return `Nao foi possivel concluir a autenticacao agora. Codigo: ${errorCode}.`;
+  return `Não foi possível concluir a autenticação agora. Codigo: ${errorCode}.`;
 }
 
 function mapAuthStatusMessage(searchParams: URLSearchParams): AuthFeedback {
@@ -92,14 +92,14 @@ function mapAuthStatusMessage(searchParams: URLSearchParams): AuthFeedback {
       tone: "error",
       message:
         searchParams.get("message") ??
-        "Nao foi possivel confirmar o e-mail agora.",
+        "Não foi possível confirmar o e-mail agora.",
     };
   }
 
   if (searchParams.get("auth") === "required") {
     return {
       tone: "error",
-      message: "Entre na sua conta para acessar essa area protegida.",
+      message: "Entre na sua conta para acessar essa área protegida.",
     };
   }
 
@@ -281,7 +281,7 @@ export default function MainApp() {
       if (shouldShowRecaptcha && !recaptchaToken) {
         setAuthFeedback({
           tone: "error",
-          message: "Confirme que voce nao e um robo para continuar.",
+          message: "Confirme que você não é um robô para continuar.",
         });
         return;
       }
@@ -308,7 +308,7 @@ export default function MainApp() {
             tone: "error",
             message:
               forgotPasswordResult?.message ??
-              "Nao foi possivel iniciar a recuperacao de senha agora.",
+              "Não foi possível iniciar a recuperação de senha agora.",
           });
           return;
         }
@@ -317,7 +317,7 @@ export default function MainApp() {
           tone: "success",
           message:
             forgotPasswordResult?.message ??
-            "Se existir uma conta com este e-mail, enviaremos um link de recuperacao em instantes. Confira tambem a pasta spam.",
+            "Se existir uma conta com este e-mail, enviaremos um link de recuperação em instantes. Confira também a pasta spam.",
         });
         return;
       }
@@ -343,7 +343,7 @@ export default function MainApp() {
         if (!registerResponse.ok) {
           setAuthFeedback({
             tone: "error",
-            message: registerResult?.message ?? "Nao foi possivel criar sua conta agora.",
+            message: registerResult?.message ?? "Não foi possível criar sua conta agora.",
           });
           return;
         }
@@ -352,7 +352,7 @@ export default function MainApp() {
           tone: "success",
           message:
             registerResult?.message ??
-            "Conta criada com sucesso. Entrando na sua area...",
+            "Conta criada com sucesso. Entrando na sua área...",
         });
       }
 
@@ -369,7 +369,7 @@ export default function MainApp() {
           message:
             authMode === "register" &&
             loginResult.error === "CredentialsSignin"
-              ? "Sua conta foi criada, mas o login automatico falhou. Tente entrar novamente."
+              ? "Sua conta foi criada, mas o login automático falhou. Tente entrar novamente."
               : mapAuthErrorMessage(loginResult.error) ??
                 buildUnknownAuthErrorMessage(loginResult.error),
         });
@@ -388,7 +388,7 @@ export default function MainApp() {
         message:
           error instanceof Error && error.message
             ? buildUnknownAuthErrorMessage(error.message)
-            : "Nao foi possivel concluir a autenticacao agora.",
+            : "Não foi possível concluir a autenticação agora.",
       });
     } finally {
       if (shouldShowRecaptcha) {
@@ -429,15 +429,15 @@ export default function MainApp() {
           <h1 className="mb-3 text-3xl font-black text-slate-800">Calcula Artesão</h1>
           <p className="mb-6 text-sm text-slate-500">
             {authMode === "forgotPassword"
-              ? "Informe o e-mail da conta para receber o link de recuperacao."
-              : "Entre com e-mail e senha ou use sua conta Google para acessar o sistema e manter sua operacao em um unico lugar."}
+              ? "Informe o e-mail da conta para receber o link de recuperação."
+              : "Entre com e-mail e senha ou use sua conta Google para acessar o sistema e manter sua operação em um único lugar."}
           </p>
           {authMode !== "forgotPassword" && (
             <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm text-slate-600">
               <p className="font-bold text-slate-700 mb-1">Primeira vez por aqui?</p>
               <p>
-                Crie sua conta, confirme seus dados e entre na hora. Depois voce
-                pode manter calculos, estoque, vendas e backup tudo no mesmo lugar.
+                Crie sua conta, confirme seus dados e entre na hora. Depois você
+                pode manter cálculos, estoque, vendas e backup tudo no mesmo lugar.
               </p>
             </div>
           )}
@@ -446,15 +446,15 @@ export default function MainApp() {
             <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900">
               <p className="font-bold mb-1">Aviso importante sobre senha</p>
               <p>
-                No momento, a recuperacao de senha por e-mail ainda nao esta
-                liberada para todos os usuarios.
+                No momento, a recuperação de senha por e-mail ainda não está
+                liberada para todos os usuários.
               </p>
               <p className="mt-1">
-                Para ter mais seguranca e evitar bloqueio de acesso, recomendamos
-                criar a conta usando o Google sempre que possivel.
+                Para ter mais segurança e evitar bloqueio de acesso, recomendamos
+                criar a conta usando o Google sempre que possível.
               </p>
               <p className="mt-1 text-amber-800">
-                A recuperacao de senha sera liberada em novas atualizacoes.
+                A recuperação de senha será liberada em novas atualizações.
               </p>
             </div>
           )}
@@ -588,7 +588,7 @@ export default function MainApp() {
                 : authMode === "register"
                   ? "Criar conta com e-mail"
                   : authMode === "forgotPassword"
-                    ? "Enviar link de recuperacao"
+                    ? "Enviar link de recuperação"
                     : "Entrar com e-mail"}
             </button>
 
@@ -640,7 +640,7 @@ export default function MainApp() {
 
               {providersLoaded && !isGoogleEnabled && (
                 <p className="text-xs text-slate-400 mt-3">
-                  O login com Google esta indisponivel agora. Confira
+                  O login com Google está indisponível agora. Confira
                   {" "}
                   <code>GOOGLE_CLIENT_ID</code>
                   {" "}

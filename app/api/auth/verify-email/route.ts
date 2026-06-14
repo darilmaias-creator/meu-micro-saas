@@ -22,7 +22,7 @@ async function verifyEmailToken(token: string) {
   if (!payload) {
     return {
       ok: false as const,
-      message: "Esse link de confirmacao expirou ou nao e mais valido.",
+      message: "Esse link de confirmação expirou ou não é mais válido.",
     };
   }
 
@@ -31,7 +31,7 @@ async function verifyEmailToken(token: string) {
   if (!user || user.email !== payload.email) {
     return {
       ok: false as const,
-      message: "Nao encontramos uma conta valida para este link.",
+      message: "Não encontramos uma conta válida para este link.",
     };
   }
 
@@ -46,8 +46,8 @@ async function verifyEmailToken(token: string) {
       message:
         result.message.includes("email_verified_at") ||
         result.message.includes("email_verification_token_sent_at")
-          ? "As colunas de verificacao de e-mail ainda nao foram criadas no Supabase. Rode o schema.sql atualizado."
-          : "Nao foi possivel confirmar o e-mail agora.",
+          ? "As colunas de verificação de e-mail ainda não foram criadas no Supabase. Rode o schema.sql atualizado."
+          : "Não foi possível confirmar o e-mail agora.",
     };
   }
 
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
       ? await verifyEmailToken(token)
       : {
           ok: false as const,
-          message: "O link de confirmacao esta incompleto.",
+          message: "O link de confirmação está incompleto.",
         };
     const redirectUrl = new URL("/entrar", request.url);
     redirectUrl.searchParams.set(
@@ -97,7 +97,7 @@ export async function GET(request: Request) {
     redirectUrl.searchParams.set("emailVerified", "error");
     redirectUrl.searchParams.set(
       "message",
-      "Nao foi possivel confirmar o e-mail agora.",
+      "Não foi possível confirmar o e-mail agora.",
     );
     return NextResponse.redirect(redirectUrl);
   }
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     body = (await request.json()) as VerifyEmailPayload;
   } catch {
     return NextResponse.json(
-      { message: "Nao foi possivel ler os dados enviados." },
+      { message: "Não foi possível ler os dados enviados." },
       { status: 400 },
     );
   }
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: "Nao foi possivel confirmar o e-mail agora." },
+      { message: "Não foi possível confirmar o e-mail agora." },
       { status: 500 },
     );
   }

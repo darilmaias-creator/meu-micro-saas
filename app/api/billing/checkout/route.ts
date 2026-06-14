@@ -108,7 +108,7 @@ export async function POST(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json(
-      { message: "Voce precisa estar logado para assinar o Premium." },
+      { message: "Você precisa estar logado para assinar o Premium." },
       { status: 401 },
     );
   }
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message:
-          "O pagamento do Premium ainda nao esta configurado no servidor.",
+          "O pagamento do Premium ainda não está configurado no servidor.",
       },
       { status: 503 },
     );
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { message: "Nao foi possivel localizar a conta logada." },
+        { message: "Não foi possível localizar a conta logada." },
         { status: 404 },
       );
     }
@@ -240,7 +240,7 @@ export async function POST(request: Request) {
 
       if (!promotionCodeId) {
         return NextResponse.json(
-          { message: "Esse cupom nao existe ou nao esta ativo." },
+          { message: "Esse cupom não existe ou não está ativo." },
           { status: 400 },
         );
       }
@@ -266,7 +266,7 @@ export async function POST(request: Request) {
     );
 
     if (!checkoutSession.client_secret) {
-      throw new Error("A Stripe nao retornou o client secret do checkout.");
+      throw new Error("A Stripe não retornou o client secret do checkout.");
     }
 
     logServerEvent({
@@ -296,7 +296,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: "Nao foi possivel iniciar a assinatura agora." },
+      { message: "Não foi possível iniciar a assinatura agora." },
       { status: 500 },
     );
   }

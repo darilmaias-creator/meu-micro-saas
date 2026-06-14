@@ -28,7 +28,7 @@ export default function ResetPasswordForm({
     if (!hasToken) {
       setFeedback({
         tone: "error",
-        message: "O link de recuperacao esta incompleto ou invalido.",
+        message: "O link de recuperação está incompleto ou inválido.",
       });
       return;
     }
@@ -57,7 +57,7 @@ export default function ResetPasswordForm({
         setFeedback({
           tone: "error",
           message:
-            result?.message ?? "Nao foi possivel redefinir a senha agora.",
+            result?.message ?? "Não foi possível redefinir a senha agora.",
         });
         return;
       }
@@ -76,7 +76,7 @@ export default function ResetPasswordForm({
     } catch {
       setFeedback({
         tone: "error",
-        message: "Nao foi possivel redefinir a senha agora.",
+        message: "Não foi possível redefinir a senha agora.",
       });
     } finally {
       setIsSubmitting(false);
@@ -97,7 +97,7 @@ export default function ResetPasswordForm({
 
         {!hasToken && (
           <div className="rounded-xl px-3 py-3 text-sm bg-red-50 text-red-700 border border-red-100 mb-4">
-            O link de recuperacao esta incompleto ou invalido. Peca um novo e-mail
+            O link de recuperação está incompleto ou inválido. Peca um novo e-mail
             na tela de login.
           </div>
         )}

@@ -20,18 +20,18 @@ const statusConfig: Record<
     className: "border-red-200 bg-red-50 text-red-800",
     icon: CloudOff,
     message:
-      "Nao foi possivel sincronizar agora. Seus dados continuam salvos neste aparelho.",
+      "Não foi possível sincronizar agora. Seus dados continuam salvos neste aparelho.",
   },
   offline: {
     className: "border-amber-200 bg-amber-50 text-amber-900",
     icon: WifiOff,
     message:
-      "Modo offline ativo. Voce pode usar a calculadora; as alteracoes sincronizam quando a internet voltar.",
+      "Modo offline ativo. Você pode usar a calculadora; as alterações sincronizam quando a internet voltar.",
   },
   pending: {
     className: "border-sky-200 bg-sky-50 text-sky-800",
     icon: RefreshCw,
-    message: "Alteracoes salvas no aparelho. Aguardando sincronizacao.",
+    message: "Alterações salvas no aparelho. Aguardando sincronização.",
   },
   synced: {
     className: "border-emerald-200 bg-emerald-50 text-emerald-800",

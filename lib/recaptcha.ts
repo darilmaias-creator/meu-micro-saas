@@ -25,7 +25,7 @@ export async function verifyRecaptchaToken(token: unknown) {
 
   if (typeof token !== "string" || !token.trim()) {
     return {
-      message: "Confirme que voce nao e um robo para continuar.",
+      message: "Confirme que você não é um robô para continuar.",
       ok: false as const,
       skipped: false as const,
     };
@@ -50,7 +50,7 @@ export async function verifyRecaptchaToken(token: unknown) {
 
   if (!response.ok || !result?.success) {
     return {
-      message: "CAPTCHA invalido. Tente novamente.",
+      message: "CAPTCHA inválido. Tente novamente.",
       ok: false as const,
       skipped: false as const,
     };
@@ -60,7 +60,7 @@ export async function verifyRecaptchaToken(token: unknown) {
 
   if (typeof result.score === "number" && result.score < minimumScore) {
     return {
-      message: "Nao foi possivel validar a seguranca do envio agora.",
+      message: "Não foi possível validar a segurança do envio agora.",
       ok: false as const,
       skipped: false as const,
     };

@@ -42,7 +42,7 @@ type SuggestionModalTab = "form" | "history";
 
 const CATEGORY_DESCRIPTIONS: Record<SuggestionCategory, string> = {
   duvida: "Algo que ficou confuso no uso da calculadora.",
-  erro: "Algo que nao funcionou como deveria.",
+  erro: "Algo que não funcionou como deveria.",
   ideia: "Uma funcao nova que poderia ajudar.",
   melhoria: "Algo que ja existe, mas poderia ficar melhor.",
 };
@@ -56,7 +56,7 @@ const STATUS_CLASSES: Record<SuggestionStatus, string> = {
 };
 
 const TAB_LABELS: Record<string, string> = {
-  calculator: "Calcular Preco",
+  calculator: "Calcular Preço",
   dashboard: "Resumo",
   inventory: "Materiais",
   operationCosts: "Gastos",
@@ -105,7 +105,7 @@ export function SuggestionModal({
 
       if (!response.ok) {
         setHistoryFeedback(
-          result?.message ?? "Nao foi possivel carregar suas sugestoes.",
+          result?.message ?? "Não foi possível carregar suas sugestões.",
         );
         setUserSuggestions([]);
         return;
@@ -113,7 +113,7 @@ export function SuggestionModal({
 
       setUserSuggestions(result?.suggestions ?? []);
     } catch {
-      setHistoryFeedback("Nao foi possivel conectar agora.");
+      setHistoryFeedback("Não foi possível conectar agora.");
       setUserSuggestions([]);
     } finally {
       setIsLoadingHistory(false);
@@ -139,7 +139,7 @@ export function SuggestionModal({
 
     if (trimmedMessage.length < 8) {
       setFeedback({
-        message: "Escreva um pouco mais para eu entender sua sugestao.",
+        message: "Escreva um pouco mais para eu entender sua sugestão.",
         tone: "error",
       });
       return;
@@ -167,7 +167,7 @@ export function SuggestionModal({
         setFeedback({
           message:
             result?.message ??
-            "Nao foi possivel enviar sua sugestao agora. Tente novamente.",
+            "Não foi possível enviar sua sugestão agora. Tente novamente.",
           tone: "error",
         });
         return;
@@ -178,14 +178,14 @@ export function SuggestionModal({
       setFeedback({
         message:
           result?.message ??
-          "Sugestao enviada com sucesso. Obrigado por ajudar a melhorar a calculadora.",
+          "Sugestão enviada com sucesso. Obrigado por ajudar a melhorar a calculadora.",
         tone: "success",
       });
       setActiveModalTab("history");
       await loadUserSuggestions();
     } catch {
       setFeedback({
-        message: "Nao foi possivel conectar agora. Tente novamente em instantes.",
+        message: "Não foi possível conectar agora. Tente novamente em instantes.",
         tone: "error",
       });
     } finally {
@@ -206,14 +206,14 @@ export function SuggestionModal({
               Envie uma ideia para a calculadora
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Use esse espaco para apontar erros, duvidas ou melhorias.
+              Use esse espaço para apontar erros, dúvidas ou melhorias.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
-            aria-label="Fechar sugestoes"
+            aria-label="Fechar sugestões"
           >
             <X size={18} />
           </button>
@@ -229,7 +229,7 @@ export function SuggestionModal({
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
-            Enviar sugestao
+            Enviar sugestão
           </button>
           <button
             type="button"
@@ -243,7 +243,7 @@ export function SuggestionModal({
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
-            Minhas sugestoes
+            Minhas sugestões
           </button>
         </div>
 
@@ -290,12 +290,12 @@ export function SuggestionModal({
                   onChange={(event) =>
                     setMessage(event.target.value.slice(0, SUGGESTION_MAX_LENGTH))
                   }
-                  placeholder="Conte o que voce gostaria de melhorar..."
+                  placeholder="Conte o que você gostaria de melhorar..."
                   className="min-h-36 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
                 />
                 <div className="mt-2 flex items-center justify-between gap-3 text-xs">
                   <span className="text-slate-500">
-                    A aba atual sera enviada junto para dar contexto.
+                    A aba atual será enviada junto para dar contexto.
                   </span>
                   <span className="font-bold text-slate-500">
                     {message.length}/{SUGGESTION_MAX_LENGTH}
@@ -320,7 +320,7 @@ export function SuggestionModal({
             <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-bold text-slate-700">
-                  Acompanhe o andamento do que voce enviou.
+                  Acompanhe o andamento do que você enviou.
                 </p>
                 <button
                   type="button"
@@ -333,7 +333,7 @@ export function SuggestionModal({
 
               {isLoadingHistory ? (
                 <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
-                  Carregando suas sugestoes...
+                  Carregando suas sugestões...
                 </p>
               ) : historyFeedback ? (
                 <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
@@ -341,7 +341,7 @@ export function SuggestionModal({
                 </p>
               ) : userSuggestions.length === 0 ? (
                 <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
-                  Voce ainda nao enviou nenhuma sugestao.
+                  Você ainda não enviou nenhuma sugestão.
                 </p>
               ) : (
                 userSuggestions.map((suggestion) => (
@@ -394,7 +394,7 @@ export function SuggestionModal({
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-600 px-5 py-3 text-sm font-black text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-300"
             >
               <Send size={16} />
-              {isSubmitting ? "Enviando..." : "Enviar sugestao"}
+              {isSubmitting ? "Enviando..." : "Enviar sugestão"}
             </button>
           )}
         </div>

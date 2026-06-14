@@ -227,7 +227,7 @@ export default function BusinessSettingsPage() {
       const result = (await response.json()) as AnnouncementManagerResponse;
 
       if (!response.ok || !result.ok) {
-        throw new Error(result.message ?? "Nao foi possivel carregar os avisos.");
+        throw new Error(result.message ?? "Não foi possível carregar os avisos.");
       }
 
       setIsAnnouncementSectionEnabled(true);
@@ -238,7 +238,7 @@ export default function BusinessSettingsPage() {
       setAnnouncementError(
         error instanceof Error
           ? error.message
-          : "Nao foi possivel carregar os avisos agora.",
+          : "Não foi possível carregar os avisos agora.",
       );
     } finally {
       setIsLoadingAnnouncements(false);
@@ -304,7 +304,7 @@ export default function BusinessSettingsPage() {
       };
 
       if (!response.ok || !result.ok) {
-        throw new Error(result.message ?? "Nao foi possivel publicar o aviso.");
+        throw new Error(result.message ?? "Não foi possível publicar o aviso.");
       }
 
       setAnnouncementStatus(result.message ?? "Aviso publicado com sucesso.");
@@ -319,7 +319,7 @@ export default function BusinessSettingsPage() {
       setAnnouncementError(
         error instanceof Error
           ? error.message
-          : "Nao foi possivel publicar o aviso agora.",
+          : "Não foi possível publicar o aviso agora.",
       );
     } finally {
       setIsPublishingAnnouncement(false);
@@ -350,7 +350,7 @@ export default function BusinessSettingsPage() {
       };
 
       if (!response.ok || !result.ok) {
-        throw new Error(result.message ?? "Nao foi possivel encerrar o aviso.");
+        throw new Error(result.message ?? "Não foi possível encerrar o aviso.");
       }
 
       setAnnouncementStatus(result.message ?? "Aviso encerrado com sucesso.");
@@ -359,7 +359,7 @@ export default function BusinessSettingsPage() {
       setAnnouncementError(
         error instanceof Error
           ? error.message
-          : "Nao foi possivel encerrar o aviso agora.",
+          : "Não foi possível encerrar o aviso agora.",
       );
     } finally {
       setIsClosingAnnouncement(false);
@@ -370,7 +370,7 @@ export default function BusinessSettingsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <p className="text-xl font-bold text-amber-600 animate-pulse">
-          Carregando seu negocio...
+          Carregando seu negócio...
         </p>
       </div>
     );
@@ -399,7 +399,7 @@ export default function BusinessSettingsPage() {
 
     if (!isPremium) {
       setFeedback(
-        "A personalizacao do seu negocio fica disponivel no plano Premium.",
+        "A personalização do seu negócio fica disponível no plano Premium.",
       );
       event.target.value = "";
       return;
@@ -409,7 +409,7 @@ export default function BusinessSettingsPage() {
 
     reader.onloadend = () => {
       config.setUserLogo(reader.result as string);
-      setFeedback("Logotipo atualizado. As alteracoes sao salvas automaticamente.");
+      setFeedback("Logotipo atualizado. As alterações são salvas automaticamente.");
     };
 
     reader.readAsDataURL(file);
@@ -420,7 +420,7 @@ export default function BusinessSettingsPage() {
     config.setStoreName(defaultBranding.storeName);
     config.setStoreSubtitle(defaultBranding.storeSubtitle);
     config.setUserLogo(defaultBranding.logo);
-    setFeedback("Seu negocio voltou para o visual padrao do app.");
+    setFeedback("Seu negócio voltou para o visual padrão do app.");
   }
 
   function handleQuoteValidityChange(value: string) {
@@ -438,7 +438,7 @@ export default function BusinessSettingsPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold leading-tight drop-shadow-sm">
-                  Meu Negocio
+                  Meu Negócio
                 </h1>
                 <span className="text-xs text-amber-200 uppercase tracking-wider font-bold">
                   Ajuste sua marca e os textos que saem no orçamento
@@ -463,15 +463,15 @@ export default function BusinessSettingsPage() {
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
                 <Sparkles size={13} />
-                Area separada e simples
+                Área separada e simples
               </div>
               <div>
                 <h2 className="text-2xl font-black text-slate-900">
                   Edite o nome, slogan, logotipo e o texto do seu orçamento
                 </h2>
                 <p className="mt-2 text-sm text-slate-600">
-                  Tudo o que voce mudar aqui aparece nos seus orcamentos e
-                  documentos. As alteracoes sao salvas automaticamente.
+                  Tudo o que você mudar aqui aparece nos seus orçamentos e
+                  documentos. As alterações são salvas automaticamente.
                 </p>
               </div>
             </div>
@@ -484,14 +484,14 @@ export default function BusinessSettingsPage() {
               }`}
             >
               <Crown size={13} />
-              {isPremium ? "Premium liberado" : "Disponivel no Premium"}
+              {isPremium ? "Premium liberado" : "Disponível no Premium"}
             </div>
           </div>
 
           {!isPremium && (
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              No plano gratis, o app usa o visual e os textos padrao no orçamento.
-              Ao voltar para o Premium, suas personalizacoes reaparecem
+              No plano grátis, o app usa o visual e os textos padrão no orçamento.
+              Ao voltar para o Premium, suas personalizações reaparecem
               automaticamente.
             </div>
           )}
@@ -507,10 +507,10 @@ export default function BusinessSettingsPage() {
           <Card className="space-y-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                Pre-visualizacao
+                Pré-visualização
               </p>
               <h3 className="mt-1 text-lg font-black text-slate-900">
-                Como seu negocio vai aparecer
+                Como seu negócio vai aparecer
               </h3>
             </div>
 
@@ -519,7 +519,7 @@ export default function BusinessSettingsPage() {
                 <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                   <img
                     src={displayLogo}
-                    alt="Logotipo do negocio"
+                    alt="Logotipo do negócio"
                     className="h-full w-full object-contain"
                   />
                 </div>
@@ -553,7 +553,7 @@ export default function BusinessSettingsPage() {
           <Card className="space-y-5">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                Dados do negocio
+                Dados do negócio
               </p>
               <h3 className="mt-1 text-lg font-black text-slate-900">
                 Informacoes principais
@@ -562,7 +562,7 @@ export default function BusinessSettingsPage() {
 
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                Nome do seu negocio
+                Nome do seu negócio
               </label>
               <input
                 type="text"
@@ -595,10 +595,10 @@ export default function BusinessSettingsPage() {
               <label className="flex cursor-pointer flex-col gap-3 rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-4 py-4 transition-colors hover:bg-amber-100">
                 <div className="flex items-center gap-2 text-sm font-bold text-amber-800">
                   <Upload size={16} />
-                  Escolher imagem do seu negocio
+                  Escolher imagem do seu negócio
                 </div>
                 <p className="text-sm text-slate-600">
-                  Envie a logo que deve aparecer nos orcamentos e documentos.
+                  Envie a logo que deve aparecer nos orçamentos e documentos.
                 </p>
                 <input
                   type="file"
@@ -633,19 +633,19 @@ export default function BusinessSettingsPage() {
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                Configuracoes do orçamento
+                Configurações do orçamento
               </p>
               <h3 className="mt-1 text-lg font-black text-slate-900">
                 Textos e contatos que saem no PDF
               </h3>
               <p className="mt-2 text-sm text-slate-600">
-                Aqui voce define as condicoes do orçamento para passar mais
+                Aqui você define as condições do orçamento para passar mais
                 segurança ao cliente sem poluir o documento.
               </p>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:max-w-xs">
-              O plano gratis usa os textos padrao abaixo. O Premium libera
+              O plano grátis usa os textos padrão abaixo. O Premium libera
               personalizacao completa.
             </div>
           </div>
@@ -710,7 +710,7 @@ export default function BusinessSettingsPage() {
 
             <SettingsField
               label="Sinal ou entrada"
-              hint="No gratis fica o padrão de 50%. No Premium você personaliza."
+              hint="No grátis fica o padrão de 50%. No Premium você personaliza."
               value={
                 isPremium
                   ? config.quoteAdvanceText
@@ -795,8 +795,8 @@ export default function BusinessSettingsPage() {
                   Aviso no topo do app (global ou direcionado)
                 </h3>
                 <p className="mt-2 text-sm text-slate-600">
-                  Tudo que voce publicar aqui aparece no topo do app para os
-                  usuarios logados.
+                  Tudo que você publicar aqui aparece no topo do app para os
+                  usuários logados.
                 </p>
               </div>
 
@@ -836,7 +836,7 @@ export default function BusinessSettingsPage() {
                 <p className="mt-1 text-xs text-slate-500">
                   {activeAnnouncement.audience === "selected"
                     ? `Direcionado para ${activeAnnouncement.targetEmails.length} e-mail(s).`
-                    : "Visivel para todos os usuarios."}
+                    : "Visível para todos os usuários."}
                 </p>
                 <p className="mt-2 text-xs text-slate-500">
                   Publicado em {formatAnnouncementDate(activeAnnouncement.createdAt)}
@@ -863,7 +863,7 @@ export default function BusinessSettingsPage() {
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               <SettingsField
                 label="Titulo do aviso"
-                hint="Exemplo: Cupom de lancamento para novos assinantes."
+                hint="Exemplo: cupom de lançamento para novos assinantes."
                 value={announcementTitle}
                 disabled={isPublishingAnnouncement}
                 placeholder="Titulo curto do aviso"
@@ -920,7 +920,7 @@ export default function BusinessSettingsPage() {
                   disabled={isPublishingAnnouncement}
                   className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-base text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 disabled:bg-slate-100 disabled:text-slate-400"
                 >
-                  <option value="all">Todos os usuarios</option>
+                  <option value="all">Todos os usuários</option>
                   <option value="selected">Somente e-mails de teste</option>
                 </select>
                 <p className="mt-2 text-xs text-slate-500">
@@ -1023,7 +1023,7 @@ export default function BusinessSettingsPage() {
                 className="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-700 focus:ring-sky-400"
               />
               <span>
-                <strong>Enviar tambem por e-mail para os usuarios</strong>
+                <strong>Enviar também por e-mail para os usuários</strong>
                 <span className="mt-1 block text-xs text-slate-500">
                   Usa o remetente configurado no Resend (ex: novidades@calculaartesao.com.br).
                 </span>
@@ -1058,7 +1058,7 @@ export default function BusinessSettingsPage() {
                 disabled={isPublishingAnnouncement}
                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Limpar formulario
+                Limpar formulário
               </button>
             </div>
 

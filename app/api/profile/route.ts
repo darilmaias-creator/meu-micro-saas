@@ -18,13 +18,13 @@ function getErrorResponseMessage(code: string) {
     case "INVALID_NAME":
       return "O nome precisa ter pelo menos 2 caracteres.";
     case "FREE_NAME_CHANGE_LIMIT":
-      return "No plano gratis, o nome so pode ser alterado uma unica vez.";
+      return "No plano grátis, o nome só pode ser alterado uma única vez.";
     case "PREMIUM_PHOTO_REQUIRED":
-      return "A troca de foto esta disponivel apenas para usuarios premium.";
+      return "A troca de foto está disponível apenas para usuários premium.";
     case "USER_NOT_FOUND":
-      return "Nao foi possivel localizar o usuario logado.";
+      return "Não foi possível localizar o usuário logado.";
     default:
-      return "Nao foi possivel atualizar o perfil.";
+      return "Não foi possível atualizar o perfil.";
   }
 }
 
@@ -49,7 +49,7 @@ export async function PATCH(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json(
-      { message: "Voce precisa estar logado para atualizar o perfil." },
+      { message: "Você precisa estar logado para atualizar o perfil." },
       { status: 401 },
     );
   }
@@ -60,14 +60,14 @@ export async function PATCH(request: Request) {
     body = (await request.json()) as UpdateProfilePayload;
   } catch {
     return NextResponse.json(
-      { message: "Nao foi possivel ler os dados do perfil." },
+      { message: "Não foi possível ler os dados do perfil." },
       { status: 400 },
     );
   }
 
   if (body.name !== undefined && typeof body.name !== "string") {
     return NextResponse.json(
-      { message: "O nome enviado nao esta em um formato valido." },
+      { message: "O nome enviado não está em um formato válido." },
       { status: 400 },
     );
   }
@@ -78,14 +78,14 @@ export async function PATCH(request: Request) {
     typeof body.image !== "string"
   ) {
     return NextResponse.json(
-      { message: "A foto enviada nao esta em um formato valido." },
+      { message: "A foto enviada não está em um formato válido." },
       { status: 400 },
     );
   }
 
   if (!isValidImageValue(body.image)) {
     return NextResponse.json(
-      { message: "A imagem informada nao esta em um formato suportado." },
+      { message: "A imagem informada não está em um formato suportado." },
       { status: 400 },
     );
   }
@@ -125,7 +125,7 @@ export async function PATCH(request: Request) {
   return NextResponse.json({
     message: result.changed
       ? "Perfil atualizado com sucesso."
-      : "Nenhuma alteracao foi feita no perfil.",
+      : "Nenhuma alteração foi feita no perfil.",
     user: getSessionUserFromStoredUser(result.user),
   });
 }

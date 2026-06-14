@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json(
-      { message: "Voce precisa estar logado para enviar o backup por e-mail." },
+      { message: "Você precisa estar logado para enviar o backup por e-mail." },
       { status: 401 },
     );
   }
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { message: "Nao foi possivel localizar a conta logada." },
+        { message: "Não foi possível localizar a conta logada." },
         { status: 404 },
       );
     }
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destinationEmail)) {
       return NextResponse.json(
-        { message: "Informe um e-mail valido para receber o backup." },
+        { message: "Informe um e-mail válido para receber o backup." },
         { status: 400 },
       );
     }
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        message: "Nao foi possivel enviar o backup por e-mail agora.",
+        message: "Não foi possível enviar o backup por e-mail agora.",
         ...(process.env.NODE_ENV !== "production"
           ? { details: getErrorDetails(error) }
           : {}),
