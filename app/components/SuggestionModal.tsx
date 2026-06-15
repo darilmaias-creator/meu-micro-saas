@@ -200,7 +200,7 @@ export function SuggestionModal({
           <div>
             <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wide text-amber-700">
               <Lightbulb size={15} />
-              Sugestoes
+              Sugestões
             </p>
             <h2 className="mt-1 text-xl font-black text-slate-900">
               Envie uma ideia para a calculadora
