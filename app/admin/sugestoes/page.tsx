@@ -139,7 +139,7 @@ export default async function SuggestionsAdminPage() {
           <p className="text-sm font-semibold uppercase text-red-700">
             Acesso restrito
           </p>
-          <h1 className="mt-2 text-2xl font-bold">Sugestoes dos usuarios</h1>
+          <h1 className="mt-2 text-2xl font-bold">Sugestões dos usuários</h1>
           <p className="mt-3 text-sm text-slate-600">
             Apenas e-mails cadastrados em ADMIN_EMAILS podem acessar as
             sugestoes enviadas dentro do app.
@@ -165,7 +165,7 @@ export default async function SuggestionsAdminPage() {
             <p className="text-xs font-semibold uppercase text-amber-700">
               Admin
             </p>
-            <h1 className="mt-1 text-3xl font-bold">Sugestoes dos usuarios</h1>
+            <h1 className="mt-1 text-3xl font-bold">Sugestões dos usuários</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
               Veja ideias, erros, duvidas e melhorias enviadas pelos usuarios
               diretamente dentro da calculadora.

@@ -177,7 +177,7 @@ export default function AuthenticatedAppShell({
                   className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50"
                 >
                   <Store size={14} />
-                  Meu Negocio
+                  Meu Negócio
                 </Link>
                 <button
                   type="button"
@@ -185,13 +185,13 @@ export default function AuthenticatedAppShell({
                   className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50"
                 >
                   <Lightbulb size={14} />
-                  Sugestoes
+                  Sugestões
                 </button>
                 <Link
                   href="/politicas/cancelamento-e-reembolso"
                   className="hidden rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50 md:inline-flex"
                 >
-                  Politica Premium
+                  Política Premium
                 </Link>
               </div>
               <button
