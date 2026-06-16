@@ -47,7 +47,7 @@ export function ActivityTracker() {
 
     lastTrackedPathRef.current = pathname;
     sendActivityHeartbeat({
-      activeSeconds: 0,
+      activeSeconds: 1,
       isPageView: true,
       path: pathname,
     });

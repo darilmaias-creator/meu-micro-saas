@@ -1,10 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
+  ArrowRight,
   BarChart2,
   Calculator,
+  CheckCircle2,
+  Crown,
   Download,
   FileText,
   Package,
@@ -32,6 +36,7 @@ import { Card } from "./ui";
 import { ProgressCard } from "@/app/components/ProgressCard";
 import { SavingsEstimate } from "@/app/components/SavingsEstimate";
 import { DailyTip } from "@/app/components/DailyTip";
+import { PremiumTrialButton } from "@/app/components/PremiumTrialButton";
 import {
   checkAndNotifyLowStock,
   checkAndNotifyPendingQuotes,
@@ -74,6 +79,61 @@ type Html2PdfChain = {
   from: (element: HTMLElement) => Html2PdfChain;
   save: () => Promise<void>;
 };
+
+function getNextStep(input: {
+  insumosCount: number;
+  productsCount: number;
+  quotesCount: number;
+  salesCount: number;
+}) {
+  if (input.insumosCount === 0) {
+    return {
+      href: "/estoque",
+      label: "Cadastrar primeiro material",
+      title: "Cadastre seu primeiro material",
+      description:
+        "Comece informando o material, quanto pagou, medida e estoque. Isso prepara a calculadora para montar o preço.",
+    };
+  }
+
+  if (input.productsCount === 0) {
+    return {
+      href: "/ficha-tecnica",
+      label: "Calcular primeiro produto",
+      title: "Calcule seu primeiro produto",
+      description:
+        "Use os materiais cadastrados, informe tempo de produção, perdas e lucro desejado para chegar ao preço sugerido.",
+    };
+  }
+
+  if (input.quotesCount === 0) {
+    return {
+      href: "/vendas",
+      label: "Criar primeiro orçamento",
+      title: "Crie um orçamento para cliente",
+      description:
+        "Transforme o produto salvo em uma proposta clara para enviar ao cliente com mais segurança.",
+    };
+  }
+
+  if (input.salesCount === 0) {
+    return {
+      href: "/vendas",
+      label: "Registrar primeira venda",
+      title: "Registre sua primeira venda",
+      description:
+        "Quando uma venda for fechada, registre para acompanhar faturamento, lucro, estoque e histórico.",
+    };
+  }
+
+  return {
+    href: "/dashboard",
+    label: "Acompanhar resultados",
+    title: "Acompanhe seus resultados",
+    description:
+      "Você já tem a base funcionando. Agora acompanhe margem, vendas e produtos que merecem ajuste.",
+  };
+}
 
 export default function DashboardTab({ appData, isPremium }: DashboardTabProps) {
   const { data: session } = useSession();
@@ -263,11 +323,64 @@ export default function DashboardTab({ appData, isPremium }: DashboardTabProps) 
 
   const shouldShowNotificationBanner =
     notificationPermission !== "granted" && notificationPermission !== "unsupported";
+  const nextStep = getNextStep({
+    insumosCount: insumos.length,
+    productsCount: savedProducts.length,
+    quotesCount: quotes.length,
+    salesCount: salesItems.length,
+  });
+  const shouldShowPremiumActivationCard =
+    !isPremium &&
+    (insumos.length >= 2 || savedProducts.length >= 1 || quotes.length >= 1);
 
   return (
     <div className="animate-fadeIn space-y-6 w-full" id="relatorio-vendas">
       <div className="space-y-6">
         <DailyTip />
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
+          <Card className="border-blue-200 bg-blue-50">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 rounded-2xl bg-white p-3 text-blue-600 shadow-sm">
+                  <CheckCircle2 size={22} />
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
+                    Próximo passo
+                  </p>
+                  <h2 className="mt-1 text-xl font-black text-slate-900">
+                    {nextStep.title}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-blue-950/80">
+                    {nextStep.description}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href={nextStep.href}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700"
+              >
+                {nextStep.label}
+                <ArrowRight size={16} />
+              </Link>
+            </div>
+          </Card>
+
+          {shouldShowPremiumActivationCard ? (
+            <Card className="border-amber-200 bg-amber-50">
+              <div className="mb-3 flex items-center gap-2 text-amber-800">
+                <Crown size={20} />
+                <h2 className="font-black">Teste Premium sem cartão</h2>
+              </div>
+              <p className="mb-4 text-sm leading-6 text-amber-950/80">
+                Você já começou a usar a calculadora. Teste por 7 dias para liberar
+                materiais e produtos ilimitados, personalização e recursos extras.
+              </p>
+              <PremiumTrialButton />
+            </Card>
+          ) : null}
+        </div>
 
         {shouldShowNotificationBanner ? (
           <Card className="border-amber-200 bg-amber-50">

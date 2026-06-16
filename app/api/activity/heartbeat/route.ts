@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json(
-      { message: "Voce precisa estar logado para registrar atividade." },
+      { message: "Você precisa estar logado para registrar atividade." },
       { status: 401 },
     );
   }
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
     console.error("[activity:heartbeat]", error);
 
     return NextResponse.json(
-      { message: "Nao foi possivel registrar a atividade agora." },
+      { message: "Não foi possível registrar a atividade agora." },
       { status: 500 },
     );
   }

@@ -129,7 +129,7 @@ function getPlanLabel(member: MemberRow) {
     return "Teste Premium";
   }
 
-  return "Gratis";
+  return "Grátis";
 }
 
 function isActivePremiumTrial(member: MemberRow, now = Date.now()) {
@@ -181,7 +181,7 @@ function getProvidersLabel(member: MemberRow) {
     : [];
 
   if (providers.length === 0) {
-    return "Nao informado";
+    return "Não informado";
   }
 
   return providers
@@ -395,7 +395,7 @@ async function getMembersDashboardData() {
         todayActivitySummaries.length > 0
           ? Math.round(todayActiveSeconds / todayActivitySummaries.length)
           : 0,
-      freeCount: members.filter((member) => getPlanLabel(member) === "Gratis")
+      freeCount: members.filter((member) => getPlanLabel(member) === "Grátis")
         .length,
       last24hCount: members.filter(
         (member) =>
@@ -407,7 +407,7 @@ async function getMembersDashboardData() {
           7 * 24 * 60 * 60 * 1000,
       ).length,
       paidPremiumCount: paidPremiumMembers.length,
-      premiumCount: members.filter((member) => getPlanLabel(member) !== "Gratis")
+      premiumCount: members.filter((member) => getPlanLabel(member) !== "Grátis")
         .length,
       todayActiveSeconds,
       totalCount: response.count ?? members.length,
@@ -460,8 +460,8 @@ export default async function MembersAdminPage() {
             </p>
             <h1 className="mt-1 text-3xl font-bold">Novos membros</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Acompanhe os usuarios cadastrados, plano atual, forma de login e
-              confirmacao de e-mail sem misturar com os dados da calculadora.
+              Acompanhe os usuários cadastrados, plano atual, forma de login e
+              confirmação de e-mail sem misturar com os dados da calculadora.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -469,7 +469,7 @@ export default async function MembersAdminPage() {
               href="/admin/comentarios"
               className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
             >
-              Comentarios
+              Comentários
             </Link>
             <Link
               href="/admin/sugestoes"
@@ -481,7 +481,7 @@ export default async function MembersAdminPage() {
               href="/admin/seguranca"
               className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
             >
-              Seguranca
+              Segurança
             </Link>
             <Link
               href="/dashboard"
@@ -494,7 +494,7 @@ export default async function MembersAdminPage() {
 
         {!isConfigured && (
           <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
-            Banco de membros ainda nao configurado. Confira as variaveis
+            Banco de membros ainda não configurado. Confira as variáveis
             NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SECRET_KEY.
           </section>
         )}
@@ -520,7 +520,7 @@ export default async function MembersAdminPage() {
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase text-slate-500">
-              Gratis
+              Grátis
             </p>
             <p className="mt-2 text-3xl font-bold">{stats.freeCount}</p>
           </div>
@@ -532,13 +532,13 @@ export default async function MembersAdminPage() {
           </div>
           <div className="rounded-lg border border-amber-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase text-amber-700">
-              Ultimas 24h
+              Últimas 24h
             </p>
             <p className="mt-2 text-3xl font-bold">{stats.last24hCount}</p>
           </div>
           <div className="rounded-lg border border-blue-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase text-blue-700">
-              Ultimos 7 dias
+              Últimos 7 dias
             </p>
             <p className="mt-2 text-3xl font-bold">{stats.last7dCount}</p>
           </div>
@@ -561,7 +561,7 @@ export default async function MembersAdminPage() {
           </div>
           <div className="rounded-lg border border-cyan-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase text-cyan-700">
-              Media por usuario
+              Média por usuário
             </p>
             <p className="mt-2 text-3xl font-bold">
               {formatDuration(stats.averageTodayActiveSeconds)}
@@ -575,13 +575,47 @@ export default async function MembersAdminPage() {
           </div>
         </section>
 
+        <section className="grid gap-3 lg:grid-cols-[1fr_1.3fr]">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase text-blue-700">
+              Campanha para grátis
+            </p>
+            <h2 className="mt-2 text-lg font-bold text-slate-950">
+              Chamada pronta para ativar teste Premium
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-blue-950/80">
+              Use esta campanha para usuários grátis que já confirmaram e-mail,
+              mas ainda não testaram o Premium.
+            </p>
+            <Link
+              href="/meu-negocio"
+              className="mt-4 inline-flex rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              Criar aviso no app
+            </Link>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase text-slate-500">
+              Modelo sugerido
+            </p>
+            <p className="mt-2 text-sm font-bold text-slate-950">
+              Teste o Premium por 7 dias, sem cartão
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Você já pode testar materiais e produtos ilimitados, personalização
+              e recursos extras da Calcula Artesão por 7 dias grátis. Não precisa
+              de cartão. Clique no botão Premium dentro do app e ative quando quiser.
+            </p>
+          </div>
+        </section>
+
         <section className="overflow-hidden rounded-lg border border-amber-200 bg-white shadow-sm">
           <div className="border-b border-amber-100 bg-amber-50/60 p-4">
             <h2 className="text-lg font-bold text-amber-950">
-              Usuarios em teste premium
+              Usuários em teste premium
             </h2>
             <p className="mt-1 text-sm text-amber-800">
-              Mostrando quem esta usando o teste gratuito premium agora.
+              Mostrando quem está usando o teste gratuito premium agora.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -599,7 +633,7 @@ export default async function MembersAdminPage() {
                 {activeTrialMembers.length === 0 ? (
                   <tr>
                     <td className="px-4 py-8 text-center text-slate-500" colSpan={5}>
-                      Nenhum usuario usando teste premium ativo agora.
+                      Nenhum usuário usando teste premium ativo agora.
                     </td>
                   </tr>
                 ) : (
@@ -651,7 +685,7 @@ export default async function MembersAdminPage() {
           <div className="border-b border-slate-200 p-4">
             <h2 className="text-lg font-bold">Membros recentes</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Mostrando os ultimos 200 usuarios cadastrados.
+              Mostrando os últimos 200 usuários cadastrados.
             </p>
           </div>
           <div className="overflow-x-auto">

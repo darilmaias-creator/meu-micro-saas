@@ -26,7 +26,6 @@ import ProfileModal from "./ProfileModal";
 import SalesTab from "./SalesTab";
 import AppHelpAssistant from "./AppHelpAssistant";
 import { ActivityTracker } from "./components/ActivityTracker";
-import EmailVerificationNotice from "./components/EmailVerificationNotice";
 import { OfflineSyncBanner } from "./components/OfflineSyncBanner";
 import { SuggestionModal } from "./components/SuggestionModal";
 import OnboardingGuide from "./onboarding/OnboardingGuide";
@@ -50,7 +49,7 @@ const TAB_ITEMS = [
   {
     icon: DollarSign,
     id: "operationCosts",
-    label: "Gastos do Negocio",
+    label: "Gastos do Negócio",
   },
   {
     icon: Calculator,
@@ -93,9 +92,6 @@ export default function AuthenticatedAppShell({
 
   const activeTab = initialTab;
   const isPremium = session.user.isPremium;
-  const shouldShowEmailVerificationNotice = Boolean(
-    session.user.email && !session.user.emailVerifiedAt,
-  );
   const displayHeaderAvatar = isPremium ? session.user?.image : null;
   const assistantContext = buildAssistantContext(session, {
     config: appData.config,
@@ -216,7 +212,7 @@ export default function AuthenticatedAppShell({
                   </span>
                   <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-bold text-amber-100/90">
                     <Crown size={10} />
-                    {isPremium ? "Premium" : "Gratis"}
+                    {isPremium ? "Premium" : "Grátis"}
                   </span>
                 </div>
               </button>
@@ -269,9 +265,6 @@ export default function AuthenticatedAppShell({
 
       <GlobalAnnouncementBanner userId={session.user.id} />
       <OfflineSyncBanner syncStatus={appData.syncStatus} />
-      {shouldShowEmailVerificationNotice && session.user.email && (
-        <EmailVerificationNotice email={session.user.email} />
-      )}
 
       <main className="mx-auto max-w-6xl px-4 py-5 md:py-6">
         {activeTab === "inventory" && (
@@ -338,7 +331,7 @@ export default function AuthenticatedAppShell({
                     : tabItem.id === "operationCosts"
                       ? "Gastos"
                     : tabItem.id === "calculator"
-                      ? "Preco"
+                      ? "Preço"
                       : tabItem.id === "sales"
                         ? "Vendas"
                         : "Resumo"}

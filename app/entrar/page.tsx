@@ -7,6 +7,7 @@ import type { Session } from "next-auth";
 import { getProviders, signIn, useSession } from "next-auth/react";
 
 import AuthenticatedAppShell from "../AuthenticatedAppShell";
+import EmailVerificationGate from "@/app/components/EmailVerificationGate";
 import { RecaptchaField } from "@/app/components/RecaptchaField";
 import { ONBOARDING_GLOBAL_COMPLETED_KEY } from "../onboarding/storage";
 import type { ActiveTab } from "@/lib/app-tabs";
@@ -352,8 +353,11 @@ export default function MainApp() {
           tone: "success",
           message:
             registerResult?.message ??
-            "Conta criada com sucesso. Entrando na sua área...",
+            "Conta criada com sucesso. Enviamos um link de confirmação para seu e-mail. Confirme antes de entrar no app.",
         });
+        setPassword("");
+        setAuthMode("login");
+        return;
       }
 
       const loginResult = await signIn("credentials", {
@@ -367,11 +371,8 @@ export default function MainApp() {
         setAuthFeedback({
           tone: "error",
           message:
-            authMode === "register" &&
-            loginResult.error === "CredentialsSignin"
-              ? "Sua conta foi criada, mas o login automático falhou. Tente entrar novamente."
-              : mapAuthErrorMessage(loginResult.error) ??
-                buildUnknownAuthErrorMessage(loginResult.error),
+            mapAuthErrorMessage(loginResult.error) ??
+            buildUnknownAuthErrorMessage(loginResult.error),
         });
         return;
       }
@@ -665,7 +666,7 @@ export default function MainApp() {
               href="/politicas/cancelamento-e-reembolso"
               className="text-xs font-bold text-slate-500 transition-colors hover:text-amber-700"
             >
-              Politica de cancelamento e reembolso
+              Política de cancelamento e reembolso
             </Link>
             <Link
               href="/politicas/termos-de-uso"
@@ -677,12 +678,16 @@ export default function MainApp() {
               href="/politicas/privacidade"
               className="mt-2 block text-xs font-bold text-slate-500 transition-colors hover:text-amber-700"
             >
-              Politica de privacidade
+              Política de privacidade
             </Link>
           </div>
         </div>
       </div>
     );
+  }
+
+  if (activeSession.user.email && !activeSession.user.emailVerifiedAt) {
+    return <EmailVerificationGate email={activeSession.user.email} />;
   }
 
   return (
