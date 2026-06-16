@@ -26,6 +26,7 @@ import ProfileModal from "./ProfileModal";
 import SalesTab from "./SalesTab";
 import AppHelpAssistant from "./AppHelpAssistant";
 import { ActivityTracker } from "./components/ActivityTracker";
+import EmailVerificationGate from "./components/EmailVerificationGate";
 import { OfflineSyncBanner } from "./components/OfflineSyncBanner";
 import { SuggestionModal } from "./components/SuggestionModal";
 import OnboardingGuide from "./onboarding/OnboardingGuide";
@@ -92,6 +93,9 @@ export default function AuthenticatedAppShell({
 
   const activeTab = initialTab;
   const isPremium = session.user.isPremium;
+  const shouldRequireEmailVerification = Boolean(
+    session.user.email && !session.user.emailVerifiedAt,
+  );
   const displayHeaderAvatar = isPremium ? session.user?.image : null;
   const assistantContext = buildAssistantContext(session, {
     config: appData.config,
@@ -120,6 +124,10 @@ export default function AuthenticatedAppShell({
       })
       .catch(() => undefined);
   }, [session.user.id]);
+
+  if (shouldRequireEmailVerification && session.user.email) {
+    return <EmailVerificationGate email={session.user.email} />;
+  }
 
   if (!appData.isLoaded) {
     return (
