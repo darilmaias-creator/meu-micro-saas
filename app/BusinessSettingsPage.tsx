@@ -650,6 +650,48 @@ export default function BusinessSettingsPage() {
             </div>
           </div>
 
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Cor padrão do orçamento
+                </p>
+                <h4 className="mt-1 text-base font-black text-slate-900">
+                  Escolha a cor que combina com sua marca
+                </h4>
+                <p className="mt-1 text-sm text-slate-600">
+                  Essa cor sai nos próximos orçamentos. No Premium, você ainda
+                  pode trocar a cor de um orçamento específico antes de baixar.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={resolvedQuoteConfig.quoteThemeColor}
+                  disabled={!isPremium}
+                  onChange={(event) =>
+                    config.setQuoteThemeColor(event.target.value)
+                  }
+                  className="h-12 w-16 cursor-pointer rounded-xl border border-slate-200 bg-white p-1 disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-label="Cor padrão do orçamento"
+                />
+                <span
+                  className="inline-flex rounded-xl px-3 py-2 text-xs font-black uppercase tracking-wide text-white"
+                  style={{ backgroundColor: resolvedQuoteConfig.quoteThemeColor }}
+                >
+                  Exemplo
+                </span>
+              </div>
+            </div>
+
+            {!isPremium && (
+              <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">
+                Personalização de cor é um recurso Premium.
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <SettingsField
               label="Validade do orçamento"

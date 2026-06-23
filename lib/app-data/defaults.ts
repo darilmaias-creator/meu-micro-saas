@@ -19,6 +19,7 @@ export const DEFAULT_QUOTE_APPROVAL_TEXT =
 export const DEFAULT_QUOTE_NOTES_TEXT = "";
 export const DEFAULT_BUSINESS_INSTAGRAM = "";
 export const DEFAULT_BUSINESS_WHATSAPP = "";
+export const DEFAULT_QUOTE_THEME_COLOR = "#d97706";
 export const DEFAULT_MONTHLY_PRODUCTION_TARGET = "";
 export const DEFAULT_PRODUCTIVE_HOURS_PER_MONTH = "";
 export const DEFAULT_OPERATION_COST_MARKUP = "0";
@@ -61,6 +62,7 @@ export type AppConfigState = {
   quoteNotesText: string;
   businessInstagram: string;
   businessWhatsapp: string;
+  quoteThemeColor: string;
   fixedCostRent: string;
   fixedCostWater: string;
   fixedCostElectricity: string;
@@ -86,6 +88,7 @@ export type QuoteDocumentConfig = Pick<
   | "quoteNotesText"
   | "businessInstagram"
   | "businessWhatsapp"
+  | "quoteThemeColor"
 >;
 
 export const QUOTE_DOCUMENT_CONFIG_KEYS: Array<keyof QuoteDocumentConfig> = [
@@ -98,6 +101,7 @@ export const QUOTE_DOCUMENT_CONFIG_KEYS: Array<keyof QuoteDocumentConfig> = [
   "quoteNotesText",
   "businessInstagram",
   "businessWhatsapp",
+  "quoteThemeColor",
 ];
 
 export type PremiumOperationCostConfig = Pick<
@@ -153,6 +157,7 @@ export function createDefaultAppDataState(): AppDataState {
       quoteNotesText: DEFAULT_QUOTE_NOTES_TEXT,
       businessInstagram: DEFAULT_BUSINESS_INSTAGRAM,
       businessWhatsapp: DEFAULT_BUSINESS_WHATSAPP,
+      quoteThemeColor: DEFAULT_QUOTE_THEME_COLOR,
       fixedCostRent: "",
       fixedCostWater: "",
       fixedCostElectricity: "",
@@ -186,6 +191,7 @@ export function createDefaultQuoteDocumentConfig(): QuoteDocumentConfig {
     quoteNotesText: defaultConfig.quoteNotesText,
     businessInstagram: defaultConfig.businessInstagram,
     businessWhatsapp: defaultConfig.businessWhatsapp,
+    quoteThemeColor: defaultConfig.quoteThemeColor,
   };
 }
 
@@ -385,6 +391,10 @@ export function normalizeAppDataState(
         typeof input?.config?.businessWhatsapp === "string"
           ? input.config.businessWhatsapp
           : defaults.config.businessWhatsapp,
+      quoteThemeColor: normalizeQuoteThemeColor(
+        input?.config?.quoteThemeColor,
+        defaults.config.quoteThemeColor,
+      ),
       fixedCostRent:
         typeof input?.config?.fixedCostRent === "string"
           ? input.config.fixedCostRent
@@ -473,6 +483,20 @@ function normalizeOptionalText(value: unknown, fallback: string) {
   return value.trim();
 }
 
+export function normalizeQuoteThemeColor(value: unknown, fallback: string) {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  return fallback;
+}
+
 export function resolveQuoteDocumentConfig(
   config: AppConfigState,
   isPremium: boolean,
@@ -519,6 +543,10 @@ export function resolveQuoteDocumentConfig(
     businessWhatsapp: normalizeOptionalText(
       config.businessWhatsapp,
       defaults.businessWhatsapp,
+    ),
+    quoteThemeColor: normalizeQuoteThemeColor(
+      config.quoteThemeColor,
+      defaults.quoteThemeColor,
     ),
   };
 }

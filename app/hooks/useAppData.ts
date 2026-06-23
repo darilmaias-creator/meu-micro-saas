@@ -56,6 +56,7 @@ const STORAGE_KEYS = {
   quoteNotesText: "calc_quoteNotesText",
   businessInstagram: "calc_businessInstagram",
   businessWhatsapp: "calc_businessWhatsapp",
+  quoteThemeColor: "calc_quoteThemeColor",
   fixedCostRent: "calc_fixedCostRent",
   fixedCostWater: "calc_fixedCostWater",
   fixedCostElectricity: "calc_fixedCostElectricity",
@@ -205,6 +206,10 @@ function readLocalAppData(userId: string) {
         buildScopedStorageKey(userId, STORAGE_KEYS.businessWhatsapp),
         defaults.config.businessWhatsapp,
       ),
+      quoteThemeColor: readStorageValue(
+        buildScopedStorageKey(userId, STORAGE_KEYS.quoteThemeColor),
+        defaults.config.quoteThemeColor,
+      ),
       fixedCostRent: readStorageValue(
         buildScopedStorageKey(userId, STORAGE_KEYS.fixedCostRent),
         defaults.config.fixedCostRent,
@@ -351,6 +356,10 @@ function writeLocalAppData(userId: string, state: AppDataState) {
   writeStorageValue(
     buildScopedStorageKey(userId, STORAGE_KEYS.businessWhatsapp),
     normalizedState.config.businessWhatsapp,
+  );
+  writeStorageValue(
+    buildScopedStorageKey(userId, STORAGE_KEYS.quoteThemeColor),
+    normalizedState.config.quoteThemeColor,
   );
   writeStorageValue(
     buildScopedStorageKey(userId, STORAGE_KEYS.fixedCostRent),
@@ -1052,6 +1061,7 @@ export function useAppData(userId: string) {
         setState,
         "businessWhatsapp",
       ),
+      setQuoteThemeColor: buildConfigFieldSetter(setState, "quoteThemeColor"),
       setFixedCostRent: buildConfigFieldSetter(setState, "fixedCostRent"),
       setFixedCostWater: buildConfigFieldSetter(setState, "fixedCostWater"),
       setFixedCostElectricity: buildConfigFieldSetter(

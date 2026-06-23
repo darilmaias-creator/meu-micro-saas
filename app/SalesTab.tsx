@@ -15,6 +15,7 @@ import {
 
 import {
   DEFAULT_STORE_LOGO,
+  normalizeQuoteThemeColor,
   resolveQuoteDocumentConfig,
   type AppConfigState,
   type GenericRecord,
@@ -80,6 +81,7 @@ type Quote = Record<string, unknown> & {
   totalTithe?: number;
   netSale: number;
   items?: QuoteLineItem[];
+  themeColor?: string;
   status: string;
 };
 
@@ -194,6 +196,15 @@ function totalQuoteQuantity(items: QuoteLineItem[]) {
   return items.reduce((total, item) => total + Number(item.quantity || 0), 0);
 }
 
+const QUOTE_THEME_PRESETS = [
+  "#d97706",
+  "#0f766e",
+  "#2563eb",
+  "#be185d",
+  "#7c3aed",
+  "#334155",
+];
+
 type SaveFilePickerWindow = Window & {
   showSaveFilePicker?: (options: {
     id?: string;
@@ -284,6 +295,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     () => Math.floor(Math.random() * 90000) + 10000,
   );
   const [docType, setDocType] = useState<"orcamento" | "recibo">("orcamento");
+  const [quoteThemeColor, setQuoteThemeColor] = useState("");
   const [quoteLineItems, setQuoteLineItems] = useState<QuoteLineItem[]>([]);
   const [completedSaleFeedback, setCompletedSaleFeedback] =
     useState<CompletedSaleFeedback | null>(null);
@@ -293,6 +305,17 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     () => resolveQuoteDocumentConfig(config, isPremium),
     [config, isPremium],
   );
+  const quoteAccentColor =
+    docType === "orcamento"
+      ? normalizeQuoteThemeColor(
+          quoteThemeColor || resolvedQuoteConfig.quoteThemeColor,
+          resolvedQuoteConfig.quoteThemeColor,
+        )
+      : "#15803d";
+  const quoteSoftBackgroundColor =
+    docType === "orcamento" ? "#fff7ed" : "#f0fdf4";
+  const quoteSoftBorderColor =
+    docType === "orcamento" ? "#fed7aa" : "#bbf7d0";
   const formattedSaleDate = formatDocumentDate(saleDate || "");
   const quoteValidityLabel = buildQuoteValidityLabel(
     saleDate,
@@ -358,6 +381,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     setQuoteLineItems([]);
     setQuoteNumber(Math.floor(Math.random() * 90000) + 10000);
     setActiveQuoteId(null);
+    setQuoteThemeColor(resolvedQuoteConfig.quoteThemeColor);
     setDocType("orcamento");
     setIsSaleLocked(false);
     setCompletedSaleFeedback(null);
@@ -580,6 +604,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
       totalTithe: currentDocumentData.totalTithe,
       netSale: currentDocumentData.netSale,
       items: currentDocumentData.items,
+      themeColor: isPremium ? quoteAccentColor : undefined,
       status: "pendente",
     };
 
@@ -606,6 +631,12 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
     setSaleDiscountPercent(quote.discountPercent || "");
     setQuoteNumber(quote.quoteNumber);
     setActiveQuoteId(quote.id);
+    setQuoteThemeColor(
+      normalizeQuoteThemeColor(
+        quote.themeColor,
+        resolvedQuoteConfig.quoteThemeColor,
+      ),
+    );
     setDocType("orcamento");
 
     if (Array.isArray(quote.items) && quote.items.length > 0) {
@@ -1058,6 +1089,51 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
               </div>
             </div>
 
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                    Cor deste orçamento
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Use a cor padrão do negócio ou escolha uma cor só para este
+                    documento.
+                  </p>
+                </div>
+
+                {isPremium ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {QUOTE_THEME_PRESETS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setQuoteThemeColor(color)}
+                        className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-105 ${
+                          quoteAccentColor === color
+                            ? "border-slate-900"
+                            : "border-white shadow ring-1 ring-slate-200"
+                        }`}
+                        style={{ backgroundColor: color }}
+                        aria-label={`Usar cor ${color} no orçamento`}
+                        title={`Usar cor ${color}`}
+                      />
+                    ))}
+                    <input
+                      type="color"
+                      value={quoteAccentColor}
+                      onChange={(event) => setQuoteThemeColor(event.target.value)}
+                      className="h-9 w-12 cursor-pointer rounded-lg border border-slate-200 bg-white p-1"
+                      aria-label="Escolher cor personalizada do orçamento"
+                    />
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">
+                    Cor personalizada disponível no Premium.
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <InputGroup
                 label="Quantidade Solicitada"
@@ -1386,7 +1462,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
             <div
               style={{
                 height: "16px",
-                backgroundColor: docType === "orcamento" ? "#d97706" : "#15803d",
+                backgroundColor: quoteAccentColor,
                 width: "100%",
               }}
             />
@@ -1481,7 +1557,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                         style={{
                           fontSize: "32px",
                           fontWeight: "900",
-                          color: docType === "orcamento" ? "#d97706" : "#15803d",
+                          color: quoteAccentColor,
                           textTransform: "uppercase",
                           letterSpacing: "2px",
                           margin: "0 0 10px 0",
@@ -1562,7 +1638,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                                   padding: "5px 15px 10px 15px",
                                   fontSize: "12px",
                                   fontWeight: "bold",
-                                  color: "#92400e",
+                                  color: quoteAccentColor,
                                   textAlign: "left",
                                 }}
                               >
@@ -1572,7 +1648,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                                 style={{
                                   padding: "5px 15px 10px 15px",
                                   fontSize: "12px",
-                                  color: "#b45309",
+                                  color: quoteAccentColor,
                                   fontWeight: "bold",
                                   textAlign: "right",
                                 }}
@@ -1673,8 +1749,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                   <tr>
                     <th
                       style={{
-                        backgroundColor:
-                          docType === "orcamento" ? "#d97706" : "#15803d",
+                        backgroundColor: quoteAccentColor,
                         color: "white",
                         padding: "14px 15px",
                         textAlign: "left",
@@ -1687,8 +1762,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                     </th>
                     <th
                       style={{
-                        backgroundColor:
-                          docType === "orcamento" ? "#d97706" : "#15803d",
+                        backgroundColor: quoteAccentColor,
                         color: "white",
                         padding: "14px 15px",
                         textAlign: "center",
@@ -1701,8 +1775,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                     </th>
                     <th
                       style={{
-                        backgroundColor:
-                          docType === "orcamento" ? "#d97706" : "#15803d",
+                        backgroundColor: quoteAccentColor,
                         color: "white",
                         padding: "14px 15px",
                         textAlign: "right",
@@ -1715,8 +1788,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                     </th>
                     <th
                       style={{
-                        backgroundColor:
-                          docType === "orcamento" ? "#d97706" : "#15803d",
+                        backgroundColor: quoteAccentColor,
                         color: "white",
                         padding: "14px 15px",
                         textAlign: "right",
@@ -1774,7 +1846,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                           fontSize: "16px",
                           textAlign: "right",
                           fontWeight: "bold",
-                          color: docType === "orcamento" ? "#d97706" : "#15803d",
+                          color: quoteAccentColor,
                         }}
                       >
                         R$ {Number(item.grossSale || 0).toFixed(2)}
@@ -1832,11 +1904,8 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                       <div
                         className="pdf-avoid-break"
                         style={{
-                          backgroundColor:
-                            docType === "orcamento" ? "#fffbeb" : "#f0fdf4",
-                          border: `2px solid ${
-                            docType === "orcamento" ? "#fde68a" : "#bbf7d0"
-                          }`,
+                          backgroundColor: quoteSoftBackgroundColor,
+                          border: `2px solid ${quoteSoftBorderColor}`,
                           borderRadius: "8px",
                           padding: "15px 20px",
                           display: "flex",
@@ -1848,7 +1917,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                           style={{
                             fontSize: "16px",
                             fontWeight: "900",
-                            color: docType === "orcamento" ? "#92400e" : "#166534",
+                            color: quoteAccentColor,
                             textTransform: "uppercase",
                           }}
                         >
@@ -1858,7 +1927,7 @@ export default function SalesTab({ appData, isPremium }: SalesTabProps) {
                           style={{
                             fontSize: "24px",
                             fontWeight: "900",
-                            color: docType === "orcamento" ? "#d97706" : "#15803d",
+                            color: quoteAccentColor,
                           }}
                         >
                           R$ {Number(currentDocumentData.netSale || 0).toFixed(2)}
